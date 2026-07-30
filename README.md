@@ -19,6 +19,8 @@ run the dev-team:bootstrap skill
 
 Fill in `docs/stack/stack.md` and customize `docs/standards/*.md` — agents stop and ask rather than guess while placeholders remain. Commit the scaffolded files to your project repo. Nothing from your project ever flows back into this repo.
 
+Keep the project `CLAUDE.md` lean — it is loaded every session, while skills and `docs/` load on demand. See [`CLAUDE.md.example`](CLAUDE.md.example) for the recommended minimal shape.
+
 Project-level skills (`.claude/skills/`) work out of the box: every dev-team agent carries the `Skill` tool and is instructed to consult relevant domain skills (e.g. a `laravel` skill) before deciding or implementing — no plugin changes needed.
 
 ## Update (per project)

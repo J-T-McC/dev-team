@@ -1,0 +1,30 @@
+# <Project Name>
+
+<One sentence: what this product is and who it is for.>
+
+## Development Organization
+
+This project uses the **dev-team** plugin. Artifacts under `docs/` are the
+source of truth; `docs/status.md` tracks all features — ask the orchestrator
+"what's next?".
+
+- Delegate feature work to the matching dev-team agent; never cross roles.
+- No phase advances without explicit Project Owner approval.
+- Missing info: search `docs/` → ADRs/answered questions → question doc to
+  the upstream agent → Project Owner. Never invent requirements.
+- Stack: `docs/stack/stack.md` · Standards: `docs/standards/` — ask, don't
+  guess, where placeholders remain.
+
+## Commands
+
+- Test: `<test command, e.g. php artisan test>`
+- Lint/format: `<lint command>`
+- Static analysis: `<analysis command, or delete this line>`
+- Build/run: `<build or dev-server command, or delete this line>`
+
+## Project rules
+
+<Only rules that are project-specific AND not covered by a skill or a
+docs/standards/ file. Delete this section if empty. Examples:>
+- <e.g. Never edit committed files in database/migrations/.>
+- <e.g. All money values are integer cents; never floats.>
