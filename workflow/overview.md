@@ -29,5 +29,5 @@ Done
 
 - Phases never auto-advance: every ✋ is an explicit Project Owner approval, recorded in the artifact and in `docs/status.md`.
 - The Orchestrator routes work between phases and maintains `docs/status.md`, but owns no phase artifact.
-- Any phase may send a question upstream (`workflow/communication.md`); affected work pauses until answered.
+- Any phase may send a question upstream (`${CLAUDE_PLUGIN_ROOT}/workflow/communication.md`); affected work pauses until answered.
 - Rework flows backward through the same gates: a review Blocker returns work to the Senior Developer; a plan defect returns to the Principal Engineer and re-triggers plan approval.

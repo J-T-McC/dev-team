@@ -28,7 +28,7 @@ Never bypass the chain. Example: the Senior Developer must not ask the Project O
 
 ## Question protocol
 
-1. Create `docs/questions/<feature-slug>-q<NNN>.md` from `templates/question.md`
+1. Create `docs/questions/<feature-slug>-q<NNN>.md` from `${CLAUDE_PLUGIN_ROOT}/templates/question.md`
 2. Reference it in the asking artifact's **Outstanding Questions**
 3. The responsible agent writes the answer in the same file and sets `Status: Answered`
 4. If the answer changes an artifact, its owner updates it and re-requests approval
