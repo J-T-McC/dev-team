@@ -33,4 +33,4 @@
 - **Outputs:** this PRD
 - **Dependencies:**
 - **Outstanding Questions:**
-- **Next Agent:** Principal Engineer
+- **Next Agent:** Designer *(user-facing UI)* or Principal Engineer *(no UI)*

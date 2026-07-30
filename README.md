@@ -1,8 +1,8 @@
 # dev-team
 
-A reusable, documentation-first development organization for [Claude Code](https://code.claude.com), packaged as a plugin. Six specialized agents move feature work from requirements to reviewed code through explicit human approval gates:
+A reusable, documentation-first development organization for [Claude Code](https://code.claude.com), packaged as a plugin. Seven specialized agents move feature work from requirements to reviewed code through explicit human approval gates:
 
-**Product Owner → product-manager → principal-engineer → task-planner → senior-developer → reviewer → Owner approval**, coordinated by an **orchestrator**.
+**Product Owner → product-manager → designer** *(UI features only)* **→ principal-engineer → task-planner → senior-developer → reviewer → Owner approval**, coordinated by an **orchestrator**.
 
 ## Install (per project)
 
@@ -42,7 +42,7 @@ Validate with `claude plugin validate .`
 
 | Path | What | Updatable |
 |---|---|---|
-| `agents/`, `skills/` | The six roles + bootstrap skill | ✅ via plugin update |
+| `agents/`, `skills/` | The seven roles + bootstrap skill | ✅ via plugin update |
 | `templates/`, `workflow/` | Document templates, pipeline/handoff/communication rules | ✅ via plugin update |
 | `seeds/` | Copied into projects once by bootstrap | ❌ project-owned after copy |
 | `examples/user-authentication/` | Worked example of the full pipeline | ✅ via plugin update |

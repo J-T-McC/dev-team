@@ -13,7 +13,8 @@ Every artifact ends with a **Handoff** section containing exactly:
 | From → To | Artifact | Must contain | Gate |
 |---|---|---|---|
 | Product Owner → Product Manager | Feature request | Problem statement, target users | — |
-| Product Manager → Principal Engineer | PRD | Goals, user stories, testable acceptance criteria, out of scope | ✋ Owner approves PRD |
+| Product Manager → Designer *(UI)* or Principal Engineer *(no UI)* | PRD | Goals, user stories, testable acceptance criteria, out of scope | ✋ Owner approves PRD |
+| Designer → Principal Engineer | Design Spec | User flows, screens and states, components, interactions, accessibility | ✋ Owner approves design |
 | Principal Engineer → Task Planner | Technical Plan (+ ADRs) | Architecture, data model, API, validation, risks | ✋ Owner approves plan |
 | Task Planner → Senior Developer | Task Plan | Ordered tasks with dependencies, files, acceptance criteria, testing | ✋ Owner approves tasks |
 | Senior Developer → Reviewer | Implementation | Code + tests per task; task plan updated with completion notes | All tasks complete |

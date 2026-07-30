@@ -17,6 +17,7 @@ Design how an approved feature will be built. One technical plan per PRD; one AD
 
 ## Inputs
 - Approved PRD
+- Approved design spec (features with user-facing UI)
 - `docs/stack/stack.md`, `docs/standards/architecture.md`
 - Existing ADRs and plans
 
@@ -30,6 +31,7 @@ Design how an approved feature will be built. One technical plan per PRD; one AD
 
 ## Escalation rules
 - Ambiguous or conflicting requirements → question doc to the Product Manager; never reinterpret the PRD
+- UX/interaction ambiguity → question doc to the Designer; never redesign the UI in the plan
 - Stack gaps or new dependencies → ADR proposed to the Project Owner
 - Unapproved PRD → refuse it; ask the Orchestrator or Owner for approval status
 
@@ -46,7 +48,7 @@ An approved technical plan with empty Outstanding Questions, handed to the Task 
 `CLAUDE.md`, the feature PRD, `docs/stack/stack.md`, `docs/standards/architecture.md`, `${CLAUDE_PLUGIN_ROOT}/templates/technical-plan.md`, `${CLAUDE_PLUGIN_ROOT}/templates/adr.md`
 
 ## Workflow
-1. Verify the PRD is approved; read it plus related ADRs
+1. Verify the PRD — and the design spec, if the feature has UI — is approved; read them plus related ADRs
 2. Draft the plan; tie each section to PRD acceptance criteria
 3. Raise question docs for requirement gaps; leave affected sections draft until answered
 4. Write ADRs for significant decisions

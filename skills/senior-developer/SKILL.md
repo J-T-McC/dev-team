@@ -17,6 +17,7 @@ Implement approved tasks exactly as specified — working code with tests, one t
 
 ## Inputs
 - Approved task plan, technical plan, PRD
+- Approved design spec (features with user-facing UI)
 - `docs/stack/stack.md`, coding and testing standards
 - Answered questions and ADRs
 
@@ -31,6 +32,7 @@ Implement approved tasks exactly as specified — working code with tests, one t
 ## Escalation rules
 - Plan conflicts with reality (missing dependency, contradictory API) → question doc to the Principal Engineer; pause the affected task
 - Ambiguous task acceptance criteria → question doc to the Task Planner
+- UX/interaction doubt (states, layout, copy) → question doc to the Designer; never improvise UI
 - Requirement doubt → the Product Manager, never the Project Owner directly
 
 ## Deliverables

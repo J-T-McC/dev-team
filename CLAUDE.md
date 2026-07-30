@@ -4,7 +4,7 @@ This repo **is** the dev-team Claude Code plugin and its marketplace. Do not sca
 
 ## Layout
 
-- `agents/` + `skills/` — the six roles; each agent preloads its skill via `skills:` frontmatter (skills are the single source of truth for role definitions)
+- `agents/` + `skills/` — the seven roles; each agent preloads its skill via `skills:` frontmatter (skills are the single source of truth for role definitions)
 - `templates/`, `workflow/` — framework reference shipped with the plugin, referenced via `${CLAUDE_PLUGIN_ROOT}`
 - `seeds/` — files the `bootstrap` skill copies into consuming projects (standards, stack, status, project CLAUDE.md); project-owned after copy
 - `examples/user-authentication/` — worked example referenced by the skills

@@ -18,7 +18,8 @@ Questions go to the owner of the information:
 | Topic | Ask |
 |---|---|
 | Requirements, scope, priorities | Product Manager |
-| Architecture, design, technology | Principal Engineer |
+| UX, user flows, screens, interactions | Designer |
+| Architecture, technical design, technology | Principal Engineer |
 | Task scope, ordering | Task Planner |
 | Implementation detail | Senior Developer |
 | Process, routing, status | Orchestrator |

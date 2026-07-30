@@ -12,7 +12,7 @@ Scaffold the per-project workspace this plugin's agents work in. **Idempotent:**
 1. Create the workspace directories:
 
 ```bash
-mkdir -p docs/product docs/plans docs/tasks docs/questions docs/reviews docs/architecture docs/standards docs/stack
+mkdir -p docs/product docs/design docs/plans docs/tasks docs/questions docs/reviews docs/architecture docs/standards docs/stack
 ```
 
 2. Copy the seeds — these become **project-owned** and should be customized and committed to the project repo (`cp -n` skips existing files):

@@ -5,4 +5,4 @@ Maintained by the **Orchestrator**. One row per feature. Update on every phase t
 | Feature | Phase | Current Agent | Blockers | Approvals |
 |---|---|---|---|---|
 
-Phases: `Requirements → Design → Task Planning → Implementation → Review → Done`
+Phases: `Requirements → UX Design (UI only) → Technical Design → Task Planning → Implementation → Review → Done`

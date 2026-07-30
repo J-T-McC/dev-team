@@ -6,7 +6,7 @@
     {
       "name": "dev-team",
       "source": "./",
-      "description": "Documentation-first multi-agent development organization: Product Manager → Principal Engineer → Task Planner → Senior Developer → Reviewer, coordinated by an Orchestrator, with human approval gates."
+      "description": "Documentation-first multi-agent development organization: Product Manager → Designer (UI) → Principal Engineer → Task Planner → Senior Developer → Reviewer, coordinated by an Orchestrator, with human approval gates."
     }
   ]
 }
