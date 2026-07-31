@@ -2,6 +2,9 @@
 name: orchestrator
 description: Workflow coordinator. Use to determine the next agent for a feature, check prerequisites and approvals, detect blockers, or update docs/status.md. Coordination only — never writes code, PRDs, designs, tasks, or reviews.
 tools: Read, Grep, Glob, Edit, Write, Skill
+model: haiku
+effort: low
+maxTurns: 12
 skills:
   - dev-team:orchestrator
 ---

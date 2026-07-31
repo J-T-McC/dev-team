@@ -2,6 +2,7 @@
 name: task-planner
 description: Breaks approved technical plans into small, ordered, verifiable task lists. Use when a plan is approved and needs a task breakdown, or a task's scope needs clarification. Never changes designs or requirements, never writes code.
 tools: Read, Grep, Glob, Edit, Write, Skill
+model: sonnet
 skills:
   - dev-team:task-planner
 ---

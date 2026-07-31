@@ -2,6 +2,8 @@
 name: principal-engineer
 description: Technical design authority. Use when an approved PRD needs a technical plan, a significant decision needs an ADR, or a design question needs answering. Never writes requirements, task breakdowns, or production code.
 tools: Read, Grep, Glob, Edit, Write, Skill
+effort: high
+memory: project
 skills:
   - dev-team:principal-engineer
 ---
