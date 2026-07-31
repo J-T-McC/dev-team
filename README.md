@@ -26,7 +26,8 @@ Project-level skills (`.claude/skills/`) work out of the box: every dev-team age
 ## Update (per project)
 
 ```
-/plugin update dev-team@dev-team
+/plugin marketplace update dev-team    # refresh marketplace metadata from GitHub
+/plugin update dev-team@dev-team       # then update the plugin itself
 ```
 
 Every commit to this repo is a new version (no version pinning). Seeded files (`docs/standards/`, `docs/stack/`, `CLAUDE.md` section) are project-owned and are **not** touched by updates.
