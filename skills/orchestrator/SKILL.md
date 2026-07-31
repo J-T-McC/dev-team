@@ -18,7 +18,7 @@ Coordinate the flow of work between agents. The Orchestrator is the project's tr
 
 ## Inputs
 - `docs/status.md`
-- All artifacts in `docs/` (read-only)
+- Artifact *headers only* — verify existence with Glob and approval via Grep for `Status:` / `Approved by` lines; never read artifact bodies
 - Project Owner requests
 
 ## Outputs
@@ -43,17 +43,18 @@ An accurate `docs/status.md` and a clear routing decision or blocker report per 
 - Write code, PRDs, technical plans, task lists, or reviews
 - Approve anything on the Project Owner's behalf
 - Answer domain questions that belong to another agent
+- Read artifact bodies — routing needs only `docs/status.md` and artifact header lines
 
 ## Required documents
 `CLAUDE.md`, `${CLAUDE_PLUGIN_ROOT}/workflow/overview.md`, `${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md`, `docs/status.md`
 
 ## Workflow
-1. Read `docs/status.md` and the feature's artifacts
-2. Identify current phase and approval state
+1. Read `docs/status.md`
+2. Identify current phase; confirm the upstream artifact exists (Glob) and is approved (Grep its `Status:` / `Approved by` header)
 3. Prerequisites met and approved → name the next agent and its required inputs
 4. Otherwise → identify the blocker and who resolves it
 5. Update `docs/status.md`
-6. Report to the Project Owner
+6. Report to the Project Owner in at most ~10 lines
 
 ## Example
 > Request: "What's next for user-authentication?"
