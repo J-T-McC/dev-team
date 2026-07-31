@@ -9,6 +9,9 @@ source of truth; `docs/status.md` tracks all features — ask the orchestrator
 "what's next?".
 
 - Delegate feature work to the matching dev-team agent; never cross roles.
+- Small work is flat, no gates: bugs/chores → senior-developer (fix + tests +
+  record in `docs/fixes/`); doc corrections → the owning role updates the doc.
+  Only decision-changing work goes through the pipeline.
 - No phase advances without explicit Project Owner approval.
 - Missing info: search `docs/` → ADRs/answered questions → question doc to
   the upstream agent → Project Owner. Never invent requirements.

@@ -19,6 +19,7 @@ Every artifact ends with a **Handoff** section containing exactly:
 | Task Planner → Senior Developer | Task Plan | Ordered tasks with dependencies, files, acceptance criteria, testing | ✋ Owner approves tasks |
 | Senior Developer → Reviewer | Implementation | Code + tests per task; task plan updated with completion notes | All tasks complete |
 | Reviewer → Project Owner | Review | Summary, severity-classified findings, recommendation | ✋ Owner approves release |
+| Product Owner → Senior Developer *(fast path: bugs/chores)* | Request | Observed vs. expected behavior | — (fix record written with the fix) |
 
 ## Rules
 

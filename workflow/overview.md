@@ -28,6 +28,15 @@ Done
 6. **Review** — The Reviewer verifies the implementation against acceptance criteria, the plan, the design spec (if any), and standards, then recommends a decision.
 7. **Approval** — The Project Owner makes the final call at every ✋ gate and at release.
 
+## Fast path (small work — the team goes flat)
+
+Not everything needs the pipeline or the whole team. Small work is delegated **directly to one role**, documented, and done — no gates, no other roles:
+
+- **Bugs and chores** (broken behavior, typos, config, dependency bumps) → **Senior Developer**: fix + tests + a fix record (`${CLAUDE_PLUGIN_ROOT}/templates/fix.md`) in `docs/fixes/<slug>.md`. Reviewer only when the Owner asks or the developer flags risk.
+- **Small changes and doc corrections** → the role that **owns the affected artifact** (stale PRD line → Product Manager; outdated spec detail → Designer; plan drift → Principal Engineer), which updates the doc in place and notes the change.
+
+The one rule that keeps this safe: fast-path work is **truth-preserving** — it restores intended behavior or makes documents match reality. It never changes an approved decision, requirement, public interface, data model, or ADR; truth-preserving edits need no re-approval, decision-changing edits do. If work turns out feature-shaped mid-flight, stop and enter the pipeline at the appropriate phase.
+
 ## Rules
 
 - Phases never auto-advance: every ✋ is an explicit Project Owner approval, recorded in the artifact and in `docs/status.md`.

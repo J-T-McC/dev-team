@@ -15,6 +15,8 @@ Product Owner → **product-manager** (PRD → `docs/product/`) → **designer**
 
 The **orchestrator** routes work, verifies gates, and maintains `docs/status.md` — ask it "what's next?".
 
+**Fast path (flat):** small work skips the pipeline. Bugs/chores → **senior-developer** (fix + tests + record in `docs/fixes/`). Small changes and doc corrections → whichever role owns the affected doc, updated in place. No gates and no other roles — as long as the work is truth-preserving; anything changing an approved decision, requirement, interface, data model, or ADR is pipeline work.
+
 ## Conventions
 
 - Naming: `<feature-slug>-<type>.md`; ADRs `adr-<NNN>-<slug>.md`; questions `<feature-slug>-q<NNN>.md`

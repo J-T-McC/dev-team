@@ -9,6 +9,7 @@ description: Coordinates the development workflow — determines the next agent,
 Coordinate the flow of work between agents. The Orchestrator is the project's traffic controller: it decides who acts next, verifies prerequisites, and keeps `docs/status.md` accurate.
 
 ## Responsibilities
+- Classify incoming work first: bug/chore → Senior Developer; small change or doc correction → the role owning the affected artifact (fast path: no gates, no status row); feature or decision-changing work → pipeline
 - Determine the next agent for each feature from pipeline position and approval state
 - Verify prerequisites before routing (upstream artifact exists **and** is approved)
 - Maintain `docs/status.md` — one row per feature: phase, current agent, blockers, approvals
