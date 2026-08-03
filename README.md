@@ -34,7 +34,21 @@ Project-level skills (`.claude/skills/`) work out of the box: every dev-team age
 /plugin update dev-team@dev-team       # then update the plugin itself
 ```
 
-Every commit to this repo is a new version (no version pinning). Seeded files (`docs/standards/`, `docs/stack/`, `CLAUDE.md` section) are project-owned and are **not** touched by updates. After updating, run `/dev-team:sync` to pull in any seed files your project is missing and see which existing standards have new seed sections (appended only with your approval — never overwritten).
+Every commit to this repo is a new version (no version pinning). Seeded files (`docs/standards/`, `docs/stack/`, `CLAUDE.md` section) are project-owned and are **not** touched by updates — use the sync command below to catch up.
+
+## Sync seeds (per project)
+
+```
+/dev-team:sync
+```
+
+Plugin updates never touch project-owned files, so a project bootstrapped before a seed was added (or extended) silently lacks it — and agents have no fallback to the plugin's copies. Run sync after updating; it is safe to run any time:
+
+- **Copies** any seed file the project is missing (standards, `docs/stack/stack.md`, `docs/status.md`) and creates any missing `docs/` directories
+- **Reports drift** in existing standards: lists seed sections (`##` headings) absent from your project's copy, ignoring your customizations
+- **Appends only what you approve** — never overwrites, rewrites, or deletes project content
+
+After a sync, fill placeholders in newly copied files and commit them to your project repo.
 
 ## Develop the framework locally
 
