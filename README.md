@@ -1,8 +1,12 @@
 # dev-team
 
-A reusable, documentation-first development organization for [Claude Code](https://code.claude.com), packaged as a plugin. Seven specialized agents move feature work from requirements to reviewed code through explicit human approval gates:
+A reusable, documentation-first development organization for [Claude Code](https://code.claude.com), packaged as a plugin. Seven specialized agents move feature work from requirements to reviewed code:
 
 **Product Owner → product-manager → designer** *(UI features only)* **→ principal-engineer → task-planner → senior-developer → reviewer → Owner approval**, coordinated by an **orchestrator**.
+
+Owner attention is reserved for what matters — approving PRDs, releases, and **major decisions** (new dependencies, stack/data-model changes, security-sensitive or irreversible choices). All other gates are delegated: design specs → product-manager, plans → principal-engineer self-certified, task plans proceed directly; the product-manager answers requirement questions as the Owner's proxy.
+
+Small work skips the pipeline entirely (**fast path**): bugs and chores go straight to the senior-developer (fix + tests + a record in `docs/fixes/`), doc corrections to the role owning the doc — no gates, as long as the work is truth-preserving.
 
 ## Install (per project)
 
@@ -48,6 +52,8 @@ Validate with `claude plugin validate .`
 | Path | What | Updatable |
 |---|---|---|
 | `agents/`, `skills/` | The seven roles + bootstrap skill | ✅ via plugin update |
+| `commands/` | `/dev-team:sync` — pull missing/updated seeds into a project | ✅ via plugin update |
 | `templates/`, `workflow/` | Document templates, pipeline/handoff/communication rules | ✅ via plugin update |
-| `seeds/` | Copied into projects once by bootstrap | ❌ project-owned after copy |
+| `hooks/` | Session-start announcement + agent-memory size sentinel | ✅ via plugin update |
+| `seeds/` | Copied into projects by bootstrap/sync | ❌ project-owned after copy |
 | `examples/user-authentication/` | Worked example of the full pipeline | ✅ via plugin update |
