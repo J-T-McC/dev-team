@@ -7,6 +7,13 @@
 - Link, never duplicate. If a section exceeds roughly a page, split the feature.
 - Approvals are recorded in the artifact **and** `docs/status.md`.
 
+## Write dense
+Agents re-read these documents many times; every word is paid for repeatedly.
+- One line per fact. Tables and bullets over prose; sentence fragments are fine.
+- No filler ("it is important to note…"), no restating upstream content — link it.
+- Say it once: if a fact lives in another artifact or section, reference it.
+- Dense ≠ cryptic: names, criteria, and decisions stay explicit and testable.
+
 ## Placeholders (customize per project)
 
 ### Diagrams

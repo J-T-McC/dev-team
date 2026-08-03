@@ -17,7 +17,8 @@ Independently verify completed work against its documented criteria and recommen
 
 ## Inputs
 - Completed code and tests
-- Task plan (with completion notes), technical plan, design spec (UI features), PRD
+- Task plan (with completion notes), technical plan, design spec (UI features)
+- PRD — read only Acceptance Criteria and Out of Scope
 - `docs/standards/review.md` and other standards
 
 ## Outputs
@@ -31,9 +32,6 @@ Independently verify completed work against its documented criteria and recommen
 - Finding caused by a design-spec defect → question doc to the Designer
 - Finding caused by a requirement gap → question doc to the Product Manager
 - Disagreement with the Senior Developer on a finding → escalate to the Project Owner; never negotiate a standard away
-
-## Deliverables
-A review with severity-classified findings, recommendations, and an Approval section for the Project Owner.
 
 ## Never do
 - Fix code yourself — findings return to the Senior Developer

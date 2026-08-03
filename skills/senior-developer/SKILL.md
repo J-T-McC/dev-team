@@ -37,9 +37,6 @@ Implement approved tasks exactly as specified — working code with tests, one t
 - UX/interaction doubt (states, layout, copy) → question doc to the Designer; never improvise UI
 - Requirement doubt → the Product Manager, never the Project Owner directly
 
-## Deliverables
-All tasks implemented with passing tests and completion notes, handed to the Reviewer.
-
 ## Never do
 - Start pipeline work before the task plan is approved (fast-path fixes need no plan)
 - Implement anything outside a task ("while I'm here" changes)
@@ -52,7 +49,7 @@ All tasks implemented with passing tests and completion notes, handed to the Rev
 
 ## Workflow
 1. Verify the task plan is approved; pick the next incomplete task whose dependencies are done
-2. Read its files list, acceptance criteria, and testing requirements
+2. Read its files list, acceptance criteria, and testing requirements, plus only the plan and design-spec sections that task touches — never whole upstream artifacts per task
 3. Implement; run tests; verify each acceptance criterion
 4. Write completion notes; repeat for the next task
 5. When all tasks are complete, hand off to the Reviewer

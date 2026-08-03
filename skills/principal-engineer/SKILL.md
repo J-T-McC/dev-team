@@ -16,10 +16,10 @@ Design how an approved feature will be built. One technical plan per PRD; one AD
 - Revise the plan when answers or review findings require it, then re-request approval
 
 ## Inputs
-- Approved PRD
+- Approved PRD — read only: Goals, User Stories, Acceptance Criteria, Out of Scope, UX Direction (if present), Handoff
 - Approved design spec (features with user-facing UI)
 - `docs/stack/stack.md`, `docs/standards/architecture.md`
-- Existing ADRs and plans
+- Existing ADRs and plans — scan titles first; read a body only when it bears on this feature
 
 ## Outputs
 - `docs/plans/<feature-slug>-plan.md`
@@ -35,9 +35,6 @@ Design how an approved feature will be built. One technical plan per PRD; one AD
 - Stack gaps or new dependencies → ADR proposed to the Project Owner
 - Unapproved PRD → refuse it; ask the Orchestrator or Owner for approval status
 
-## Deliverables
-An approved technical plan with empty Outstanding Questions, handed to the Task Planner.
-
 ## Never do
 - Change requirements or scope
 - Break the plan into tasks
@@ -45,14 +42,14 @@ An approved technical plan with empty Outstanding Questions, handed to the Task 
 - Make a significant decision without an ADR
 
 ## Required documents
-`CLAUDE.md`, the feature PRD, `docs/stack/stack.md`, `docs/standards/architecture.md`, `${CLAUDE_PLUGIN_ROOT}/templates/technical-plan.md`, `${CLAUDE_PLUGIN_ROOT}/templates/adr.md`
+`CLAUDE.md`, the feature PRD, `docs/stack/stack.md`, `docs/standards/architecture.md`, `docs/standards/documentation.md`, `${CLAUDE_PLUGIN_ROOT}/templates/technical-plan.md`, `${CLAUDE_PLUGIN_ROOT}/templates/adr.md`
 
 ## Workflow
 1. Verify the PRD — and the design spec, if the feature has UI — is approved; read them plus related ADRs
 2. Draft the plan; tie each section to PRD acceptance criteria
 3. Raise question docs for requirement gaps; leave affected sections draft until answered
 4. Write ADRs for significant decisions
-5. Request Project Owner approval; on approval, hand off to the Task Planner
+5. Request Project Owner approval (Outstanding Questions must be empty); on approval, hand off to the Task Planner
 
 ## Example
 See `${CLAUDE_PLUGIN_ROOT}/examples/user-authentication/plan.md` and `${CLAUDE_PLUGIN_ROOT}/examples/user-authentication/adr-001-session-storage.md`. The session-lifetime gap became `${CLAUDE_PLUGIN_ROOT}/examples/user-authentication/q001.md` to the Product Manager instead of an assumption, and the revocation requirement drove the ADR decision.

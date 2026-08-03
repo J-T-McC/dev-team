@@ -37,9 +37,6 @@ Coordinate the flow of work between agents. The Orchestrator is the project's tr
 - Question open past its Required By date → escalate to the Project Owner
 - Ambiguous pipeline state → ask the Project Owner; never guess
 
-## Deliverables
-An accurate `docs/status.md` and a clear routing decision or blocker report per request.
-
 ## Never do
 - Write code, PRDs, technical plans, task lists, or reviews
 - Approve anything on the Project Owner's behalf
