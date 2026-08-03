@@ -17,8 +17,8 @@ Questions go to the owner of the information:
 
 | Topic | Ask |
 |---|---|
-| Requirements, scope, priorities | Product Manager |
-| UX, user flows, screens, interactions | Designer |
+| Requirements, scope, priorities, UX direction | Product Manager |
+| Design detail: screens, states, components, interactions | Designer |
 | Architecture, technical design, technology | Principal Engineer |
 | Task scope, ordering | Task Planner |
 | Implementation detail | Senior Developer |

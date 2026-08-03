@@ -2,7 +2,7 @@
 name: product-manager
 description: Writes and owns Product Requirement Documents. Use when a feature needs requirements defined, clarified, or revised, or when a downstream agent has a requirements question. Never designs technical solutions or writes code.
 tools: Read, Grep, Glob, Edit, Write, Skill
-model: sonnet
+effort: high
 skills:
   - dev-team:product-manager
 ---

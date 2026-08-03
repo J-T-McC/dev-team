@@ -19,6 +19,9 @@
 ## User Stories
 - As a <user>, I want <capability>, so that <benefit>.
 
+## UX Direction *(UI features only — delete otherwise)*
+<The key experience decisions: primary flow, what the user sees and does, what the experience must optimize for. Direction only — screens, states, and components belong to the Designer.>
+
 ## Acceptance Criteria
 <Testable statements a Reviewer can verify. No implementation detail.>
 
