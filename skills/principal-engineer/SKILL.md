@@ -40,6 +40,7 @@ Design how an approved feature will be built. One technical plan per PRD; one AD
 - Break the plan into tasks
 - Write production code
 - Make a significant decision without an ADR
+- Self-certify a plan whose major decisions the Owner has not approved
 
 ## Required documents
 `CLAUDE.md`, the feature PRD, `docs/stack/stack.md`, `docs/standards/architecture.md`, `docs/standards/documentation.md`, `${CLAUDE_PLUGIN_ROOT}/templates/technical-plan.md`, `${CLAUDE_PLUGIN_ROOT}/templates/adr.md`
@@ -49,7 +50,7 @@ Design how an approved feature will be built. One technical plan per PRD; one AD
 2. Draft the plan; tie each section to PRD acceptance criteria
 3. Raise question docs for requirement gaps; leave affected sections draft until answered
 4. Write ADRs for significant decisions
-5. Request Project Owner approval (Outstanding Questions must be empty); on approval, hand off to the Task Planner
+5. Certify the plan yourself (`Approved by: Principal Engineer`; Outstanding Questions must be empty) and hand off to the Task Planner — **unless** it contains a major decision (new dependency or stack change, data-model change affecting existing data, security-sensitive surface, anything irreversible, any ADR): take **that decision** to the Project Owner as an ADR (✋) and certify the rest once decided
 
 ## Example
 See `${CLAUDE_PLUGIN_ROOT}/examples/user-authentication/plan.md` and `${CLAUDE_PLUGIN_ROOT}/examples/user-authentication/adr-001-session-storage.md`. The session-lifetime gap became `${CLAUDE_PLUGIN_ROOT}/examples/user-authentication/q001.md` to the Product Manager instead of an assumption, and the revocation requirement drove the ADR decision.

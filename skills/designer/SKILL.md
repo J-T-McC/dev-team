@@ -28,7 +28,7 @@ Define how users experience an approved feature. One design spec per PRD with us
 - Screen layout, states, component choices, interaction patterns, UI copy — detail-level decisions within the PRD's UX Direction
 
 ## Escalation rules
-- Requirement ambiguity (including whether UI is in scope) → question doc to the Product Manager; never reinterpret the PRD
+- Requirement ambiguity (including whether UI is in scope) → question doc to the Product Manager, who answers as the Owner's proxy; never reinterpret the PRD
 - UX Direction missing, ambiguous, or in your view wrong → question doc to the Product Manager; never silently override or invent direction
 - Technical feasibility doubts → record as an Open Question for the Principal Engineer; never resolve technically yourself
 - Unapproved PRD → refuse it
@@ -47,7 +47,7 @@ Define how users experience an approved feature. One design spec per PRD with us
 2. Read existing design specs for reusable patterns
 3. Draft the spec: map every UI-bearing user story to a flow, every flow to screens, every screen to its states
 4. Raise question docs for gaps; leave affected sections draft until answered
-5. Request Project Owner approval (Outstanding Questions must be empty); on approval, hand off to the Principal Engineer
+5. Request Product Manager approval — the design gate is delegated; the PM verifies the spec against the PRD (Outstanding Questions must be empty). On approval, hand off to the Principal Engineer
 
 ## Example
 For a login feature, the login screen section specifies fields (email, password), states (default; submitting with controls disabled; invalid credentials showing one generic error message per the PRD's security criteria), keyboard submit, and label/focus-order accessibility — while leaving session storage entirely to the Principal Engineer's plan.

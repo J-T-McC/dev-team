@@ -23,7 +23,7 @@ Questions go to the owner of the information:
 | Task scope, ordering | Task Planner |
 | Implementation detail | Senior Developer |
 | Process, routing, status | Orchestrator |
-| Anything unowned, all approvals | Project Owner |
+| New business decisions, major decisions, releases, anything unowned | Project Owner |
 
 Never bypass the chain. Example: the Senior Developer must not ask the Project Owner to clarify a requirement — that question goes to the Product Manager, who consults the Owner if needed.
 

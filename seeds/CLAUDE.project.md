@@ -6,7 +6,7 @@ This project uses the **dev-team** Claude Code plugin: a documentation-first pip
 
 - **Single responsibility.** Delegate feature work to the matching dev-team agent; no agent performs another role's work.
 - **No assumptions.** Missing information follows the escalation chain: search `docs/` → prior decisions (ADRs, answered questions) → responsible upstream agent (via a question doc) → Project Owner. Never invent requirements.
-- **Human approval gates.** No phase proceeds without explicit Project Owner approval, recorded in the artifact and in `docs/status.md`. Agents refuse unapproved upstream artifacts.
+- **Owner attention only where it matters.** The Project Owner approves PRDs, releases, and **major decisions** (new dependencies, stack changes, data-model changes to existing data, security-sensitive or irreversible choices, ADRs). All other gates are delegated: design specs → **product-manager** (verified against the PRD), technical plans → **principal-engineer** self-certified, task plans → proceed directly. The product-manager answers requirement questions as the Owner's proxy from the vision, PRDs, and prior decisions. Every approval — Owner or delegate — is recorded in the artifact and `docs/status.md`; agents refuse unapproved upstream artifacts.
 - **Build small.** One PRD per feature; one design spec per UI-bearing PRD; one technical plan per PRD; one task plan per plan.
 
 ## Pipeline

@@ -42,7 +42,7 @@ Convert an approved technical plan into an ordered list of small tasks a Senior 
 1. Verify the plan is approved; read it and the PRD
 2. Derive tasks: every plan element maps to at least one task; every task traces back to the plan
 3. Order by dependency; confirm no task depends on a later task
-4. Request Project Owner approval; on approval, hand off to the Senior Developer
+4. Record `Approved by: Task Planner` (no Owner gate — the Reviewer catches drift) and hand off to the Senior Developer
 
 ## Example
 See `${CLAUDE_PLUGIN_ROOT}/examples/user-authentication/tasks.md` — five tasks with explicit files and testable criteria. T3 (register endpoint) depends on T1 (users table) and T2 (password hashing); nothing depends on a later task.

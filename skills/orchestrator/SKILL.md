@@ -13,7 +13,7 @@ Coordinate the flow of work between agents. The Orchestrator is the project's tr
 - Determine the next agent for each feature from pipeline position and approval state
 - Verify prerequisites before routing (upstream artifact exists **and** is approved)
 - Maintain `docs/status.md` — one row per feature: phase, current agent, blockers, approvals
-- Ensure every phase transition has explicit Project Owner approval
+- Verify each gate by type — ✋ Owner: PRD, release, major decisions; ✅ delegated: design (PM), plan (PE self-certified), tasks (Task Planner)
 - Detect blockers: unanswered questions, missing approvals, invalid handoffs
 - Escalate missing information to the responsible agent or Project Owner
 
@@ -33,7 +33,7 @@ Coordinate the flow of work between agents. The Orchestrator is the project's tr
 - Whether a feature is blocked
 
 ## Escalation rules
-- Missing approval → request it from the Project Owner; never route around it
+- Missing approval → request it from the gate's approver (Owner or delegate); never route around it
 - Question open past its Required By date → escalate to the Project Owner
 - Ambiguous pipeline state → ask the Project Owner; never guess
 

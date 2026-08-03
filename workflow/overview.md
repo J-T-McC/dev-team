@@ -6,11 +6,11 @@ Product Owner
 Product Manager        — writes PRD                     → docs/product/
    ↓  ✋ Owner approves PRD
 Designer (UI only)     — writes Design Spec             → docs/design/
-   ↓  ✋ Owner approves design   (features without UI skip this phase)
+   ↓  ✅ PM approves design against the PRD   (features without UI skip this phase)
 Principal Engineer     — writes Technical Plan + ADRs   → docs/plans/, docs/architecture/
-   ↓  ✋ Owner approves plan
+   ↓  ✅ PE self-certifies — ✋ Owner only for major decisions
 Task Planner           — writes Task Plan               → docs/tasks/
-   ↓  ✋ Owner approves tasks
+   ↓  ✅ proceeds directly
 Senior Developer       — implements tasks + tests       → source code
    ↓  all tasks complete with notes
 Reviewer               — reviews against criteria       → docs/reviews/
@@ -26,7 +26,19 @@ Done
 4. **Task Planning** — The Task Planner breaks the approved plan into small, ordered, independently verifiable tasks.
 5. **Implementation** — The Senior Developer implements tasks one at a time, with tests, recording completion notes.
 6. **Review** — The Reviewer verifies the implementation against acceptance criteria, the plan, the design spec (if any), and standards, then recommends a decision.
-7. **Approval** — The Project Owner makes the final call at every ✋ gate and at release.
+7. **Approval** — The Project Owner decides at the ✋ gates: PRD, release, and major decisions surfaced mid-pipeline.
+
+## Owner attention (major decisions only)
+
+The Owner is involved exactly three ways: approving PRDs, approving releases, and deciding **major decisions** wherever they surface:
+
+- New dependency, or any stack change
+- Data-model change affecting existing data; anything irreversible or destructive
+- Security-sensitive surface (auth, permissions, secrets, PII)
+- Scope or requirement change to an approved PRD
+- Anything an agent proposes as an ADR
+
+Everything else is delegated: the **PM approves design specs** against the PRD; the **PE self-certifies plans** (bringing only the major decision — not the whole plan — to the Owner when one appears); **task plans proceed directly** to the Senior Developer, with the Reviewer catching drift. Delegated approvals are recorded like any other: `Approved by: <role>` in the artifact and `docs/status.md`. The Owner can always demand review of anything; a project's `CLAUDE.md` may tighten or loosen the majors list.
 
 ## Fast path (small work — the team goes flat)
 
@@ -39,8 +51,8 @@ The one rule that keeps this safe: fast-path work is **truth-preserving** — it
 
 ## Rules
 
-- Phases never auto-advance: every ✋ is an explicit Project Owner approval, recorded in the artifact and in `docs/status.md`.
+- Phases never advance without their gate: ✋ gates need explicit Project Owner approval, ✅ gates the named delegate's — both recorded in the artifact and in `docs/status.md`.
 - The Orchestrator routes work between phases and maintains `docs/status.md`, but owns no phase artifact.
 - Any phase may send a question upstream (`${CLAUDE_PLUGIN_ROOT}/workflow/communication.md`); affected work pauses until answered.
-- Rework flows backward through the same gates: a review Blocker returns work to the Senior Developer; a plan defect returns to the Principal Engineer and re-triggers plan approval; a design-spec defect returns to the Designer and re-triggers design approval.
+- Rework flows backward through the same gates: a review Blocker returns work to the Senior Developer; a plan defect returns to the Principal Engineer and re-triggers plan certification; a design-spec defect returns to the Designer and re-triggers PM approval.
 - Whether a feature has user-facing UI is the Product Manager's call, recorded in the PRD's Handoff **Next Agent** (Designer or Principal Engineer).
