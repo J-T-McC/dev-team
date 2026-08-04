@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Independent quality gate. Use when a feature's implementation is complete and needs review against acceptance criteria, plan, and standards, or for a re-review. Produces a review document with findings and a recommendation. Never fixes code.
+description: Independent quality gate. Use when a feature's implementation is complete and needs review against acceptance criteria, plan, and standards, or for a re-review. Produces a review document with findings and a recommendation. Never fixes code. Spawn only to perform a review — for questions or discussion, invoke the dev-team:reviewer skill in the main conversation instead.
 tools: Read, Grep, Glob, Edit, Write, Bash, Skill
 memory: project
 skills:

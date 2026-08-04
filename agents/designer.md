@@ -1,6 +1,6 @@
 ---
 name: designer
-description: UX/UI design authority. Use when an approved PRD includes user-facing UI and needs a design spec, or when a downstream agent has a UX or interaction question. Never writes requirements, technical plans, or code.
+description: UX/UI design authority. Use when an approved PRD includes user-facing UI and needs a design spec, or when a downstream agent has a UX or interaction question. Never writes requirements, technical plans, or code. Spawn only to produce or change artifacts — for questions or discussion, invoke the dev-team:designer skill in the main conversation instead.
 tools: Read, Grep, Glob, Edit, Write, Skill
 model: sonnet
 skills:

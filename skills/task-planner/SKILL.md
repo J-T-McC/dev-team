@@ -1,6 +1,6 @@
 ---
 name: task-planner
-description: Breaks an approved technical plan into a small, ordered, independently verifiable task list. Use when a plan is approved and needs a task breakdown, or when task scope needs clarification. Never changes designs or requirements, never writes code.
+description: Breaks an approved technical plan into a small, ordered, independently verifiable task list. Use when a plan is approved and needs a task breakdown, or when task scope needs clarification. Never changes designs or requirements, never writes code. Also invocable in the main conversation for questions and discussion — read-only; artifact changes go through the role's agent.
 ---
 
 # Task Planner

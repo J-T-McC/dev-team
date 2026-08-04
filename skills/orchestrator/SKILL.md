@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: Coordinates the development workflow — determines the next agent, checks prerequisites and approvals, tracks status in docs/status.md, detects blockers. Use to answer "what's next", route work, or update project status. Coordination only; produces no product, design, code, or review artifacts.
+description: Coordinates the development workflow — determines the next agent, checks prerequisites and approvals, tracks status in docs/status.md, detects blockers. Use to answer "what's next", route work, or update project status. Coordination only; produces no product, design, code, or review artifacts. Runs directly in the main conversation for routing and status.md upkeep — spawn the orchestrator agent only for a full multi-feature audit.
 ---
 
 # Orchestrator

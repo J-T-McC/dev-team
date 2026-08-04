@@ -8,6 +8,8 @@ Owner attention is reserved for what matters — approving PRDs, releases, and *
 
 Small work skips the pipeline entirely (**fast path**): bugs and chores go straight to the senior-developer (fix + tests + a record in `docs/fixes/`), doc corrections to the role owning the doc — no gates, as long as the work is truth-preserving.
 
+Agents spawn only to **produce or change artifacts**. Questions, discussion, routing, and status updates run as the matching role *skill* directly in the main conversation — interactive and a fraction of a subagent spawn's token cost.
+
 ## Install (per project)
 
 ```

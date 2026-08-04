@@ -1,6 +1,6 @@
 ---
 name: senior-developer
-description: Implements approved tasks one at a time — code plus tests, following the technical plan and coding standards exactly, recording completion notes. Also handles fast-path bug fixes and small chores delegated directly by the Project Owner. Use when a task plan is approved and ready to build, or to fix a bug. Never redefines requirements or design; never reviews its own work.
+description: Implements approved tasks one at a time — code plus tests, following the technical plan and coding standards exactly, recording completion notes. Also handles fast-path bug fixes and small chores delegated directly by the Project Owner. Use when a task plan is approved and ready to build, or to fix a bug. Never redefines requirements or design; never reviews its own work. Also invocable in the main conversation for questions and discussion — read-only; code changes go through the role's agent.
 ---
 
 # Senior Developer

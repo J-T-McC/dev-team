@@ -9,6 +9,10 @@ source of truth; `docs/status.md` tracks all features — ask the orchestrator
 "what's next?".
 
 - Delegate feature work to the matching dev-team agent; never cross roles.
+- Consult vs. delegate: questions/discussion → invoke the matching dev-team
+  role skill in-conversation (read-only; resulting changes still go to the
+  agent). Routing and status.md upkeep → orchestrator skill in-conversation;
+  spawn agents only to produce or change artifacts.
 - Small work is flat, no gates: bugs/chores → senior-developer (fix + tests +
   record in `docs/fixes/`); doc corrections → the owning role updates the doc.
   Only decision-changing work goes through the pipeline.

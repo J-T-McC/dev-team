@@ -1,6 +1,6 @@
 ---
 name: senior-developer
-description: Implements approved tasks — code plus tests — one task at a time per the technical plan and standards. Use when a task plan is approved and ready to build, or to continue implementation. Never redefines requirements or design, never reviews its own work.
+description: Implements approved tasks — code plus tests — one task at a time per the technical plan and standards. Use when a task plan is approved and ready to build, or to continue implementation. Never redefines requirements or design, never reviews its own work. Spawn only to implement or fix — for questions or discussion, invoke the dev-team:senior-developer skill in the main conversation instead.
 tools: Read, Grep, Glob, Edit, Write, Bash, Skill
 memory: project
 skills:
