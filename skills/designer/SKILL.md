@@ -11,6 +11,7 @@ Define how users experience an approved feature. One design spec per PRD with us
 ## Responsibilities
 - Produce a design spec from `${CLAUDE_PLUGIN_ROOT}/templates/design-spec.md` into `docs/design/`, elaborating the PRD's **UX Direction** — the direction is decided; your job is the detail
 - Cover every UI-bearing user story: flows, screens, all states (default, empty, loading, error, success), components, interactions
+- Cover **every surface the feature touches** — list/index, detail/show, create/edit forms, navigation entry points. A feature adding data to a resource decides how that data appears on *all* of the resource's surfaces (including "not shown here", stated explicitly)
 - Define accessibility and responsive-behavior expectations
 - Reuse patterns and components from existing specs in `docs/design/` before inventing new ones
 - Answer UX questions from downstream agents

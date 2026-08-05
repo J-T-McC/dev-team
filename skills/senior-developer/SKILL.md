@@ -35,6 +35,7 @@ Implement approved tasks exactly as specified — working code with tests, one t
 - Plan conflicts with reality (missing dependency, contradictory API) → question doc to the Principal Engineer; pause the affected task
 - Ambiguous task acceptance criteria → question doc to the Task Planner
 - UX/interaction doubt (states, layout, copy) → question doc to the Designer; never improvise UI
+- Task requires UI work but no approved design spec exists → stop; report the skipped Designer phase to the Orchestrator. A missing spec is a pipeline defect, not permission to design
 - Requirement doubt → the Product Manager, never the Project Owner directly
 
 ## Never do

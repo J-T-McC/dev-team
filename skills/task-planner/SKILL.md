@@ -29,6 +29,7 @@ Convert an approved technical plan into an ordered list of small tasks a Senior 
 - Design ambiguity → question doc to the Principal Engineer
 - A task that cannot be made small and verifiable signals a plan problem → raise it with the Principal Engineer instead of writing a vague task
 - Unapproved plan → refuse it
+- Plan covers UI work but no approved design spec exists → refuse it; report the skipped Designer phase to the Orchestrator
 
 ## Never do
 - Alter the design or requirements

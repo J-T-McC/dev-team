@@ -55,4 +55,4 @@ The one rule that keeps this safe: fast-path work is **truth-preserving** — it
 - The Orchestrator routes work between phases and maintains `docs/status.md`, but owns no phase artifact.
 - Any phase may send a question upstream (`${CLAUDE_PLUGIN_ROOT}/workflow/communication.md`); affected work pauses until answered.
 - Rework flows backward through the same gates: a review Blocker returns work to the Senior Developer; a plan defect returns to the Principal Engineer and re-triggers plan certification; a design-spec defect returns to the Designer and re-triggers PM approval.
-- Whether a feature has user-facing UI is the Product Manager's call, recorded in the PRD's Handoff **Next Agent** (Designer or Principal Engineer).
+- Whether a feature has user-facing UI is the Product Manager's call, recorded **as the PRD's UX Direction section**. Its presence makes the Designer phase mandatory: no role plans, tasks, or builds UI without a PM-approved design spec — any role handed such work with the spec missing stops and reports the skipped phase. Its absence routes directly to the Principal Engineer.

@@ -20,7 +20,7 @@
 - As a <user>, I want <capability>, so that <benefit>.
 
 ## UX Direction *(UI features only — delete otherwise)*
-<The key experience decisions: primary flow, what the user sees and does, what the experience must optimize for. Direction only — screens, states, and components belong to the Designer.>
+<The key experience decisions: primary flow, what the user sees and does, what the experience must optimize for. Direction only — screens, states, and components belong to the Designer. This section's presence makes the Designer phase mandatory.>
 
 ## Acceptance Criteria
 <Testable statements a Reviewer can verify. No implementation detail.>
@@ -36,4 +36,4 @@
 - **Outputs:** this PRD
 - **Dependencies:**
 - **Outstanding Questions:**
-- **Next Agent:** Designer *(user-facing UI)* or Principal Engineer *(no UI)*
+- **Next Agent:** Designer *(mandatory if UX Direction is present)* or Principal Engineer *(no UI)*

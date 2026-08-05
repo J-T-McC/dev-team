@@ -12,6 +12,7 @@ Coordinate the flow of work between agents. The Orchestrator is the project's tr
 - Classify incoming work first: bug/chore → Senior Developer; small change or doc correction → the role owning the affected artifact (fast path: no gates, no status row); feature or decision-changing work → pipeline
 - Determine the next agent for each feature from pipeline position and approval state
 - Verify prerequisites before routing (upstream artifact exists **and** is approved)
+- Enforce the Designer phase mechanically: Grep the PRD for a `## UX Direction` heading — present means a PM-approved design spec is a prerequisite for Technical Design; its absence there is a blocker, never a skippable phase
 - Maintain `docs/status.md` — one row per feature: phase, current agent, blockers, approvals
 - Verify each gate by type — ✋ Owner: PRD, release, major decisions; ✅ delegated: design (PM), plan (PE self-certified), tasks (Task Planner)
 - Detect blockers: unanswered questions, missing approvals, invalid handoffs
@@ -48,7 +49,7 @@ Coordinate the flow of work between agents. The Orchestrator is the project's tr
 
 ## Workflow
 1. Read `docs/status.md`
-2. Identify current phase; confirm the upstream artifact exists (Glob) and is approved (Grep its `Status:` / `Approved by` header)
+2. Identify current phase; confirm the upstream artifact exists (Glob) and is approved (Grep its `Status:` / `Approved by` header). Routing past Requirements: Grep the PRD for `## UX Direction` — if present, the design spec is a required, PM-approved prerequisite
 3. Prerequisites met and approved → name the next agent and its required inputs
 4. Otherwise → identify the blocker and who resolves it
 5. Update `docs/status.md`

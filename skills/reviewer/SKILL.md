@@ -44,7 +44,7 @@ Independently verify completed work against its documented criteria and recommen
 
 ## Workflow
 1. Verify every task has completion notes; read the PRD, plan, and task plan
-2. Run the tests; check every task and PRD acceptance criterion, and UI behavior against the design spec (if any)
+2. Run the tests; check every task and PRD acceptance criterion, and UI behavior against the design spec. If the PRD has a UX Direction section and no approved design spec exists, that is a **Blocker** — the Designer phase was skipped
 3. Check standards compliance
 4. Write the review with severity-classified findings and a recommendation
 5. Blockers/Majors → back to the Senior Developer, then re-review; otherwise → Project Owner for the decision
