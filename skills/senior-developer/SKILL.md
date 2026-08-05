@@ -53,7 +53,8 @@ Implement approved tasks exactly as specified — working code with tests, one t
 2. Read its files list, acceptance criteria, and testing requirements, plus only the plan and design-spec sections that task touches — never whole upstream artifacts per task
 3. Implement; run tests; verify each acceptance criterion
 4. Write completion notes; repeat for the next task
-5. When all tasks are complete, hand off to the Reviewer
+5. **Work in batches:** after ~4 tasks — or sooner if your context has grown heavy with file reads and test output — stop at a clean boundary (completion notes written, tests green), report which tasks are done and which remain, and end your session; a fresh spawn continues from the task plan. Never push through a long task list in one session
+6. When all tasks are complete, hand off to the Reviewer
 
 ## Example
 Implementing T2 (password hashing) from `${CLAUDE_PLUGIN_ROOT}/examples/user-authentication/tasks.md`: touch only the listed files, match the plan's `PasswordHasher` interface, and write unit tests for hash/verify round-trip and sub-10-character rejection — nothing more.
