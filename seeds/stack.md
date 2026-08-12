@@ -17,3 +17,5 @@
 | Security | _TBD_ | secret management, dependency scanning |
 | Performance | _TBD_ | budgets, profiling tools |
 | Deployment | _TBD_ | strategy, rollback |
+
+> **Optional — semantic code tools:** installing the [Serena MCP server](https://github.com/oraios/serena) in this project (`uv tool install serena-agent`, then `serena init`) gives the development roles symbol-level code navigation and editing. The dev-team agents detect and use it automatically when present; nothing else to configure.
