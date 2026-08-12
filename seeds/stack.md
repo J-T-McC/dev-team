@@ -18,6 +18,6 @@
 | Performance | _TBD_ | budgets, profiling tools |
 | Deployment | _TBD_ | strategy, rollback |
 
-> **Optional — semantic code tools:** the development roles use symbol-level code navigation and editing automatically when a matching MCP server is configured in this project. Two supported options — configure either, named exactly `serena` or `jetbrains` in `.mcp.json`:
-> - [Serena](https://github.com/oraios/serena) (`uv tool install serena-agent`, then `serena init`) — free, headless; works whenever agents run
-> - JetBrains MCP server — richer IDE-grade analysis, but requires the IDE running with this project open
+> **Optional — semantic code tools:** the development roles use symbol-level code navigation and editing automatically when a matching MCP server is configured in this project. Two supported options:
+> - [Serena](https://github.com/oraios/serena) (`uv tool install serena-agent`, then `serena init`) — free, headless; works whenever agents run. Name the server exactly `serena` in `.mcp.json`.
+> - JetBrains MCP server — richer IDE-grade analysis, but requires the IDE running with this project open. When the IDE registers the server itself it uses the product name (e.g. `phpstorm`); if configuring manually in `.mcp.json`, name it `jetbrains`. Both names are recognized (`phpstorm` covers PhpStorm; other JetBrains IDEs should use the manual `jetbrains` name).

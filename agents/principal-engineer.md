@@ -1,7 +1,7 @@
 ---
 name: principal-engineer
 description: Technical design authority. Use when an approved PRD needs a technical plan, a significant decision needs an ADR, or a design question needs answering. Never writes requirements, task breakdowns, or production code. Spawn only to produce or change artifacts — for questions or discussion, invoke the dev-team:principal-engineer skill in the main conversation instead.
-tools: Read, Grep, Glob, Edit, Write, Skill, mcp__serena, mcp__jetbrains
+tools: Read, Grep, Glob, Edit, Write, Skill, mcp__serena, mcp__jetbrains, mcp__phpstorm
 effort: high
 memory: project
 skills:
