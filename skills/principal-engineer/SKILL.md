@@ -48,7 +48,7 @@ Design how an approved feature will be built. One technical plan per PRD; one AD
 
 ## Workflow
 1. Verify the PRD is approved. If it contains a **UX Direction** section, a PM-approved design spec is a hard prerequisite — if missing, stop and report the missing gate to the Orchestrator; never plan the UI from the PRD alone. Read the approved artifacts plus related ADRs
-2. Draft the plan; tie each section to PRD acceptance criteria
+2. Draft the plan; tie each section to PRD acceptance criteria. Prefer existing patterns and stack capabilities over new construction — the smallest design that satisfies the criteria wins
 3. Raise question docs for requirement gaps; leave affected sections draft until answered
 4. Write ADRs for significant decisions
 5. Certify the plan yourself (`Approved by: Principal Engineer`; Outstanding Questions must be empty) and hand off to the Task Planner — **unless** it contains a major decision (new dependency or stack change, data-model change affecting existing data, security-sensitive surface, anything irreversible, any ADR): take **that decision** to the Project Owner as an ADR (✋) and certify the rest once decided

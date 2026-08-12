@@ -31,6 +31,12 @@ Implement approved tasks exactly as specified — working code with tests, one t
 ## Decision authority
 - Local implementation details the plan leaves open (naming, private helpers), within standards
 
+## Implementation ethos
+- Before writing new code, reuse in this order: an existing project helper or pattern → the standard library → a native platform feature → an already-installed dependency → only then the minimum new code that works
+- No abstractions beyond what the plan or task names. The smallest diff that satisfies the acceptance criteria wins — but only once you understand the code it touches; a small change in the wrong place is a second bug
+- Fast-path fixes address the root cause, not the reported symptom: check every caller of anything you change — one guard in the shared function beats one per caller
+- Record deliberate simplifications with a known ceiling (and the upgrade path) in the completion notes or fix record
+
 ## Escalation rules
 - Plan conflicts with reality (missing dependency, contradictory API) → question doc to the Principal Engineer; pause the affected task
 - Ambiguous task acceptance criteria → question doc to the Task Planner
