@@ -1,4 +1,4 @@
-> **Example artifact** — fictional feature demonstrating the workflow. Ships with the dev-team plugin for reference; in a real project this artifact lives in the project workspace at the `docs/` path its naming conventions show.
+> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
 
 # ADR-001: Session storage — server-side tokens vs JWT
 

@@ -1,4 +1,4 @@
-> **Example artifact** — fictional feature demonstrating the workflow. Ships with the dev-team plugin for reference; in a real project this artifact lives in the project workspace at the `docs/` path its naming conventions show.
+> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
 
 # PRD: User Authentication
 
@@ -7,7 +7,7 @@
 - **Approved by / date:** Project Owner / 2026-07-28
 
 ## Feature
-Email-and-password authentication with persistent sessions.
+Email-and-password authentication with persistent sessions. API-first: endpoints only — any login/registration UI ships as its own PRD (with UX Direction), so this feature skips the Designer phase.
 
 ## Problem
 The product has no concept of identity. Users cannot save work or access personalized data, and the API cannot restrict access.
@@ -38,6 +38,7 @@ The product has no concept of identity. Users cannot save work or access persona
 - OAuth / social login
 - Multi-factor authentication
 - Password reset (will be its own PRD)
+- Login/registration UI (its own PRD, with UX Direction)
 
 ## Open Questions
 - ~~Q001: session lifetime and remember-me behavior~~ — answered; see `docs/questions/user-authentication-q001.md`

@@ -1,14 +1,16 @@
 # dev-team
 
-A reusable, documentation-first development organization for [Claude Code](https://code.claude.com), packaged as a plugin. Seven specialized agents move feature work from requirements to reviewed code:
+A reusable, documentation-first development organization for [Claude Code](https://code.claude.com), packaged as a plugin. Six specialized roles move feature work from requirements to reviewed code:
 
-**Product Owner → product-manager → designer** *(UI features only)* **→ principal-engineer → task-planner → senior-developer → reviewer → Owner approval**, coordinated by an **orchestrator**.
+**Product Owner → product-manager → designer** *(UI features only)* **→ principal-engineer** *(plan + ADRs + task breakdown)* **→ senior-developer → reviewer → Owner approval**, coordinated by an in-conversation **orchestrator**.
 
-Owner attention is reserved for what matters — approving PRDs, releases, and **major decisions** (new dependencies, stack/data-model changes, security-sensitive or irreversible choices). All other gates are delegated: design specs → product-manager, plans → principal-engineer self-certified, task plans proceed directly; the product-manager answers requirement questions as the Owner's proxy.
+Owner attention is reserved for what matters — approving PRDs, releases, and **major decisions** (new dependencies, stack/data-model changes, security-sensitive or irreversible choices). All other gates are delegated: design specs → product-manager, plans and task breakdowns → principal-engineer self-certified; the product-manager answers requirement questions as the Owner's proxy.
 
 Small work skips the pipeline entirely (**fast path**): bugs and chores go straight to the senior-developer (fix + tests + a record in `docs/fixes/`), doc corrections to the role owning the doc — no gates, as long as the work is truth-preserving.
 
-Agents spawn only to **produce or change artifacts**. Questions, discussion, routing, and status updates run as the matching role *skill* directly in the main conversation — interactive and a fraction of a subagent spawn's token cost.
+**Roles run inline by default.** All work — questions, fast-path fixes, and full pipeline phases in linear sequence — runs in the main conversation by invoking the owning role's skill, at a fraction of a subagent spawn's token cost. Agents spawn only when it pays for itself: **concurrency**, **independent review** (pipeline reviews always run in the reviewer agent — fresh eyes), or **context relief** (handing a big phase to a fresh context).
+
+Tasks are token-frugal by design: each feature's breakdown is a directory (`docs/tasks/<slug>/`) with a status index and one file per task, so an implementing session loads the tiny index plus only the task it is working on — never the whole plan.
 
 ## Install (per project)
 
@@ -25,7 +27,7 @@ run the dev-team:bootstrap skill
 
 Fill in `docs/stack/stack.md` and customize `docs/standards/*.md` — agents stop and ask rather than guess while placeholders remain. Commit the scaffolded files to your project repo. Nothing from your project ever flows back into this repo.
 
-Keep the project `CLAUDE.md` lean — it is loaded every session, while skills and `docs/` load on demand. See [`CLAUDE.md.example`](CLAUDE.md.example) for the recommended minimal shape.
+Keep the project `CLAUDE.md` lean — it is loaded every session, while skills and `docs/` load on demand. The seed [`seeds/CLAUDE.project.md`](seeds/CLAUDE.project.md) is the recommended shape.
 
 Project-level skills (`.claude/skills/`) work out of the box: every dev-team agent carries the `Skill` tool and is instructed to consult relevant domain skills (e.g. a `laravel` skill) before deciding or implementing — no plugin changes needed.
 
@@ -67,7 +69,7 @@ Validate with `claude plugin validate .`
 
 | Path | What | Updatable |
 |---|---|---|
-| `agents/`, `skills/` | The seven roles + bootstrap skill | ✅ via plugin update |
+| `agents/`, `skills/` | The six roles (orchestrator is skill-only) + bootstrap skill | ✅ via plugin update |
 | `commands/` | `/dev-team:sync` — pull missing/updated seeds into a project | ✅ via plugin update |
 | `templates/`, `workflow/` | Document templates, pipeline/handoff/communication rules | ✅ via plugin update |
 | `hooks/` | Session-start announcement + agent-memory size sentinel | ✅ via plugin update |

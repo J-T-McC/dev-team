@@ -1,9 +1,8 @@
 ---
 name: product-manager
-description: Writes and owns Product Requirement Documents. Use when a feature needs requirements defined, clarified, or revised, or when a downstream agent has a requirements question. Never designs technical solutions or writes code. Spawn only to produce or change artifacts — for questions or discussion, invoke the dev-team:product-manager skill in the main conversation instead.
+description: Requirements authority — PRDs, UX Direction, requirement answers as Owner proxy, design-spec approval. Spawn only for parallel work or context relief; otherwise use the dev-team:product-manager skill in-conversation.
 tools: Read, Grep, Glob, Edit, Write, Skill
 effort: high
-maxTurns: 20
 skills:
   - dev-team:product-manager
 ---

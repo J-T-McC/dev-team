@@ -1,10 +1,10 @@
-> **Example artifact** — fictional feature demonstrating the workflow. Ships with the dev-team plugin for reference; in a real project this artifact lives in the project workspace at the `docs/` path its naming conventions show.
+> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
 
 # Review: User Authentication
 
 - **Reviewer / date:** Reviewer / 2026-07-30
-- **Scope:** T1–T5 of `docs/tasks/user-authentication-tasks.md`
-- **Inputs verified:** PRD, technical plan, task plan with completion notes, full test run
+- **Scope:** `docs/tasks/user-authentication/` (T1–T5)
+- **Inputs verified:** PRD, technical plan, task files with completion notes, full test run
 
 ## Summary
 All five tasks are implemented with passing tests (42/42, run independently). Every task acceptance criterion and every PRD acceptance criterion verified, including immediate logout invalidation and absence of plaintext passwords in code and logs. Two minor findings; no blockers.
@@ -16,7 +16,7 @@ All five tasks are implemented with passing tests (42/42, run independently). Ev
 | 2 | Minor | `tests/auth/test_login.*` | Test names describe implementation ("test_token_row_insert") rather than behavior (`docs/standards/testing.md` §Naming). |
 
 ## Recommendations
-- Ask the Task Planner to create a follow-up task for the session cleanup job before the table grows.
+- Ask the Principal Engineer to add a follow-up task for the session cleanup job before the table grows.
 - Rename login tests to behavior style in the next change touching that file.
 - Neither finding blocks approval.
 
@@ -25,7 +25,7 @@ All five tasks are implemented with passing tests (42/42, run independently). Ev
 - **Project Owner decision / date:** _pending_
 
 ## Handoff
-- **Inputs:** task plan with completion notes, technical plan, PRD, independent test run
+- **Inputs:** task files with completion notes, technical plan, PRD, independent test run
 - **Outputs:** this review
 - **Dependencies:** none
 - **Outstanding Questions:** none

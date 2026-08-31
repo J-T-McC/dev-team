@@ -1,11 +1,11 @@
-> **Example artifact** — fictional feature demonstrating the workflow. Ships with the dev-team plugin for reference; in a real project this artifact lives in the project workspace at the `docs/` path its naming conventions show.
+> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
 
 # Technical Plan: User Authentication
 
 - **Status:** Approved
 - **Author:** Principal Engineer
 - **PRD:** `docs/product/user-authentication-prd.md`
-- **Approved by / date:** Project Owner / 2026-07-29
+- **Approved by / date:** Principal Engineer (self-certified) / 2026-07-29 — ADR-001 decided by Project Owner
 
 ## Overview
 Add an `auth` module providing registration, login/logout, and session validation behind four REST endpoints. Sessions are opaque server-side tokens (ADR-001).
@@ -49,4 +49,4 @@ Add an `auth` module providing registration, login/logout, and session validatio
 - **Outputs:** this plan
 - **Dependencies:** stack selections in `docs/stack/stack.md`
 - **Outstanding Questions:** none
-- **Next Agent:** Task Planner
+- **Next Agent:** Senior Developer — tasks in `docs/tasks/user-authentication/`

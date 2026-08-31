@@ -19,8 +19,7 @@ Questions go to the owner of the information:
 |---|---|
 | Requirements, scope, priorities, UX direction | Product Manager |
 | Design detail: screens, states, components, interactions | Designer |
-| Architecture, technical design, technology | Principal Engineer |
-| Task scope, ordering | Task Planner |
+| Architecture, technical design, technology, task scope and ordering | Principal Engineer |
 | Implementation detail | Senior Developer |
 | Process, routing, status | Orchestrator |
 | New business decisions, major decisions, releases, anything unowned | Project Owner |

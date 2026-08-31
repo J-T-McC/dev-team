@@ -9,26 +9,14 @@ Scaffold the per-project workspace this plugin's agents work in. **Idempotent:**
 
 ## Steps
 
-1. Create the workspace directories:
+1. Run the seed sync: follow `${CLAUDE_PLUGIN_ROOT}/commands/sync.md` — it creates the `docs/` directories and copies any missing seeds (standards, stack, status), never overwriting. Seeds become **project-owned**: customized and committed to the project repo.
 
-```bash
-mkdir -p docs/product docs/design docs/plans docs/tasks docs/fixes docs/questions docs/reviews docs/architecture docs/standards docs/stack
-```
-
-2. Copy the seeds — these become **project-owned** and should be customized and committed to the project repo (`cp -n` skips existing files):
-
-```bash
-cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/standards/"*.md docs/standards/
-cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/stack.md" docs/stack/stack.md
-cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/status.md" docs/status.md
-```
-
-3. Project `CLAUDE.md`:
+2. Project `CLAUDE.md`:
    - If the project has no `CLAUDE.md`: `cp "${CLAUDE_PLUGIN_ROOT}/seeds/CLAUDE.project.md" CLAUDE.md`
    - If one exists and does not already contain a "Development Organization" section: append the seed's content to it.
    - If the section already exists: skip.
 
-4. Optional (ask the user first): check a marketplace registration into the project's `.claude/settings.json` so collaborators auto-get this plugin:
+3. Optional (ask the user first): check a marketplace registration into the project's `.claude/settings.json` so collaborators auto-get this plugin:
 
 ```json
 {
@@ -39,6 +27,6 @@ cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/status.md" docs/status.md
 }
 ```
 
-5. Report what was created vs. skipped, then remind the user:
+4. Report what was created vs. skipped, then remind the user:
    - Fill in `docs/stack/stack.md` and customize `docs/standards/*.md` — agents are instructed to stop and ask rather than guess while placeholders remain.
    - Commit the scaffolded files to the **project** repo.

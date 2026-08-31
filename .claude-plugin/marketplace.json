@@ -1,12 +1,14 @@
 {
   "name": "dev-team",
-  "owner": { "name": "J-T-McC" },
+  "owner": {
+    "name": "J-T-McC"
+  },
   "description": "Marketplace for the dev-team plugin: a reusable documentation-first development organization for Claude Code.",
   "plugins": [
     {
       "name": "dev-team",
       "source": "./",
-      "description": "Documentation-first multi-agent development organization: Product Manager → Designer (UI) → Principal Engineer → Task Planner → Senior Developer → Reviewer, coordinated by an Orchestrator, with human approval gates."
+      "description": "Documentation-first development organization: Product Manager \u2192 Designer (UI) \u2192 Principal Engineer \u2192 Senior Developer \u2192 Reviewer with human approval gates; roles run inline by default, agents spawn for parallel work or independent review."
     }
   ]
 }
