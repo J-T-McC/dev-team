@@ -1,8 +1,16 @@
 {
   "name": "dev-team",
   "displayName": "Dev Team",
-  "description": "A reusable development organization for Claude Code: seven specialized role agents with matching skills, document templates, workflow rules, and a bootstrap skill that scaffolds a per-project docs/ workspace.",
-  "author": { "name": "J-T-McC" },
+  "description": "A reusable development organization for Claude Code: specialized role skills with spawnable agents, document templates, workflow rules, and a bootstrap skill that scaffolds a per-project docs/ workspace.",
+  "author": {
+    "name": "J-T-McC"
+  },
   "repository": "https://github.com/J-T-McC/dev-team",
-  "keywords": ["agents", "workflow", "prd", "planning", "review"]
+  "keywords": [
+    "agents",
+    "workflow",
+    "prd",
+    "planning",
+    "review"
+  ]
 }

@@ -2,7 +2,7 @@
 
 - **Reviewer / date:**
 - **Scope:** <tasks or artifacts reviewed>
-- **Inputs verified:** <PRD, plan, task plan, test run>
+- **Inputs verified:** <PRD, plan, task files, test run>
 
 ## Summary
 <Overall assessment in 2–3 sentences, including test results.>

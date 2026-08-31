@@ -3,7 +3,7 @@
 > **Placeholder** — customize per project. Owned by the Principal Engineer (proposes) and Project Owner (approves).
 
 ## Requirements (active)
-- Every task defines its tests before implementation starts (in the task plan).
+- Every task defines its tests before implementation starts (in its task file).
 - The Senior Developer runs the full suite before marking any task complete.
 - The Reviewer independently runs the suite during review.
 

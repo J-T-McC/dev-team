@@ -37,4 +37,4 @@
 - **Outputs:** this plan
 - **Dependencies:**
 - **Outstanding Questions:**
-- **Next Agent:** Task Planner
+- **Next Agent:** Senior Developer — tasks in `docs/tasks/<feature-slug>/`
