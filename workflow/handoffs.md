@@ -16,7 +16,7 @@ Every artifact ends with a **Handoff** section containing exactly:
 | Product Manager → Designer *(UI)* or Principal Engineer *(no UI)* | PRD | Goals, user stories, testable acceptance criteria, out of scope | ✋ Owner approves PRD |
 | Designer → Principal Engineer | Design Spec | User flows, screens and states, components, interactions, accessibility | ✅ PM approves against the PRD |
 | Principal Engineer → Senior Developer | Technical Plan (+ ADRs) and task directory `docs/tasks/<slug>/` | Architecture, data model, API, validation, risks; ordered task files with dependencies, files, acceptance criteria, testing | ✅ PE self-certifies; ✋ Owner decides any major decision it contains |
-| Senior Developer → Reviewer | Implementation | Code + tests per task; completion notes in task files, statuses in the index | All tasks complete |
+| Senior Developer → Reviewer | Implementation | Code + tests per task; completion notes in task files; statuses and a complete Review manifest (tier, base/head commits, test command) in the index | All tasks complete |
 | Reviewer → Project Owner | Review | Summary, severity-classified findings, recommendation | ✋ Owner approves release |
 | Product Owner → Senior Developer *(fast path: bugs/chores)* | Request | Observed vs. expected behavior | — (fix record written with the fix) |
 

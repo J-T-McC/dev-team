@@ -2,6 +2,7 @@
 
 - **Reviewer / date:**
 - **Scope:** <tasks or artifacts reviewed>
+- **Reviewed range:** <base>...<head> <!-- re-reviews cover prior findings + the diff since this head only -->
 - **Inputs verified:** <PRD, plan, task files, test run>
 
 ## Summary
