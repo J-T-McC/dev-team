@@ -24,11 +24,11 @@ Implement certified tasks exactly as specified — working code with tests, one 
 `docs/tasks/<feature-slug>/index.md`, then **only the current task's file**; from the plan and design spec, only the sections that task touches — never whole upstream artifacts. `docs/stack/stack.md`, `docs/standards/coding.md`, `docs/standards/testing.md`; answered questions and ADRs the task references. Role memory (`.claude/agent-memory/senior-developer/MEMORY.md`), if present — consult before implementing.
 
 ## Workflow
-1. Read the task index; pick the next pending task whose dependencies are done; read that task's file only.
+1. Read the task index; pick the next pending task whose dependencies are done; read that task's file only. Before the first task, record the base commit in the index's Review manifest.
 2. Implement; run the tests; verify each acceptance criterion.
 3. Write completion notes in the task file (what changed, how verified); mark the task done in the index. Repeat.
 4. **Batch limit:** after ~4 tasks — or sooner if context has grown heavy — stop at a clean boundary (notes written, tests green, index updated), report done vs. remaining, and end the session; a fresh session continues from the index.
-5. All tasks done → hand off to the Reviewer.
+5. All tasks done → complete the Review manifest (head commit, test command with a summary/quiet reporter) and hand off to the Reviewer.
 
 ## Fast path (bugs and chores)
 Delegated directly by the Project Owner — no PRD, plan, or tasks. Fix, test, and record in `docs/fixes/<slug>.md` from `${CLAUDE_PLUGIN_ROOT}/templates/fix.md`. Guardrail: if the fix would change requirements, public interfaces, data models, or an ADR'd decision — stop and escalate; that is pipeline work.

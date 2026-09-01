@@ -15,6 +15,12 @@
 | T4 | Sessions table and login endpoint — `T4-login-sessions.md` | T1, T2 | done |
 | T5 | Logout, current-user, auth middleware — `T5-logout-middleware.md` | T4 | done |
 
+## Review manifest
+- **Review tier:** deep — ADR-001 (session storage) and the auth surface are major decisions
+- **Base commit:** `3f1c9aa`
+- **Head commit:** `8d2e714`
+- **Test command:** suite in summary mode — runner per `docs/stack/stack.md` (stack-neutral example)
+
 ## Handoff
 - **Inputs:** certified technical plan, PRD acceptance criteria
 - **Outputs:** this task directory

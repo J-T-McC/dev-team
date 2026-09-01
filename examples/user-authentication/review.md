@@ -3,8 +3,9 @@
 # Review: User Authentication
 
 - **Reviewer / date:** Reviewer / 2026-07-30
-- **Scope:** `docs/tasks/user-authentication/` (T1–T5)
-- **Inputs verified:** PRD, technical plan, task files with completion notes, full test run
+- **Scope:** `docs/tasks/user-authentication/` (T1–T5), deep tier per the manifest
+- **Reviewed range:** `3f1c9aa...8d2e714`
+- **Inputs verified:** PRD acceptance criteria, plan sections the tasks touch, task files with completion notes, independent test run (summary mode)
 
 ## Summary
 All five tasks are implemented with passing tests (42/42, run independently). Every task acceptance criterion and every PRD acceptance criterion verified, including immediate logout invalidation and absence of plaintext passwords in code and logs. Two minor findings; no blockers.
