@@ -27,6 +27,8 @@ run the dev-team:bootstrap skill
 
 Fill in `docs/stack/stack.md` and customize `docs/standards/*.md` — agents stop and ask rather than guess while placeholders remain. Commit the scaffolded files to your project repo. Nothing from your project ever flows back into this repo.
 
+**Adopting into an existing project?** Bootstrap takes a second path ([`workflow/adoption.md`](workflow/adoption.md)): it surveys for collisions with your `docs/` and `CLAUDE.md` first, then has the principal-engineer **harvest** the standards and stack from your codebase — manifests, CI, lint config, test layout, commit history — citing the file behind every line and leaving anything unevidenced as `_TBD_`; you approve. In-flight features enter at their true phase marked `pre-adoption` (upstream gates waived, downstream gates apply). Shipped work is **never** documented backwards — no retro PRDs, no retro ADRs. Documents are written forward, for the next change.
+
 Keep the project `CLAUDE.md` lean — it is loaded every session, while skills and `docs/` load on demand. The seed [`seeds/CLAUDE.project.md`](seeds/CLAUDE.project.md) is the recommended shape.
 
 Project-level skills (`.claude/skills/`) work out of the box: every dev-team agent carries the `Skill` tool and is instructed to consult relevant domain skills (e.g. a `laravel` skill) before deciding or implementing — no plugin changes needed.

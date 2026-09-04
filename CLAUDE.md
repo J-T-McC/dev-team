@@ -6,7 +6,7 @@ This repo **is** the dev-team Claude Code plugin and its marketplace. Do not sca
 
 - `agents/` + `skills/` — the six roles (orchestrator is skill-only, no agent); each agent preloads its skill via `skills:` frontmatter (skills are the single source of truth for role definitions)
 - `commands/` — `/dev-team:sync` seed-sync command
-- `templates/`, `workflow/` — framework reference shipped with the plugin, referenced via `${CLAUDE_PLUGIN_ROOT}`; `workflow/handoffs.md` is the canonical home of gate-validity rules
+- `templates/`, `workflow/` — framework reference shipped with the plugin, referenced via `${CLAUDE_PLUGIN_ROOT}`; `workflow/handoffs.md` is the canonical home of gate-validity rules, `workflow/adoption.md` of existing-project adoption rules
 - `seeds/` — files the `bootstrap` skill copies into consuming projects (standards, stack, status, backlog index, project CLAUDE.md); project-owned after copy
 - `examples/user-authentication/` — worked example referenced by the skills
 - `hooks/` — tiny SessionStart announcement
