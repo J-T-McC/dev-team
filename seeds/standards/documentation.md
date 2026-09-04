@@ -2,7 +2,7 @@
 
 ## Active conventions
 - One document per feature per type; always start from the dev-team plugin's `templates/`.
-- Naming: `<feature-slug>-<type>.md`; tasks `docs/tasks/<feature-slug>/` (`index.md` + `T<NN>-<slug>.md`); ADRs `adr-<NNN>-<slug>.md`; questions `<feature-slug>-q<NNN>.md`.
+- Naming: `<feature-slug>-<type>.md`; tasks `docs/tasks/<feature-slug>/` (`index.md` + `T<NN>-<slug>.md`); ADRs `adr-<NNN>-<slug>.md`; questions `<feature-slug>-q<NNN>.md`; backlog `docs/backlog/` (`index.md` + `B<NN>-<slug>.md`).
 - Every artifact carries Status, Author, Approval, and a Handoff section (plugin `workflow/handoffs.md`).
 - Link, never duplicate. If a section exceeds roughly a page, split the feature.
 - Approvals are recorded in the artifact **and** `docs/status.md`.

@@ -9,6 +9,7 @@ This project uses the **dev-team** Claude Code plugin: a documentation-first pip
 - **No assumptions.** Missing information follows the escalation chain: search `docs/` → prior decisions (ADRs, answered questions) → responsible upstream role (via a question doc) → Project Owner. Never invent requirements.
 - **Owner attention only where it matters.** The Project Owner approves PRDs, releases, and **major decisions** (new dependencies, stack changes, data-model changes to existing data, security-sensitive or irreversible choices, ADRs). All other gates are delegated: design specs → **product-manager** (verified against the PRD); technical plans and task breakdowns → **principal-engineer** self-certified. The product-manager answers requirement questions as the Owner's proxy from the vision, PRDs, and prior decisions. Every approval — Owner or delegate — is recorded in the artifact and `docs/status.md`; roles refuse unapproved upstream artifacts.
 - **Build small.** One PRD per feature; one design spec per UI-bearing PRD; one technical plan and one task directory per PRD.
+- **Not now is not lost.** Deferred work — scope cuts, tech debt, known bugs — is filed as a backlog item by any role; the product-manager owns the index and promotes items into the pipeline or the fast path (`docs/standards/planning.md`).
 
 ## Pipeline
 
@@ -20,7 +21,8 @@ The **orchestrator** skill routes work, verifies gates, and maintains `docs/stat
 
 ## Conventions
 
-- Naming: `<feature-slug>-<type>.md`; tasks `docs/tasks/<feature-slug>/` (`index.md` + `T<NN>-<slug>.md`); ADRs `adr-<NNN>-<slug>.md`; questions `<feature-slug>-q<NNN>.md`
+- Naming: `<feature-slug>-<type>.md`; tasks `docs/tasks/<feature-slug>/` (`index.md` + `T<NN>-<slug>.md`); ADRs `adr-<NNN>-<slug>.md`; questions `<feature-slug>-q<NNN>.md`; backlog `docs/backlog/` (`index.md` + `B<NN>-<slug>.md`)
+- Commits are semantic — `<type>(<scope>): <task IDs> <what changed>`, terse body if any (`docs/standards/coding.md`)
 - Every artifact starts from a plugin template and ends with a Handoff section
 - Standards live in `docs/standards/`; the stack in `docs/stack/stack.md`. Where placeholders remain, ask the Project Owner rather than assuming.
 
