@@ -47,6 +47,10 @@ Not everything needs the pipeline or the whole team. Small work is delegated **d
 
 The one rule that keeps this safe: fast-path work is **truth-preserving** — it restores intended behavior or makes documents match reality. It never changes an approved decision, requirement, public interface, data model, or ADR; truth-preserving edits need no re-approval, decision-changing edits do. If work turns out feature-shaped mid-flight, stop and enter the pipeline at the appropriate phase.
 
+## Backlog (work that is not now)
+
+Deferred work is filed, not remembered: `docs/backlog/index.md` (status table + promotion log) plus one `B<NN>-<slug>.md` file per item — feature ideas and scope cuts, tech debt, and known bugs not being fixed yet. **Any role files** an item; the **Product Manager owns the index** — priority, status, promotion. Promotion is the only exit: a `feature` item becomes a PRD and enters the pipeline; a `bug` or `debt` item is delegated to the Senior Developer's fast path. `docs/status.md` tracks work in flight; the backlog tracks work not started, and nothing sits in both. Structure and rules are canonical in `docs/standards/planning.md`.
+
 ## Where work runs
 
 A role is a set of rules, not a separate agent. By default all work runs in the main conversation with the owning role's skill invoked — fast-path fixes and full pipeline phases alike, one role at a time in linear sequence; the role's boundaries, artifacts, records, and gates apply exactly as if its agent had done the work, without agent startup cost. Spawning a role's agent buys exactly three things, and the startup cost is paid only when one is needed: **concurrency** (independent work streams running at once), **independence** (pipeline reviews always run in the reviewer agent — fresh eyes, never the conversation that produced or orchestrated the code), and **context relief** (a conversation grown too long hands a big phase to a fresh agent context).

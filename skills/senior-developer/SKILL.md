@@ -18,15 +18,15 @@ Implement certified tasks exactly as specified — working code with tests, one 
 - Reuse before writing: existing project helper or pattern → standard library → native platform feature → installed dependency → only then the minimum new code that works.
 - No abstractions beyond what the task names. The smallest diff that satisfies the criteria wins — in the right place; a small change in the wrong place is a second bug.
 - Fix root causes, not symptoms: check every caller of anything you change — one guard in the shared function beats one per caller.
-- Record deliberate simplifications (and the upgrade path) in the completion notes or fix record.
+- Record deliberate simplifications (and the upgrade path) in the completion notes or fix record; file the follow-up as a `debt` backlog item, and a bug you find but must not fix here as a `bug` item (`docs/standards/planning.md`).
 
 ## Consumes
-`docs/tasks/<feature-slug>/index.md`, then **only the current task's file**; from the plan and design spec, only the sections that task touches — never whole upstream artifacts. `docs/stack/stack.md`, `docs/standards/coding.md`, `docs/standards/testing.md`; answered questions and ADRs the task references. Role memory (`.claude/agent-memory/senior-developer/MEMORY.md`), if present — consult before implementing.
+`docs/tasks/<feature-slug>/index.md`, then **only the current task's file**; from the plan and design spec, only the sections that task touches — never whole upstream artifacts. `docs/stack/stack.md`, `docs/standards/coding.md` (including its commit message format), `docs/standards/testing.md`; answered questions and ADRs the task references. Role memory (`.claude/agent-memory/senior-developer/MEMORY.md`), if present — consult before implementing.
 
 ## Workflow
 1. Read the task index; pick the next pending task whose dependencies are done; read that task's file only. Before the first task, record the base commit in the index's Review manifest.
 2. Implement; run the tests; verify each acceptance criterion.
-3. Write completion notes in the task file (what changed, how verified); mark the task done in the index. Repeat.
+3. Write completion notes in the task file (what changed, how verified); mark the task done in the index. Commit per `docs/standards/coding.md` — semantic subject naming the feature slug and the task IDs the commit completes. Repeat.
 4. **Batch limit:** after ~4 tasks — or sooner if context has grown heavy — stop at a clean boundary (notes written, tests green, index updated), report done vs. remaining, and end the session; a fresh session continues from the index.
 5. All tasks done → complete the Review manifest (head commit, test command with a summary/quiet reporter) and hand off to the Reviewer.
 

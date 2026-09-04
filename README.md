@@ -10,7 +10,7 @@ Small work skips the pipeline entirely (**fast path**): bugs and chores go strai
 
 **Roles run inline by default.** All work — questions, fast-path fixes, and full pipeline phases in linear sequence — runs in the main conversation by invoking the owning role's skill, at a fraction of a subagent spawn's token cost. Agents spawn only when it pays for itself: **concurrency**, **independent review** (pipeline reviews always run in the reviewer agent — fresh eyes), or **context relief** (handing a big phase to a fresh context).
 
-Tasks are token-frugal by design: each feature's breakdown is a directory (`docs/tasks/<slug>/`) with a status index and one file per task, so an implementing session loads the tiny index plus only the task it is working on — never the whole plan.
+Tasks are token-frugal by design: each feature's breakdown is a directory (`docs/tasks/<slug>/`) with a status index and one file per task, so an implementing session loads the tiny index plus only the task it is working on — never the whole plan. The **backlog** follows the same shape (`docs/backlog/index.md` + one file per item): any role files deferred work — scope cuts, tech debt, known bugs — and the product-manager prioritizes and promotes it into the pipeline or the fast path.
 
 ## Install (per project)
 
@@ -48,7 +48,7 @@ Every commit to this repo is a new version (no version pinning). Seeded files (`
 
 Plugin updates never touch project-owned files, so a project bootstrapped before a seed was added (or extended) silently lacks it — and agents have no fallback to the plugin's copies. Run sync after updating; it is safe to run any time:
 
-- **Copies** any seed file the project is missing (standards, `docs/stack/stack.md`, `docs/status.md`) and creates any missing `docs/` directories
+- **Copies** any seed file the project is missing (standards, `docs/stack/stack.md`, `docs/status.md`, `docs/backlog/index.md`) and creates any missing `docs/` directories
 - **Reports drift** in existing standards: lists seed sections (`##` headings) absent from your project's copy, ignoring your customizations
 - **Appends only what you approve** — never overwrites, rewrites, or deletes project content
 

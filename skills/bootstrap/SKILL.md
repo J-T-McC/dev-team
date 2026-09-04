@@ -9,7 +9,7 @@ Scaffold the per-project workspace this plugin's agents work in. **Idempotent:**
 
 ## Steps
 
-1. Run the seed sync: follow `${CLAUDE_PLUGIN_ROOT}/commands/sync.md` — it creates the `docs/` directories and copies any missing seeds (standards, stack, status), never overwriting. Seeds become **project-owned**: customized and committed to the project repo.
+1. Run the seed sync: follow `${CLAUDE_PLUGIN_ROOT}/commands/sync.md` — it creates the `docs/` directories and copies any missing seeds (standards, stack, status, backlog index), never overwriting. Seeds become **project-owned**: customized and committed to the project repo.
 
 2. Project `CLAUDE.md`:
    - If the project has no `CLAUDE.md`: `cp "${CLAUDE_PLUGIN_ROOT}/seeds/CLAUDE.project.md" CLAUDE.md`
