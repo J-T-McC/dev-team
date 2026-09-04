@@ -23,6 +23,7 @@ Every artifact ends with a **Handoff** section containing exactly:
 ## Rules
 
 - A handoff is **invalid** if its approval gate has not passed. The receiving agent must refuse it.
+- Exception, once per project: work adopted from before this organization carries `pre-adoption` in `docs/status.md` — its upstream gates are waived, its downstream gates are not (`workflow/adoption.md`).
 - A PRD containing a **UX Direction** section must flow through the Designer: any downstream handoff (plan, tasks, implementation) for such a PRD without a PM-approved design spec is invalid. This rule is canonical here — other documents reference it.
 - Outstanding Questions must be empty — or explicitly waived by the gate's approver — before downstream work starts.
 - The receiving agent verifies the Handoff section before starting; anything missing goes back to the producing agent as a question document, not a guess.

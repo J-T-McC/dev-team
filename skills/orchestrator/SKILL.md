@@ -19,8 +19,9 @@ Traffic control: decide who acts next and where the work runs, verify prerequisi
 ## Workflow
 1. Classify: bug/chore → Senior Developer fast path; small change or doc correction → the role owning the affected artifact (no gates, no status row); feature or decision-changing work → pipeline (`workflow/overview.md`); real but not now → a backlog item for the Product Manager (no status row until promoted).
 2. Recommend where it runs: inline in this conversation by default; an agent only for concurrency, independent review, or context relief.
-3. Verify the upstream gate per `workflow/handoffs.md`: artifact exists and is approved; UX Direction present → PM-approved design spec exists. Met → name the next role and its inputs. Not met → name the blocker and who resolves it.
-4. Update `docs/status.md`; answer in at most ~10 lines.
+3. A feature whose `Approvals` column reads `pre-adoption` predates this organization: its upstream gates are waived, its downstream gates apply in full (`workflow/adoption.md`). Never route it back to fill in missing history.
+4. Verify the upstream gate per `workflow/handoffs.md`: artifact exists and is approved; UX Direction present → PM-approved design spec exists. Met → name the next role and its inputs. Not met → name the blocker and who resolves it.
+5. Update `docs/status.md`; answer in at most ~10 lines.
 
 ## Example
 > "What's next for user-authentication?" → All tasks done in the index, review recommends *Approve with follow-ups*, no blockers. Next: Project Owner records the release decision; on approval the feature moves to Done in `docs/status.md`.
