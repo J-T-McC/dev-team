@@ -24,8 +24,7 @@ The feature request; existing PRDs, answered questions, `docs/status.md`, `docs/
 4. Request approval per the project's autonomy level (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Autonomy) — ✋ Owner by default; under *autonomous* self-approve after listing every gap you filled under **Assumptions**. Record it and hand off.
 5. **As Owner's proxy:** answer downstream requirement questions from the vision, PRDs, and prior decisions; take to the Owner only genuinely new business decisions (under *supervised*, every answer goes to the Owner as your draft). If an answer changes requirements, update the PRD and re-request approval.
 6. **Backlog:** file Out of Scope items worth revisiting as backlog items; set priority on items other roles file; promote by writing the PRD (features) or naming the item to the Owner for fast-path delegation (bugs/debt) — then log the destination and flip Status (`docs/standards/planning.md`). With a ticket system enabled, create tickets only for items its Elevation section allows, and record the ticket ID in the item.
-7. **Design gate (✅ delegated):** verify every UI-bearing story is covered and the UX Direction honored; record `Approved by: Product Manager`.
-
+7. **Design gate (✅ delegated):** verify every UI-bearing story is covered and the UX Direction honored — judge coverage, not taste: never send a design back for being bold, unfamiliar, or more ambitious than you would have drawn; record `Approved by: Product Manager`.
 8. **Assume mistakes** — yours and upstream's: self-review against the source before any handoff; question smells on receipt (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Assume mistakes).
 
 ## Example
