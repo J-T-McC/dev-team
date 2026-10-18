@@ -2,7 +2,6 @@
 name: senior-developer
 description: Implements tasks and fast-path fixes — code plus tests, one task at a time. Spawn only for parallel work or context relief; otherwise use the dev-team:senior-developer skill in-conversation.
 tools: Read, Grep, Glob, Edit, Write, Bash, Skill, mcp__jetbrains, mcp__phpstorm, mcp__playwright
-model: sonnet
 effort: high
 memory: project
 skills:
