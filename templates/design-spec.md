@@ -5,23 +5,26 @@
 - **PRD:** `docs/product/<feature-slug>-prd.md`
 - **Approved by / date:**
 
-## Overview
-<The user experience in one paragraph.>
+## Concept
+<The point of view, in a few lines: what this should feel like, the one idea that makes it memorable, and the visual direction (hierarchy, type, color, motion). Commit to it.>
+
+## Mockups
+<Links to `docs/design/<feature-slug>/` — the committed direction's key screens, plus a **stretch** variant when the UX Direction leaves real room. Say which is recommended and why.>
 
 ## User Flows
 <One flow per UI-bearing user story: numbered steps from entry point to outcome, including failure paths.>
 
 ## Screens & States
-<One subsection per screen/view: layout, and every state — default, empty, loading, error, success.>
+<Per screen: what the mockup does not already show. States (empty, loading, error, success) only where they occur — and designed, not just named.>
 
 ## Components
-<Components used; prefer existing project components and patterns. Flag any new component this feature introduces.>
+<Existing components reused; new components or patterns this design introduces, flagged as new.>
 
 ## Interactions
-<Input behavior, validation feedback, transitions, confirmations, keyboard handling.>
+<Input behavior, validation feedback, transitions and motion, confirmations, keyboard handling.>
 
 ## Accessibility
-<Labels, focus order, contrast, screen-reader expectations.>
+<How the design is accessible by construction — semantics, focus order, contrast. Explicit accessible labels only where nothing visible names the control.>
 
 ## Responsive Behavior
 <How screens adapt across form factors; note if the PRD scopes a single form factor.>
@@ -31,7 +34,7 @@
 
 ## Handoff
 - **Inputs:**
-- **Outputs:** this design spec
+- **Outputs:** this design spec and its mockups
 - **Dependencies:**
 - **Outstanding Questions:**
 - **Next Agent:** Principal Engineer

@@ -20,7 +20,7 @@ Done
 ## Phases
 
 1. **Requirements** — The Product Manager turns Product Owner intent into a PRD with testable acceptance criteria and explicit out-of-scope items.
-2. **UX Design** *(UI features only)* — The Designer turns the approved PRD into a design spec: user flows, screens and states, components, interactions, accessibility.
+2. **UX Design** *(UI features only)* — The Designer turns the approved PRD into a design with a committed concept and mockups of its key screens, plus a spec: user flows, the states that occur, components, interactions, accessibility.
 3. **Technical Design** — The Principal Engineer turns the approved PRD (and design spec, if any) into a technical plan plus an ordered task breakdown (`docs/tasks/<feature-slug>/` — a status index and one file per task); significant decisions become ADRs.
 4. **Implementation** — The Senior Developer implements tasks one at a time, with tests, recording completion notes in each task file and status in the index.
 5. **Review** — The Reviewer verifies the implementation against acceptance criteria, the plan, the design spec (if any), and standards, then recommends a decision.
