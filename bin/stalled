@@ -1,0 +1,25 @@
+#!/bin/bash
+# stalled <check-in> [hours] — a supervised worker needs attention (failed, exited without
+# finishing), or features are in flight and no document has changed for [hours] (default 4).
+source "$(dirname "$0")/_common.sh"
+lock_held && exit 1
+name=$1; hours=${2:-4}
+
+# New worker problems since the last run.
+new=$(orca orchestration worker-list --json 2>/dev/null | python3 -I -c '
+import json, sys
+seen = set(open(sys.argv[1]).read().split()) if __import__("os").path.exists(sys.argv[1]) else set()
+rows = json.load(sys.stdin).get("result", {}).get("workers", [])
+ids = [r["projection"]["dispatchId"] for r in rows if r["projection"]["attention"].get("requiresAction")]
+fresh = [i for i in ids if i not in seen]
+open(sys.argv[1], "w").write("\n".join(seen | set(ids)))
+print(len(fresh))' "$STATE_DIR/$name.seen")
+[ "${new:-0}" -gt 0 ] && exit 0
+
+# No progress for too long while features are in flight.
+in_flight=$(grep -E '^\|' docs/status.md 2>/dev/null | tail -n +3 | awk -F'|' '$3 !~ /Done/' | wc -l)
+[ "$in_flight" -gt 0 ] || exit 1
+fp=$(docs_fingerprint); prog="$STATE_DIR/$name.progress"
+if [ "$fp" != "$(head -1 "$prog" 2>/dev/null)" ]; then echo "$fp" > "$prog"; exit 1; fi
+[ $(( $(date +%s) - $(mtime "$prog") )) -ge $(( hours * 3600 )) ] || exit 1
+touch "$prog"   # fire once per stall window, not every tick

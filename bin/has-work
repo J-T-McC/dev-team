@@ -1,0 +1,9 @@
+#!/bin/bash
+# has-work <check-in> — docs changed since this check-in last ran.
+# has-work --mark <check-in> — record the current state (end of a run, so its own edits don't re-trigger it).
+source "$(dirname "$0")/_common.sh"
+if [ "$1" = --mark ]; then docs_fingerprint > "$STATE_DIR/$2.fp"; exit 0; fi
+lock_held && exit 1
+fp=$(docs_fingerprint)
+[ "$fp" = "$(cat "$STATE_DIR/$1.fp" 2>/dev/null)" ] && exit 1
+echo "$fp" > "$STATE_DIR/$1.fp"

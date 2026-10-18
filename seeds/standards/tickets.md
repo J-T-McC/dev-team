@@ -3,12 +3,13 @@
 How this project uses an external ticket system through its MCP server. `System: none` disables all of it. The plugin's `workflow/tickets.md` sets the rules every setting here obeys (who may touch the system, read once, allowlist out). Tune this file freely — `/dev-team:tickets` walks through changes — and log each change below.
 
 ## Connection (active)
-- **System:** none *(e.g. `linear`, `jira`)*
-- **MCP server:** _TBD_ *(the server name as Claude Code lists it)*
+- **System:** none *(e.g. `linear`, `jira`, `github`)*
+- **Via:** mcp *(`mcp` — any tracker with an MCP server; `orca` — Orca's built-in Linear client; `gh` — the GitHub CLI. The CLIs need no MCP server and return less output.)*
+- **MCP server:** _TBD_ *(only for `Via: mcp` — the server name as Claude Code lists it)*
 - **Workspace / team / project:** _TBD_
 
 ## Intake (active)
-- **Work query:** _TBD_ *(e.g. team `ENG`, label `dev-team`, status `Ready`)*
+- **Work query:** _TBD_ *(e.g. team `ENG`, label `dev-team`, status `Ready`; GitHub: `assignee:@me label:dev-team`, or a Project number plus its query)*
 - **Routing** — ticket type or label → destination:
   - feature → Product Manager (PRD)
   - bug, chore → Senior Developer fast path (fix record)

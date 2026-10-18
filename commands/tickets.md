@@ -15,8 +15,8 @@ Request: $ARGUMENTS
    - Otherwise → **tune**, step 4.
 
 3. **Setup.**
-   - Find enabled ticket MCP servers from the tools available in this session (names like `linear`, `atlassian`/`jira`, `github`, `shortcut`, `asana`). None → tell the user to enable one in Claude Code first, and stop.
-   - Ask, one topic at a time, offering real values read from the server where a cheap read can supply them (teams/projects, workflow status names, labels): which server and workspace; the work query; routing by type or label; status on intake; the status-sync table; what to elevate (release comment? which backlog items become tickets?); `Watch comments`.
+   - Find the available connections: ticket MCP servers in this session (names like `linear`, `atlassian`/`jira`, `github`, `shortcut`, `asana`); Orca's Linear client (`orca linear team list` succeeds); the GitHub CLI (`gh auth status` succeeds). Prefer a CLI where it covers the system. None → tell the user to connect one first, and stop.
+   - Ask, one topic at a time, offering real values read from the server where a cheap read can supply them (teams/projects, workflow status names, labels): which system, connection (`Via`), and workspace or repo/Project; the work query; routing by type or label; status on intake; the status-sync table; what to elevate (release comment? which backlog items become tickets?); `Watch comments`.
    - Fill the config. Keep the seed's defaults for anything the user skips.
    - Ensure the project `CLAUDE.md` carries the ticket rule (it is not in the seed; it is added only when tickets are enabled). If missing, propose adding to its rules:
 
