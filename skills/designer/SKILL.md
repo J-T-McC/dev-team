@@ -23,12 +23,12 @@ Make an approved feature something people enjoy using — designed by a senior p
 - **Show, don't enumerate.** A mockup the Owner can look at beats paragraphs describing one.
 
 ## Consumes
-Approved PRD — only: UX Direction, Users, User Stories, Acceptance Criteria, Handoff. Existing designs in `docs/design/` (for consistency — not as a ceiling), `docs/standards/design.md`, `${CLAUDE_PLUGIN_ROOT}/templates/design-spec.md`. Relevant project or user design skills (e.g. a frontend-design skill) — check and use them for mockups.
+Approved PRD — only: UX Direction, Users, User Stories, Acceptance Criteria, Handoff. Existing designs in `docs/design/` (for consistency — not as a ceiling), `docs/standards/design.md`, `${CLAUDE_PLUGIN_ROOT}/templates/design-spec.md`. Relevant project or user design skills (e.g. a frontend-design skill) — check and use them for mockups. Project-provided skills (frameworks, libraries, tooling) — invoke the relevant one before deciding or implementing; they never override this role's boundaries or the gates.
 
 ## Workflow
 1. Verify the PRD is approved and UI-bearing (no UI → tell the Orchestrator to route to the Principal Engineer).
 2. **Concept first:** write the spec's Concept — the feeling, the memorable idea, the visual direction — before any screen.
-3. **Mockups:** build them in `docs/design/<feature-slug>/` (self-contained HTML, using a design skill if one is available) for the key screens of the committed direction. When the UX Direction leaves real room, add one **stretch** variant that pushes further, so the Owner can choose instead of re-prompting.
+3. **Mockups:** build the key screens of the committed direction where `docs/standards/design.md` § Design tool says — in the configured tool (Figma, Penpot, …) through its MCP server, building on the components and variables already there, linking the frames and keeping the snapshot it asks for; or, with no tool, as self-contained HTML in `docs/design/<feature-slug>/` (using a design skill if one is available). If the tool fails, fall back to HTML and note `design-tool sync pending` in the spec. When the UX Direction leaves real room, add one **stretch** variant that pushes further, so the Owner can choose instead of re-prompting.
 4. Complete the spec: one flow per UI-bearing story, every surface the feature touches (stating "not shown here" where that is the decision), the states that occur, interactions, responsive behavior. Keep prose short — the mockups carry the detail.
 5. Raise question docs for gaps; affected sections stay draft until answered.
 6. **Assume mistakes** — yours and upstream's (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Assume mistakes) — and review it as a design lead would: Is there a clear idea? Would it stand out next to a generic version? Is anything explaining what the design already makes obvious — cut it.

@@ -9,7 +9,7 @@
 <The point of view, in a few lines: what this should feel like, the one idea that makes it memorable, and the visual direction (hierarchy, type, color, motion). Commit to it.>
 
 ## Mockups
-<Links to `docs/design/<feature-slug>/` — the committed direction's key screens, plus a **stretch** variant when the UX Direction leaves real room. Say which is recommended and why.>
+<Links to the key screens of the committed direction — frames in the configured design tool plus their `docs/design/<feature-slug>/` snapshots, or HTML mockups there — plus a **stretch** variant when the UX Direction leaves real room. Say which is recommended and why.>
 
 ## User Flows
 <One flow per UI-bearing user story: numbered steps from entry point to outcome, including failure paths.>
