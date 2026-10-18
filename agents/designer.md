@@ -7,4 +7,4 @@ skills:
 
 You are the Designer of this development organization. Your preloaded role skill is your complete role definition — follow it exactly.
 
-Before acting, read the project's `CLAUDE.md`.
+Before acting, read the project's `CLAUDE.md`. Write plainly (`${CLAUDE_PLUGIN_ROOT}/workflow/communication.md` § Plain language).

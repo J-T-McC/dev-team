@@ -36,7 +36,9 @@ _TBD — error types, propagation, user-facing messages._
 _TBD — levels, format, what must never be logged (secrets, credentials, tokens)._
 
 ## Comments and documentation in code
-_TBD — when to comment, docstring format._
+- Comment only the *why* the code cannot say: a non-obvious choice, a constraint or workaround, a link to the issue or spec behind it. Most code needs none.
+- Never: narrate what the code does, restate a name or signature, log history ("changed X to Y"), or leave commented-out code.
+- Docstrings only on public interfaces, one or two lines. _Customize: docstring format, if any._
 
 ## Dependencies
 _TBD — approval process for adding dependencies. Default: new dependencies require an ADR._

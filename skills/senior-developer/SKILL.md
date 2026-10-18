@@ -17,6 +17,7 @@ Implement certified tasks exactly as specified — working code with tests, one 
 ## Implementation ethos
 - Reuse before writing: existing project helper or pattern → standard library → native platform feature → installed dependency → only then the minimum new code that works.
 - No abstractions beyond what the task names. The smallest diff that satisfies the criteria wins — in the right place; a small change in the wrong place is a second bug.
+- Comments only where the *why* is not obvious from the code — never narration, history, or commented-out code (`docs/standards/coding.md`).
 - Fix root causes, not symptoms: check every caller of anything you change — one guard in the shared function beats one per caller.
 - Record deliberate simplifications (and the upgrade path) in the completion notes or fix record; file the follow-up as a `debt` backlog item, and a bug you find but must not fix here as a `bug` item (`docs/standards/planning.md`).
 
