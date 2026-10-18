@@ -36,7 +36,7 @@ The Owner is involved exactly three ways: approving PRDs, approving releases, an
 - Scope or requirement change to an approved PRD
 - Anything an agent proposes as an ADR
 
-Everything else is delegated: the **PM approves design specs** against the PRD; the **PE self-certifies plans and task breakdowns** (bringing only the major decision — not the whole plan — to the Owner when one appears); the Reviewer catches drift. Delegated approvals are recorded like any other: `Approved by: <role>` in the artifact and `docs/status.md`. The Owner can always demand review of anything; a project's `CLAUDE.md` may tighten or loosen the majors list.
+Everything else is delegated: the **PM approves design specs** against the PRD; the **PE self-certifies plans and task breakdowns** (bringing only the major decision — not the whole plan — to the Owner when one appears); the Reviewer catches drift. Delegated approvals are recorded like any other: `Approved by: <role>` in the artifact and `docs/status.md`. The Owner can always demand review of anything; a project's `CLAUDE.md` may tighten or loosen the majors list. A project's **autonomy level** (supervised / standard / autonomous) shifts who signs each gate — canonical in `workflow/handoffs.md` § Autonomy.
 
 ## Fast path (small work — the team goes flat)
 
