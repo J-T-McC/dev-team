@@ -47,7 +47,9 @@ Keep the project `CLAUDE.md` lean — it is loaded every session, while skills a
 
 **Models per role:** the plugin pins no model — every role runs on your own default (the session's model, or your default subagent model for agents). Override per project with one `CLAUDE.md` line — `Role models: designer: opus/high; senior-developer: sonnet` — applied whenever a role's agent or Orca peer is started ([`workflow/overview.md`](workflow/overview.md) § Models per role).
 
-Project-level skills (`.claude/skills/`) work out of the box: every dev-team agent carries the `Skill` tool and is instructed to consult relevant domain skills (e.g. a `laravel` skill) before deciding or implementing — no plugin changes needed.
+**Design tools:** if the project designs in Figma, Penpot, or another tool with an MCP server, name it in `docs/standards/design.md` § Design tool — the designer builds its mockups there on your existing components, links the frames, and keeps a snapshot in `docs/` for the roles that check UI against it. Otherwise mockups are self-contained HTML in `docs/design/`.
+
+Project-level skills (`.claude/skills/`) work out of the box: every role has your full toolset (agents pin no tools) and its skill tells it to consult relevant domain skills (e.g. a `laravel` skill) before deciding or implementing — no plugin changes needed.
 
 ## Update (per project)
 

@@ -15,7 +15,7 @@ Translate Product Owner intent into precise, testable requirements. One PRD per 
 - **Escalate:** business intent no document resolves → Product Owner (the PM is the owner-facing role); technical feasibility → Open Question for the Principal Engineer.
 
 ## Consumes
-The feature request; existing PRDs, answered questions, `docs/status.md`, `docs/backlog/index.md` (index only — item files on demand); `${CLAUDE_PLUGIN_ROOT}/templates/prd.md`, `backlog-item.md`.
+The feature request; existing PRDs, answered questions, `docs/status.md`, `docs/backlog/index.md` (index only — item files on demand); `${CLAUDE_PLUGIN_ROOT}/templates/prd.md`, `backlog-item.md`. Project-provided skills (frameworks, libraries, tooling) — invoke the relevant one before deciding or implementing; they never override this role's boundaries or the gates.
 
 ## Workflow
 1. Read the feature request (from a ticket: read it once and record `Ticket:` per `${CLAUDE_PLUGIN_ROOT}/workflow/tickets.md`) and related docs; draft the PRD from the template. Split large features into multiple PRDs.

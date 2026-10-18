@@ -44,6 +44,7 @@ A repository with source code and history predating this session is an **existin
 4. **Owner preferences** — ask, then record (skip any the Owner defers; the defaults apply):
    - **Autonomy:** `supervised`, `standard` (default), or `autonomous`, plus any gates to keep (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Autonomy). Set the project `CLAUDE.md`'s `Autonomy:` line.
    - **Ticket system:** does work come from Linear, Jira, or another tracker enabled via MCP? Yes → run the setup in `${CLAUDE_PLUGIN_ROOT}/commands/tickets.md`. No → leave `System: none`; `/dev-team:tickets` enables it later.
+   - **Design tool:** does the team design in Figma, Penpot, or another tool with an MCP server? Yes → fill `docs/standards/design.md` § Design tool so the designer builds mockups there. No → mockups stay HTML in `docs/design/`.
 
 5. Report what was created vs. skipped, then remind the user:
    - Fill in `docs/stack/stack.md` and customize `docs/standards/*.md` — agents are instructed to stop and ask rather than guess while placeholders remain. Existing projects: step 6 fills most of this from the code instead.
