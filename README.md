@@ -12,6 +12,10 @@ Small work skips the pipeline entirely (**fast path**): bugs and chores go strai
 
 Tasks are token-frugal by design: each feature's breakdown is a directory (`docs/tasks/<slug>/`) with a status index and one file per task, so an implementing session loads the tiny index plus only the task it is working on — never the whole plan. The **backlog** follows the same shape (`docs/backlog/index.md` + one file per item): any role files deferred work — scope cuts, tech debt, known bugs — and the product-manager prioritizes and promotes it into the pipeline or the fast path.
 
+## Orca runtime (optional)
+
+Projects driven from Orca can opt into a second runtime ([`workflow/orca.md`](workflow/orca.md)): every role runs as a long-lived **top-level peer session** launched and supervised by Orca orchestration — never a subagent. Peers are plain sessions with full project tools (MCP servers, skills, claude-mem); the dispatch spec gives each its role. Peers stay **warm** across dispatches to pay startup once, and the coordinator `/clear`s them at phase boundaries, past a context threshold, or after a failed attempt; the Reviewer is cleared before every review. Opt in with one line in the project `CLAUDE.md` plus a settings deny for the `Agent` tool — without it, nothing changes.
+
 ## Install (per project)
 
 ```

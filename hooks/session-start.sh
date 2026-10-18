@@ -1,6 +1,8 @@
 #!/bin/bash
 # Announce the dev-team plugin to the main conversation. Kept tiny for token efficiency.
-if [ -f "${CLAUDE_PROJECT_DIR:-.}/docs/status.md" ]; then
+if [ -f "${CLAUDE_PROJECT_DIR:-.}/docs/status.md" ] && grep -qs "Runtime: Orca" "${CLAUDE_PROJECT_DIR:-.}/CLAUDE.md"; then
+  echo "dev-team plugin active (Orca runtime). Workspace: docs/ (status: docs/status.md). Roles run as top-level Orca peers per the plugin's workflow/orca.md; never spawn subagents."
+elif [ -f "${CLAUDE_PROJECT_DIR:-.}/docs/status.md" ]; then
   echo "dev-team plugin active. Workspace: docs/ (status: docs/status.md). Run roles inline via the dev-team:<role> skills (orchestrator routes — ask 'what's next?'); spawn a role's agent only for parallel work, independent review, or context relief."
 else
   echo "dev-team plugin active, but this project has no docs/status.md. If the user wants to use the dev-team workflow here, run the dev-team:bootstrap skill to scaffold the workspace."
