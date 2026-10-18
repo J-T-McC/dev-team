@@ -1,13 +1,17 @@
 #!/bin/bash
 # new-tickets <check-in> [source] — tickets this check-in has not seen yet.
-#   linear (default)                       Linear issues assigned to you, via Orca's Linear client
+#   linear <team-key> [workspace-id]       Linear issues assigned to you in that team, via Orca's Linear client
 #   github                                 GitHub issues in this repo assigned to you, via gh
 #   github-project <owner> <n> [query]     items on a GitHub Project (default query: assignee:@me)
 source "$(dirname "$0")/_common.sh"
 lock_held && exit 1
 name=$1; src=${2:-linear}
+team=""
 case "$src" in
-  linear)         out=$(orca linear list --filter assigned --limit 50 --json 2>/dev/null) ;;
+  linear)
+    # Orca's Linear connection is shared by every project: never query without the project's team.
+    team=$3; [ -n "$team" ] || { echo "new-tickets linear needs the project's team key" >&2; exit 2; }
+    out=$(orca linear list --filter assigned --team "$team" ${4:+--workspace "$4"} --limit 50 --json 2>/dev/null) ;;
   github)         out=$(gh issue list --assignee @me --state open --limit 50 --json url 2>/dev/null) ;;
   github-project) out=$(gh project item-list "$4" --owner "$3" --query "${5:-assignee:@me}" --limit 50 --format json 2>/dev/null) ;;
   *) echo "unknown source: $src" >&2; exit 2 ;;
@@ -21,5 +25,8 @@ d = json.load(sys.stdin)
 if isinstance(d, dict): d = d.get("result", d)
 rows = d if isinstance(d, list) else (d.get("issues") or d.get("items") or [])
 ids = {r.get("identifier") or r.get("url") or r.get("id") for r in rows} - {None}
+team = sys.argv[2]
+if team:  # belt and braces: keep only issues from this team, ENG-123 -> ENG
+    ids = {i for i in ids if i.split("-")[0] == team}
 open(path, "w").write("\n".join(seen | ids))
-sys.exit(0 if ids - seen else 1)' "$STATE_DIR/$name.seen"
+sys.exit(0 if ids - seen else 1)' "$STATE_DIR/$name.seen" "$team"

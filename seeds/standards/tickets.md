@@ -6,7 +6,10 @@ How this project uses an external ticket system through its MCP server. `System:
 - **System:** none *(e.g. `linear`, `jira`, `github`)*
 - **Via:** mcp *(`mcp` — any tracker with an MCP server; `orca` — Orca's built-in Linear client; `gh` — the GitHub CLI. The CLIs need no MCP server and return less output.)*
 - **MCP server:** _TBD_ *(only for `Via: mcp` — the server name as Claude Code lists it)*
-- **Workspace / team / project:** _TBD_
+- **Scope** *(required — the connection is shared by all your projects; this is the only fence)*:
+  - **Workspace:** _TBD_ *(Linear/Jira workspace id; GitHub: `owner/repo`)*
+  - **Team / project:** _TBD_ *(Linear team key, e.g. `ENG`; Jira project key; GitHub Project number, if used)*
+  - **Account:** _TBD_ *(`gh` only: the GitHub login that must be active)*
 
 ## Intake (active)
 - **Work query:** _TBD_ *(e.g. team `ENG`, label `dev-team`, status `Ready`; GitHub: `assignee:@me label:dev-team`, or a Project number plus its query)*
