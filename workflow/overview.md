@@ -55,6 +55,8 @@ Deferred work is filed, not remembered: `docs/backlog/index.md` (status table + 
 
 A role is a set of rules, not a separate agent. By default all work runs in the main conversation with the owning role's skill invoked — fast-path fixes and full pipeline phases alike, one role at a time in linear sequence; the role's boundaries, artifacts, records, and gates apply exactly as if its agent had done the work, without agent startup cost. Spawning a role's agent buys exactly three things, and the startup cost is paid only when one is needed: **concurrency** (independent work streams running at once), **independence** (pipeline reviews always run in the reviewer agent — fresh eyes, never the conversation that produced or orchestrated the code), and **context relief** (a conversation grown too long hands a big phase to a fresh agent context).
 
+Projects that opt into the **Orca runtime** run every role as a long-lived top-level peer session instead, never a subagent — rules in `${CLAUDE_PLUGIN_ROOT}/workflow/orca.md`.
+
 ## Rules
 
 - Phases never advance without their gate: ✋ gates need explicit Project Owner approval, ✅ gates the named delegate's — both recorded in the artifact and in `docs/status.md`. Gate validity rules live in `workflow/handoffs.md`.
