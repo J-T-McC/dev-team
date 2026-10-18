@@ -4,7 +4,7 @@ How this project uses an external ticket system through its MCP server. `System:
 
 ## Connection (active)
 - **System:** none *(e.g. `linear`, `jira`, `github`)*
-- **Via:** mcp *(`mcp` — an MCP server; **add it at local scope** (`claude mcp add --scope local`) so only this project can reach the tracker. `orca` — Orca's built-in Linear client, and `gh` — the GitHub CLI: cheaper, but each is one connection shared by every project on the machine.)*
+- **Via:** mcp *(`orca` — Orca's built-in Linear client, and `gh` — the GitHub CLI: cheapest, no MCP server, but each is one connection every project on this machine can use. Fine when only this project uses the tracker. **Running several projects?** Use `mcp`, added at local scope (`claude mcp add --scope local`) and logged in to this project's workspace only, so the others cannot reach it.)*
 - **MCP server:** _TBD_ *(only for `Via: mcp` — the server name as Claude Code lists it)*
 - **Scope** *(required — the connection is shared by all your projects; this is the only fence)*:
   - **Workspace:** _TBD_ *(Linear/Jira workspace id; GitHub: `owner/repo`)*
