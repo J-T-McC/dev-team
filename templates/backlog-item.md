@@ -4,6 +4,7 @@
 - **Priority:** high | medium | low *(Product Manager sets)*
 - **Status:** open | promoted | done | dropped
 - **Filed by / date:** <role / date>
+- **Ticket:** *(ID once elevated to a ticket system, if any)*
 - **Source:** <PRD Out of Scope section, task completion note, fix record, review finding, or Owner request>
 
 ## What

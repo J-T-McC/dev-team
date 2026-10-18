@@ -3,6 +3,7 @@
 - **Status:** Draft | In Review | Approved
 - **Author:** Product Manager
 - **Approved by / date:**
+- **Ticket:** *(ID, if this came from a ticket system — delete otherwise)*
 
 ## Feature
 <One-sentence description.>
