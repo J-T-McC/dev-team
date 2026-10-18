@@ -22,9 +22,11 @@ Tasks are token-frugal by design: each feature's breakdown is a directory (`docs
 
 Projects driven from Orca can opt into a second runtime ([`workflow/orca.md`](workflow/orca.md)): every role runs as a long-lived **top-level peer session** launched and supervised by Orca orchestration — never a subagent. Peers are plain sessions with full project tools (MCP servers, skills, claude-mem); the dispatch spec gives each its role. Peers stay **warm** across dispatches to pay startup once, and the coordinator `/clear`s them at phase boundaries, past a context threshold, or after a failed attempt; the Reviewer is cleared before every review. Opt in with one line in the project `CLAUDE.md` plus a settings deny for the `Agent` tool — without it, nothing changes.
 
+**Check-ins** (`/dev-team:checkins`) are scheduled Orca automations defined in `docs/standards/checkins.md` — e.g. keep work moving every 30 minutes, catch stalled or failed work hourly, have the product-manager groom tickets assigned to you each weekday. Each starts with a free trigger check, so an idle project costs nothing; each reuses its session so it keeps its bearings (a run still re-sends that session, so check-in sessions are kept small). Optional extras: mirror `docs/status.md` onto Orca's worktree board (with an unread flag when you're needed), and Orca's built-in browser for UI checks in place of Playwright.
+
 ## Ticket systems (optional)
 
-Work can come from Linear, Jira, or any tracker enabled through MCP — configured per project in `docs/standards/tickets.md` (off by default; rules in [`workflow/tickets.md`](workflow/tickets.md)). The tracker is the **source of work and the record of outcomes**; agents still work and talk through `docs/`, which is cheaper than MCP round-trips. A ticket is read once at intake and its ID carried in the PRD, fix record, and status row; phase changes sync its status; and only what the config's **Elevation** allowlist names goes back out — a release comment, high-priority bugs — never findings, questions, or task notes. Only the orchestrator and product-manager write to the tracker.
+Work can come from Linear, Jira, GitHub Issues and Projects, or any tracker enabled through MCP — or through Orca's built-in Linear client or the `gh` CLI, which need no MCP server — configured per project in `docs/standards/tickets.md` (off by default; rules in [`workflow/tickets.md`](workflow/tickets.md)). The tracker is the **source of work and the record of outcomes**; agents still work and talk through `docs/`, which is cheaper than MCP round-trips. A ticket is read once at intake and its ID carried in the PRD, fix record, and status row; phase changes sync its status; and only what the config's **Elevation** allowlist names goes back out — a release comment, high-priority bugs — never findings, questions, or task notes. Only the orchestrator and product-manager write to the tracker.
 
 Bootstrap asks whether to connect one. Set up or fine-tune any time with `/dev-team:tickets "<change>"` (e.g. "also open tickets for review follow-ups") — it edits only the affected section, verifies the work query read-only, logs the change in the config's Tuning log, and writes on your approval.
 
@@ -92,8 +94,9 @@ Validate with `claude plugin validate .`
 | Path | What | Updatable |
 |---|---|---|
 | `agents/`, `skills/` | The six roles (orchestrator is skill-only) + bootstrap skill | ✅ via plugin update |
-| `commands/` | `/dev-team:sync` — pull missing/updated seeds into a project; `/dev-team:tickets` — ticket-system setup/tuning | ✅ via plugin update |
+| `commands/` | `/dev-team:sync` — pull missing/updated seeds into a project; `/dev-team:tickets` — ticket-system setup/tuning; `/dev-team:checkins` — Orca check-ins | ✅ via plugin update |
 | `templates/`, `workflow/` | Document templates, pipeline/handoff/communication rules | ✅ via plugin update |
+| `bin/` | Check-in trigger scripts and the coordinator lock (Orca runtime) | ✅ via plugin update |
 | `hooks/` | Session-start announcement + agent-memory size sentinel | ✅ via plugin update |
 | `seeds/` | Copied into projects by bootstrap/sync | ❌ project-owned after copy |
 | `examples/user-authentication/` | Worked example of the full pipeline | ✅ via plugin update |

@@ -7,7 +7,7 @@ An alternative to the default runtime in `workflow/overview.md` ("Where work run
 Add to the project `CLAUDE.md` rules:
 
 ```
-- **Runtime: Orca.** Roles run as top-level Orca peers per the dev-team `workflow/orca.md`; never spawn subagents. Peer clear threshold: 25% of the peer's context window.
+- **Runtime: Orca.** Roles run as top-level Orca peers per the dev-team `workflow/orca.md`; never spawn subagents. Peer clear threshold: 25% of the peer's context window. Board: off.
 ```
 
 and deny the subagent tool in `.claude/settings.json` (`"permissions": { "deny": ["Agent"] }`) — peers are full sessions and would otherwise carry it. Without the rule line the default runtime applies, even inside Orca. The threshold is the project's to tune (below); omitted, it defaults to 25%.
@@ -61,3 +61,21 @@ When the task index has independent chains, record the base commit in the Review
 - **Last merge completes the Review manifest** (head commit, test command); the coordinator's spec says which merge is last. Then the Reviewer is dispatched and stream peers are released.
 
 When an answered question lands in the feature worktree, the coordinator's reply tells the waiting stream to pull the feature branch.
+
+## Check-ins (optional)
+
+Scheduled Orca automations that keep work moving without the Owner prompting: defined in `docs/standards/checkins.md`, applied with `/dev-team:checkins`. Each has a schedule, a role, a trigger check, a job, and limits.
+
+- **Free when idle.** Orca runs the trigger check first; it exits non-zero — no session, no tokens — when nothing changed or another coordinator holds the lock. The plugin ships `has-work`, `stalled`, and `new-tickets` (`${CLAUDE_PLUGIN_ROOT}/bin/`); any shell command works.
+- **Always reuse the session.** A run keeps its orientation instead of re-reading the project. It is not free: each run re-sends the whole session, and check-ins spaced further apart than the prompt cache lasts (minutes to an hour) pay it uncached — about the session's size. Keep check-in sessions small: the size rule for warm peers applies.
+- **One coordinator at a time.** Whoever dispatches holds `${CLAUDE_PLUGIN_ROOT}/bin/dev-team-lock` — check-ins take it at the start of a run; an interactive coordinator takes it (`acquire owner`) before dispatching and releases it when its turn ends. A forgotten lock expires after 30 minutes.
+- **Limits.** A check-in never exceeds the project's autonomy level: below *autonomous* it acts only where a gate is delegated, and flags anything that needs the Owner (on the board, when enabled).
+- **Never restart sessions.** A check-in that finds a peer not responding reports it; restarting is the Owner's call.
+
+## Board (optional)
+
+Add `Board: on` to the project's Runtime line to mirror `docs/status.md` onto Orca's worktree board — `docs/status.md` stays the truth. At each phase change the coordinator runs `orca worktree set --worktree <feature worktree> --workspace-status <status> --comment "<phase> · <role> · <blocker or none>"`, with status `todo` (Requirements), `in-progress` (UX Design, Technical Design, Implementation), `in-review` (Review), `completed` (Done). When the Owner is needed — an approval, an Owner question, a session not responding — it adds `--unread`. Features sharing a worktree share its card; the comment names each.
+
+## Browser
+
+Under this runtime, UI checks (senior-developer, reviewer) and mockup snapshots (designer) use Orca's built-in browser — `orca tab create --url …`, `orca snapshot`, `orca screenshot` — instead of a Playwright MCP server.

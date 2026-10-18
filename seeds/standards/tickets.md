@@ -3,12 +3,16 @@
 How this project uses an external ticket system through its MCP server. `System: none` disables all of it. The plugin's `workflow/tickets.md` sets the rules every setting here obeys (who may touch the system, read once, allowlist out). Tune this file freely — `/dev-team:tickets` walks through changes — and log each change below.
 
 ## Connection (active)
-- **System:** none *(e.g. `linear`, `jira`)*
-- **MCP server:** _TBD_ *(the server name as Claude Code lists it)*
-- **Workspace / team / project:** _TBD_
+- **System:** none *(e.g. `linear`, `jira`, `github`)*
+- **Via:** mcp *(`orca` — Orca's built-in Linear client, and `gh` — the GitHub CLI: cheapest, no MCP server, but each is one connection every project on this machine can use. Fine when only this project uses the tracker. **Running several projects?** Use `mcp`, added at local scope (`claude mcp add --scope local`) and logged in to this project's workspace only, so the others cannot reach it.)*
+- **MCP server:** _TBD_ *(only for `Via: mcp` — the server name as Claude Code lists it)*
+- **Scope** *(required — the connection is shared by all your projects; this is the only fence)*:
+  - **Workspace:** _TBD_ *(Linear/Jira workspace id; GitHub: `owner/repo`)*
+  - **Team / project:** _TBD_ *(Linear team key, e.g. `ENG`; Jira project key; GitHub Project number, if used)*
+  - **Account:** _TBD_ *(`gh` only: the GitHub login that must be active)*
 
 ## Intake (active)
-- **Work query:** _TBD_ *(e.g. team `ENG`, label `dev-team`, status `Ready`)*
+- **Work query:** _TBD_ *(e.g. team `ENG`, label `dev-team`, status `Ready`; GitHub: `assignee:@me label:dev-team`, or a Project number plus its query)*
 - **Routing** — ticket type or label → destination:
   - feature → Product Manager (PRD)
   - bug, chore → Senior Developer fast path (fix record)

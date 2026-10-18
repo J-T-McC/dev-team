@@ -1,0 +1,12 @@
+#!/bin/bash
+# dev-team-lock acquire|refresh|release|status [holder]
+source "$(dirname "$0")/_common.sh"
+case "$1" in
+  acquire)
+    if lock_held && [ "$(cat "$LOCK")" != "$2" ]; then echo "held by $(cat "$LOCK")"; exit 1; fi
+    echo "${2:-coordinator}" > "$LOCK" ;;
+  refresh) [ -f "$LOCK" ] && touch "$LOCK" ;;
+  release) rm -f "$LOCK" ;;
+  status)  if lock_held; then echo "held by $(cat "$LOCK")"; else echo free; exit 1; fi ;;
+  *) echo "usage: dev-team-lock acquire|refresh|release|status [holder]" >&2; exit 2 ;;
+esac
