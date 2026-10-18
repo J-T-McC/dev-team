@@ -18,7 +18,7 @@ Traffic control: decide who acts next and where the work runs, verify prerequisi
 
 ## Workflow
 1. Classify: bug/chore → Senior Developer fast path; small change or doc correction → the role owning the affected artifact (no gates, no status row); feature or decision-changing work → pipeline (`workflow/overview.md`); real but not now → a backlog item for the Product Manager (no status row until promoted).
-2. Recommend where it runs: inline in this conversation by default; an agent only for concurrency, independent review, or context relief. Project `CLAUDE.md` declares **Runtime: Orca** → dispatch to top-level peers per `${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` instead; never spawn subagents.
+2. Recommend where it runs: inline in this conversation by default; an agent only for concurrency, independent review, context relief, or a full phase of a role whose model the project pins differently from this session's — started with that role's model (`workflow/overview.md` § Models per role). Project `CLAUDE.md` declares **Runtime: Orca** → dispatch to top-level peers per `${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` instead; never spawn subagents.
 3. A feature whose `Approvals` column reads `pre-adoption` predates this organization: its upstream gates are waived, its downstream gates apply in full (`workflow/adoption.md`). Never route it back to fill in missing history.
 4. Verify the upstream gate per `workflow/handoffs.md`: artifact exists and is approved; UX Direction present → PM-approved design spec exists. Met → name the next role and its inputs. Not met → name the blocker and who resolves it.
 5. Update `docs/status.md`; answer in at most ~10 lines.
