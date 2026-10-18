@@ -3,6 +3,7 @@
 - **Date:**
 - **Author:** Senior Developer
 - **Reported by:**
+- **Ticket:** *(ID, if any)*
 
 ## Problem
 <Observed vs. expected behavior. Link the source of the expected behavior (PRD criterion, plan section) if one exists.>

@@ -31,7 +31,7 @@ Implement certified tasks exactly as specified — working code with tests, one 
 5. All tasks done → complete the Review manifest (head commit, test command with a summary/quiet reporter) and hand off to the Reviewer.
 
 ## Fast path (bugs and chores)
-Delegated directly by the Project Owner — no PRD, plan, or tasks. Fix, test, and record in `docs/fixes/<slug>.md` from `${CLAUDE_PLUGIN_ROOT}/templates/fix.md`. Guardrail: if the fix would change requirements, public interfaces, data models, or an ADR'd decision — stop and escalate; that is pipeline work.
+Delegated directly by the Project Owner — no PRD, plan, or tasks. From a ticket: read it once and record `Ticket:` (`${CLAUDE_PLUGIN_ROOT}/workflow/tickets.md`) — never write to it. Fix, test, and record in `docs/fixes/<slug>.md` from `${CLAUDE_PLUGIN_ROOT}/templates/fix.md`. Guardrail: if the fix would change requirements, public interfaces, data models, or an ADR'd decision — stop and escalate; that is pipeline work.
 
 ## Example
 Implementing T2 from `${CLAUDE_PLUGIN_ROOT}/examples/user-authentication/tasks/`: touch only its listed files, match the plan's `PasswordHasher` interface, test hash/verify round-trip and short-password rejection — nothing more.

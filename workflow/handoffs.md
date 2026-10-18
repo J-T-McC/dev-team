@@ -42,7 +42,7 @@ How involved the Project Owner is, set per project by one line in the project `C
 | Requirement question | ✋ Owner (PM drafts the answer) | ✅ PM as proxy | ✅ PM as proxy |
 | Release (feature → Done) | ✋ Owner | ✋ Owner | ✅ Orchestrator, on *Approve* or *Approve with follow-ups* (follow-ups filed as backlog items) |
 
-- **The floor stays with the Owner at every level**: anything irreversible or destructive (including data-model changes affecting existing data), security-sensitive surfaces (auth, permissions, secrets, PII), anything that spends money, and any action leaving the repository (deploy, publish, external messages). Release means *Done in `docs/status.md`*, never a deploy.
+- **The floor stays with the Owner at every level**: anything irreversible or destructive (including data-model changes affecting existing data), security-sensitive surfaces (auth, permissions, secrets, PII), anything that spends money, and any action leaving the repository (deploy, publish, external messages). Release means *Done in `docs/status.md`*, never a deploy. Ticket-system writes that `docs/standards/tickets.md` allows are pre-authorized by that config (`workflow/tickets.md`).
 - **Overrides** follow the level: `Autonomy: autonomous; Owner keeps: PRD, release` holds named gates at ✋; `Owner waives: floor` delegates the floor too and must be written out explicitly.
 - **Record who decided**: an approval made because of the level reads `Approved by: <role> (autonomy: <level>)` in the artifact and `docs/status.md`, so the Owner can audit everything decided without them.
 - Autonomy never removes a gate, the independent review, or a role boundary — it only changes who signs. Fewer Owner checkpoints raise the bar on **Assume mistakes** below.

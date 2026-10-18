@@ -1,0 +1,13 @@
+# Ticket Systems (optional)
+
+A project may connect a ticket system (Linear, Jira, …) through its MCP server. It is enabled when `docs/standards/tickets.md` names a `System` other than `none`; that file is the project's tunable config, this file the rules every config obeys. The ticket system is a **source of work and a record of outcomes** — `docs/` stays the working medium, because documents are cheaper than MCP round-trips and the roles already communicate through them.
+
+## Rules
+
+- **Who touches it.** Writes come from two roles only, and only as the config allows: the **Orchestrator** (intake routing, status sync, the release comment) and the **Product Manager** (creating tickets from backlog items the config elevates — it owns priority). The Orchestrator queries for work; the role receiving a ticket reads that one ticket. No other role calls the ticket system: findings worth a ticket become backlog items, and reach the system only through the Product Manager.
+- **Read once.** On intake the receiving role copies what it needs (problem, observed vs. expected, acceptance hints, reporter) into its own document and records `Ticket: <ID>` in that document's header; the Orchestrator carries it in the `docs/status.md` Feature cell (`user-auth (ENG-123)`). From then on the documents are the truth. Re-read the ticket only when the Owner says it changed, or at gates when the config sets `Watch comments: at gates`. A ticket change that alters requirements is a requirement change — it goes to the Product Manager and is re-approved.
+- **Fetch narrowly.** Request only the fields the work needs; never pull full comment history or attachments unless the config asks for them.
+- **Allowlist out.** Only what the config's Elevation section lists leaves `docs/`, in its templates, within its cap. Everything else stays in documents; the Owner may elevate anything ad hoc.
+- **Pre-authorized.** Writes the config allows were approved by the Owner when they wrote the config, so they are not floor actions (`workflow/handoffs.md` § Autonomy). Any other write to the ticket system is, at every autonomy level.
+- **Fail soft.** If the server is unavailable or a write fails, keep working from the documents, note `ticket sync pending` in the feature's status row, and retry at the next transition. Ticket sync never blocks a gate.
+- **Tuning.** The config is a standard: the Owner changes it, directly or with `/dev-team:tickets`, and every change gets a Tuning log row. A role that finds the setup noisy or lossy proposes a change to the Owner — it never edits the config itself.

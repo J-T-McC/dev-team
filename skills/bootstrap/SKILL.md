@@ -13,7 +13,7 @@ Scaffold the per-project workspace this plugin's agents work in. **Idempotent:**
 git log --oneline -1 2>/dev/null; ls docs 2>/dev/null; ls CLAUDE.md 2>/dev/null
 ```
 
-A repository with source code and history predating this session is an **existing project** — run step 0 and step 5 as well, per `${CLAUDE_PLUGIN_ROOT}/workflow/adoption.md`. A fresh or near-empty repository is greenfield: skip both. When it is genuinely ambiguous, ask the Owner rather than guessing — the wrong branch either interrogates the Owner for answers the code holds, or invents standards for a project with none.
+A repository with source code and history predating this session is an **existing project** — run step 0 and step 6 as well, per `${CLAUDE_PLUGIN_ROOT}/workflow/adoption.md`. A fresh or near-empty repository is greenfield: skip both. When it is genuinely ambiguous, ask the Owner rather than guessing — the wrong branch either interrogates the Owner for answers the code holds, or invents standards for a project with none.
 
 ## Steps
 
@@ -41,11 +41,15 @@ A repository with source code and history predating this session is an **existin
 }
 ```
 
-4. Report what was created vs. skipped, then remind the user:
-   - Fill in `docs/stack/stack.md` and customize `docs/standards/*.md` — agents are instructed to stop and ask rather than guess while placeholders remain. Existing projects: step 5 fills most of this from the code instead.
+4. **Owner preferences** — ask, then record (skip any the Owner defers; the defaults apply):
+   - **Autonomy:** `supervised`, `standard` (default), or `autonomous`, plus any gates to keep (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Autonomy). Set the project `CLAUDE.md`'s `Autonomy:` line.
+   - **Ticket system:** does work come from Linear, Jira, or another tracker enabled via MCP? Yes → run the setup in `${CLAUDE_PLUGIN_ROOT}/commands/tickets.md`. No → leave `System: none`; `/dev-team:tickets` enables it later.
+
+5. Report what was created vs. skipped, then remind the user:
+   - Fill in `docs/stack/stack.md` and customize `docs/standards/*.md` — agents are instructed to stop and ask rather than guess while placeholders remain. Existing projects: step 6 fills most of this from the code instead.
    - Commit the scaffolded files to the **project** repo.
 
-5. **Existing projects — harvest, then draw the line** (`workflow/adoption.md`):
+6. **Existing projects — harvest, then draw the line** (`workflow/adoption.md`):
    - **Harvest:** invoke the `dev-team:principal-engineer` skill to propose `docs/stack/stack.md`, `docs/standards/coding.md`, and `docs/standards/testing.md` from the repository — manifests, CI and container config, lint/format config, test layout, a representative sample of source, and commit history. Every proposed line cites the file it came from; anything the repository does not answer stays `_TBD_`. Record what the project does, not what it should do. The Owner approves each file.
-   - **Declare in-flight work:** one `docs/status.md` row per feature already under way, `Phase` at its true position, `Approvals: pre-adoption`. Upstream gates are waived by that record; downstream gates apply in full from today.
+   - **Declare in-flight work:** one `docs/status.md` row per feature already under way (Feature cell carries its ticket ID if a ticket system is configured), `Phase` at its true position, `Approvals: pre-adoption`. Upstream gates are waived by that record; downstream gates apply in full from today.
    - **Never document backwards.** No PRD, plan, or ADR for work already shipped — documents are written forward, for the next change. The next *new* feature runs the pipeline from the top.
