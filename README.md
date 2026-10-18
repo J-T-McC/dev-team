@@ -6,6 +6,10 @@ A reusable, documentation-first development organization for [Claude Code](https
 
 Owner attention is reserved for what matters — approving PRDs, releases, and **major decisions** (new dependencies, stack/data-model changes, security-sensitive or irreversible choices). All other gates are delegated: design specs → product-manager, plans and task breakdowns → principal-engineer self-certified; the product-manager answers requirement questions as the Owner's proxy.
 
+**Choose how involved you are** with one line in the project `CLAUDE.md`: `Autonomy: supervised` (you sign every gate, down to each finished task), `standard` (the default above), or `autonomous` (roles sign everything; you keep only the floor — irreversible or destructive changes, security-sensitive surfaces, spending, and anything leaving the repo). Hold specific gates with `; Owner keeps: PRD, release`. Every decision made without you is recorded as `Approved by: <role> (autonomy: <level>)` for audit. Rules: [`workflow/handoffs.md`](workflow/handoffs.md) § Autonomy.
+
+**Agents assume mistakes** — their own and each other's. Each self-reviews its output against the source documents (not its memory of them) before handing off, and questions an assignment or upstream artifact that smells wrong instead of silently complying or silently fixing it.
+
 Small work skips the pipeline entirely (**fast path**): bugs and chores go straight to the senior-developer (fix + tests + a record in `docs/fixes/`), doc corrections to the role owning the doc — no gates, as long as the work is truth-preserving.
 
 **Roles run inline by default.** All work — questions, fast-path fixes, and full pipeline phases in linear sequence — runs in the main conversation by invoking the owning role's skill, at a fraction of a subagent spawn's token cost. Agents spawn only when it pays for itself: **concurrency**, **independent review** (pipeline reviews always run in the reviewer agent — fresh eyes), or **context relief** (handing a big phase to a fresh context).

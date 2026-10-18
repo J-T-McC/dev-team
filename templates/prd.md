@@ -28,6 +28,9 @@
 ## Out of Scope
 <Explicitly excluded items, with a note if they become their own PRD.>
 
+## Assumptions *(autonomy: autonomous only — delete otherwise)*
+<Each gap the PM filled without the Owner, one line each, so the Owner can audit it.>
+
 ## Open Questions
 <Link question docs. Must be empty (or struck through with answers linked) before approval.>
 

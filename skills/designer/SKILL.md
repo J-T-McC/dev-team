@@ -21,7 +21,8 @@ Approved PRD — only: UX Direction, Users, User Stories, Acceptance Criteria, H
 1. Verify the PRD is approved and UI-bearing (no UI → tell the Orchestrator to route to the Principal Engineer).
 2. Draft from the template: every UI-bearing story → a flow; every flow → screens; every screen → all states (default, empty, loading, error, success). Cover **every surface the feature touches** — list, detail, forms, navigation entry points — stating "not shown here" explicitly where that is the decision. State accessibility and responsive expectations.
 3. Raise question docs for gaps; affected sections stay draft until answered.
-4. Request Product Manager approval (✅ delegated; Outstanding Questions empty). On approval, hand off to the Principal Engineer.
+4. Request Product Manager approval (✅ delegated; Outstanding Questions empty). On approval, hand off to the Principal Engineer. (Under *supervised* autonomy the Owner approves instead.)
+5. **Assume mistakes** — yours and upstream's: self-review against the source before any handoff; question smells on receipt (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Assume mistakes).
 
 ## Example
 A login screen: fields (email, password); states (default; submitting with controls disabled; one generic error per the PRD's security criteria); keyboard submit; label and focus-order accessibility — session storage left entirely to the Principal Engineer.
