@@ -7,10 +7,10 @@ An alternative to the default runtime in `workflow/overview.md` ("Where work run
 Add to the project `CLAUDE.md` rules:
 
 ```
-- **Runtime: Orca.** Roles run as top-level Orca peers per the dev-team `workflow/orca.md`; never spawn subagents.
+- **Runtime: Orca.** Roles run as top-level Orca peers per the dev-team `workflow/orca.md`; never spawn subagents. Peer clear threshold: 25% of the peer's context window.
 ```
 
-and deny the subagent tool in `.claude/settings.json` (`"permissions": { "deny": ["Agent"] }`) — peers are full sessions and would otherwise carry it. Without the rule line the default runtime applies, even inside Orca.
+and deny the subagent tool in `.claude/settings.json` (`"permissions": { "deny": ["Agent"] }`) — peers are full sessions and would otherwise carry it. Without the rule line the default runtime applies, even inside Orca. The threshold is the project's to tune (below); omitted, it defaults to 25%.
 
 ## Topology
 
@@ -34,11 +34,13 @@ Exact commands and settlement rules come from Orca's version-matched guide (`orc
 Startup is a session's fixed cost (~35k measured: system prompt, skills, claude-mem context); a warm peer pays it once and keeps its orientation across dispatches. Between settled dispatches the coordinator chooses one:
 
 - **Reuse warm** — next dispatch to the same terminal. The default within a phase or a stream.
-- **Clear, then reuse** — `orca terminal send --terminal <handle> --text "/clear" --enter`, wait `--for tui-idle`, dispatch. Clear when any holds:
-  - the phase ended (plan certified, spec approved, the stream's tasks done)
-  - the senior-developer batch limit hit (its skill's ~4 tasks, or heavy context)
-  - context is large: send `/context` and grep the terminal output for its `Messages:` line — clear above ~100k (tune with real numbers)
+- **Clear, then reuse** — `orca terminal send --terminal <handle> --text "/clear" --enter`, wait `--for tui-idle`, dispatch. **Content is the primary trigger** — poison is stale or wrong context, not a large one. Clear when any holds:
   - the last dispatch failed, was rejected, or hit a dead end — that context is poison, not orientation
+  - the phase ended (plan certified, spec approved, the stream's tasks done) — what follows works from documents
+  - the senior-developer batch limit hit (its skill's ~4 tasks)
+  - **size fallback** — the peer's context passes the project's threshold (default 25% of its window: ~250k on a 1M model, ~50k on 200k). Size costs on every turn — each turn re-sends the whole context, cached or not — so this is a cost bound: clear once carried orientation is worth less than re-sending it. Check with `/context` (a local command, no model turn): grep the terminal output for `Messages:` and the window size.
+
+  Until the threshold is tuned, check `/context` after every settlement and report the sizes to the Owner with the feature's outcome, so the project's number comes from real runs.
 - **Release** — feature done, or the role is idle for the foreseeable future: `orca orchestration worker-release --dispatch <id>` closes the peer's terminal.
 
 `/clear` needs terminal-mode agent tabs (Orca's Chat UI setting); with chat-mode workers, clearing means release plus a fresh `worker-start`.
