@@ -8,6 +8,8 @@ Owner attention is reserved for what matters — approving PRDs, releases, and *
 
 **Choose how involved you are** with one line in the project `CLAUDE.md`: `Autonomy: supervised` (you sign every gate, down to each finished task), `standard` (the default above), or `autonomous` (roles sign everything; you keep only the floor — irreversible or destructive changes, security-sensitive surfaces, spending, and anything leaving the repo). Hold specific gates with `; Owner keeps: PRD, release`. Every decision made without you is recorded as `Approved by: <role> (autonomy: <level>)` for audit. Rules: [`workflow/handoffs.md`](workflow/handoffs.md) § Autonomy.
 
+**Agents write plainly** — short, plain English in every doc and note, and code comments only where the *why* is not obvious ([`workflow/communication.md`](workflow/communication.md) § Plain language). No narrated code, no history comments, no commented-out code.
+
 **Agents assume mistakes** — their own and each other's. Each self-reviews its output against the source documents (not its memory of them) before handing off, and questions an assignment or upstream artifact that smells wrong instead of silently complying or silently fixing it.
 
 Small work skips the pipeline entirely (**fast path**): bugs and chores go straight to the senior-developer (fix + tests + a record in `docs/fixes/`), doc corrections to the role owning the doc — no gates, as long as the work is truth-preserving.

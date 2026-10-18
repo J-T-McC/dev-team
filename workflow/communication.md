@@ -38,3 +38,14 @@ Never bypass the chain. Example: the Senior Developer must not ask the Project O
 - Communicate through documents, not chat memory.
 - Be concise; link to documents instead of restating them.
 - One question per question document.
+
+## Plain language
+
+Everything a role writes — artifacts, notes, questions, summaries, commit messages — is read by people and re-read by agents. Neither needs padding.
+
+- Short sentences, common words. Say what was done or what is needed, then stop.
+- No filler ("it is important to note"), no hedging, no restating the question or the upstream doc.
+- Lead with the point; details after, only if they change what the reader does.
+- Plain is not vague: names, numbers, criteria, and decisions stay exact.
+
+**Code comments** follow the same rule. Comment only what the code cannot say: why a non-obvious choice was made, a constraint or workaround, a link to the issue or spec behind it. Never narrate what the code does, restate a name, log history ("changed X to Y"), or leave commented-out code. Most code needs no comments.

@@ -3,7 +3,7 @@
 ## Severity definitions (active)
 - **Blocker** — violates acceptance criteria, breaks functionality, or introduces a security defect. Blocks approval.
 - **Major** — materially violates the technical plan or standards, or duplicates or adds a dependency without an ADR. Blocks approval.
-- **Minor** — style or improvement, including reimplemented existing helpers or abstractions beyond the plan; recorded as follow-up. Does not block.
+- **Minor** — style or improvement, including reimplemented existing helpers, abstractions beyond the plan, and comments that narrate or restate the code; recorded as follow-up. Does not block.
 
 ## Review scope (active)
 - Verify every task acceptance criterion and every PRD acceptance criterion.

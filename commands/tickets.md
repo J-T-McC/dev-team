@@ -18,7 +18,7 @@ Request: $ARGUMENTS
    - Find enabled ticket MCP servers from the tools available in this session (names like `linear`, `atlassian`/`jira`, `github`, `shortcut`, `asana`). None → tell the user to enable one in Claude Code first, and stop.
    - Ask, one topic at a time, offering real values read from the server where a cheap read can supply them (teams/projects, workflow status names, labels): which server and workspace; the work query; routing by type or label; status on intake; the status-sync table; what to elevate (release comment? which backlog items become tickets?); `Watch comments`.
    - Fill the config. Keep the seed's defaults for anything the user skips.
-   - Ensure the project `CLAUDE.md` carries the ticket rule (the seed's **Ticket system** line). If missing, propose adding to its rules:
+   - Ensure the project `CLAUDE.md` carries the ticket rule (it is not in the seed; it is added only when tickets are enabled). If missing, propose adding to its rules:
 
      ```
      - **Ticket system** (only if `docs/standards/tickets.md` enables one): only the orchestrator and product-manager write to it, as that file allows; other roles read a ticket once at intake, then work from `docs/` and file backlog items (dev-team `workflow/tickets.md`).

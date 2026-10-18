@@ -8,7 +8,8 @@
 - Approvals are recorded in the artifact **and** `docs/status.md`.
 
 ## Write dense
-Agents re-read these documents many times; every word is paid for repeatedly.
+Agents re-read these documents many times and people have to skim them; every word is paid for repeatedly.
+- Plain English: short sentences, common words. Say what was done or what is needed, then stop.
 - One line per fact. Tables and bullets over prose; sentence fragments are fine.
 - No filler ("it is important to note…"), no restating upstream content — link it.
 - Say it once: if a fact lives in another artifact or section, reference it.
