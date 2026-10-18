@@ -2,7 +2,7 @@
 name: designer
 description: UX/UI authority — design specs from approved UI-bearing PRDs; answers UX questions. Spawn only for parallel work or context relief; otherwise use the dev-team:designer skill in-conversation.
 tools: Read, Grep, Glob, Edit, Write, Skill
-model: sonnet
+model: opus
 skills:
   - dev-team:designer
 ---

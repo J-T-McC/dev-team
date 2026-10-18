@@ -35,6 +35,8 @@ Fill in `docs/stack/stack.md` and customize `docs/standards/*.md` — agents sto
 
 Keep the project `CLAUDE.md` lean — it is loaded every session, while skills and `docs/` load on demand. The seed [`seeds/CLAUDE.project.md`](seeds/CLAUDE.project.md) is the recommended shape.
 
+**Models per role:** each role's default model lives in its agent file (designer: Opus; senior-developer: Sonnet; the rest inherit the session's model). Override per project with one `CLAUDE.md` line — `Role models: designer: opus/high; senior-developer: sonnet` — applied whenever a role's agent or Orca peer is started ([`workflow/overview.md`](workflow/overview.md) § Models per role).
+
 Project-level skills (`.claude/skills/`) work out of the box: every dev-team agent carries the `Skill` tool and is instructed to consult relevant domain skills (e.g. a `laravel` skill) before deciding or implementing — no plugin changes needed.
 
 ## Update (per project)

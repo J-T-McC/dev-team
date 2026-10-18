@@ -57,6 +57,16 @@ A role is a set of rules, not a separate agent. By default all work runs in the 
 
 Projects that opt into the **Orca runtime** run every role as a long-lived top-level peer session instead, never a subagent — rules in `${CLAUDE_PLUGIN_ROOT}/workflow/orca.md`.
 
+### Models per role
+
+Each role's **plugin default** model and effort live in its agent's frontmatter (`${CLAUDE_PLUGIN_ROOT}/agents/<role>.md`); no `model:` means the session's own model. A project overrides any role with one line in its `CLAUDE.md`:
+
+```
+- **Role models:** designer: opus/high; senior-developer: sonnet
+```
+
+`<role>: <model>[/<effort>]`; roles not listed keep the plugin default. Use model aliases (`opus`, `sonnet`, `haiku`) — they track the latest release and are what the subagent tool accepts. Whoever starts a role's agent applies it: the orchestrator passes the model when spawning, and under the Orca runtime passes `--model`/`--effort` at launch. A role run **inline** uses the conversation's model; when the project pins a different model for a role, a full phase of that role is a reason to run it as its agent — quick questions stay inline.
+
 ## Rules
 
 - Phases never advance without their gate: ✋ gates need explicit Project Owner approval, ✅ gates the named delegate's — both recorded in the artifact and in `docs/status.md`. Gate validity rules live in `workflow/handoffs.md`.
