@@ -67,7 +67,7 @@ When an answered question lands in the feature worktree, the coordinator's reply
 Scheduled Orca automations that keep work moving without the Owner prompting: defined in `docs/standards/checkins.md`, applied with `/dev-team:checkins`. Each has a schedule, a role, a trigger check, a job, and limits.
 
 - **Free when idle.** Orca runs the trigger check first; it exits non-zero — no session, no tokens — when nothing changed or another coordinator holds the lock. The plugin ships `has-work`, `stalled`, and `new-tickets` (`${CLAUDE_PLUGIN_ROOT}/bin/`); any shell command works.
-- **Always reuse the session.** A check-in that runs pays one turn, not a session startup. Its session grows like any warm peer; Claude Code compacts it near the window limit.
+- **Always reuse the session.** A run keeps its orientation instead of re-reading the project. It is not free: each run re-sends the whole session, and check-ins spaced further apart than the prompt cache lasts (minutes to an hour) pay it uncached — about the session's size. Keep check-in sessions small: the size rule for warm peers applies.
 - **One coordinator at a time.** Whoever dispatches holds `${CLAUDE_PLUGIN_ROOT}/bin/dev-team-lock` — check-ins take it at the start of a run; an interactive coordinator takes it (`acquire owner`) before dispatching and releases it when its turn ends. A forgotten lock expires after 30 minutes.
 - **Limits.** A check-in never exceeds the project's autonomy level: below *autonomous* it acts only where a gate is delegated, and flags anything that needs the Owner (on the board, when enabled).
 - **Never restart sessions.** A check-in that finds a peer not responding reports it; restarting is the Owner's call.

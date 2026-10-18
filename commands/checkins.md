@@ -28,7 +28,7 @@ Request: $ARGUMENTS
        --precheck "$D/<trigger check> <name> [args]" \
        --prompt "<prompt>" --enabled
      ```
-     A built-in trigger check gets the check-in's name as its first argument; a custom command is used as written. `new-tickets linear` takes the team key and workspace from `docs/standards/tickets.md` § Scope — refuse to create it when the Scope is missing.
+     A built-in trigger check gets the check-in's name as its first argument; `always` omits `--precheck`; a custom command is used as written. `new-tickets linear` takes the team key and workspace from `docs/standards/tickets.md` § Scope — refuse to create it when the Scope is missing.
    - The prompt (with `$D` expanded to the absolute path):
      > You are the dev-team **<role>** running the **<name>** check-in. If the `dev-team:<role>` skill is not loaded in this conversation, invoke it. Take the lock: `"$D/dev-team-lock" acquire <name>` — if it fails, stop. Job: <job>. Limits: <may>, never beyond the project's autonomy level. When done: `"$D/has-work" --mark <name>`, then `"$D/dev-team-lock" release`. Report in five lines or fewer.
 
