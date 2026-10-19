@@ -17,7 +17,7 @@ print(len(fresh))' "$STATE_DIR/$name.seen")
 [ "${new:-0}" -gt 0 ] && exit 0
 
 # No progress for too long while features are in flight.
-in_flight=$(grep -E '^\|' docs/status.md 2>/dev/null | tail -n +3 | awk -F'|' '$3 !~ /Done/' | wc -l)
+in_flight=$(grep -E '^\|' "$WS/status.md" 2>/dev/null | tail -n +3 | awk -F'|' '$3 !~ /Done/' | wc -l)
 [ "$in_flight" -gt 0 ] || exit 1
 fp=$(docs_fingerprint); prog="$STATE_DIR/$name.progress"
 if [ "$fp" != "$(head -1 "$prog" 2>/dev/null)" ]; then echo "$fp" > "$prog"; exit 1; fi

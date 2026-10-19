@@ -1,6 +1,6 @@
-> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
+> **Example artifact** — fictional; in a real project this lives at the same path under the workspace.
 
-# T1 — Users table and model
+# T01 — Users table and model
 
 - **Plan section:** §Data Model
 - **Dependencies:** none

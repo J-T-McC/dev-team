@@ -16,7 +16,7 @@ The one exception: an in-flight feature that cannot continue without an upstream
 
 Features already under way when the organization arrives enter at their true phase:
 
-- One row in `docs/status.md` per in-flight feature, `Phase` set to where the work actually is, `Approvals` recording `pre-adoption`.
+- One row in `<ws>/status.md` per in-flight feature, `Phase` set to where the work actually is, `Approvals` recording `pre-adoption`.
 - Gates **upstream** of that phase are waived by adoption — recorded once by the Owner, not re-litigated per role.
 - Gates **downstream** apply in full from the adoption date. A feature adopted at Implementation still needs its review and its release approval.
 - A role handed pre-adoption work must not refuse it for a missing upstream artifact; it must refuse it for a missing *downstream* gate exactly as normal.
@@ -31,9 +31,9 @@ Evidence sources, in order of authority:
 
 | Target | Read |
 |---|---|
-| `docs/stack/stack.md` | package manifests and lockfiles, CI workflow files, container and deploy config, test/lint/format config, `.tool-versions`-style pins |
-| `docs/standards/coding.md` | directory layout, a representative sample of source files (naming, structure, error handling, logging), formatter and linter config; existing commit history for the commit-message section |
-| `docs/standards/testing.md` | test directory layout, test framework in the manifest, coverage config, CI test invocation |
+| `<ws>/stack/stack.md` | package manifests and lockfiles, CI workflow files, container and deploy config, test/lint/format config, `.tool-versions`-style pins |
+| `<ws>/standards/coding.md` | directory layout, a representative sample of source files (naming, structure, error handling, logging), formatter and linter config; existing commit history for the commit-message section |
+| `<ws>/standards/testing.md` | test directory layout, test framework in the manifest, coverage config, CI test invocation |
 
 Rules that keep the harvest honest:
 
@@ -46,13 +46,13 @@ Rules that keep the harvest honest:
 
 Two collisions to settle first, because both are cheaper to resolve before the scaffold lands than after.
 
-**An existing `docs/` directory.** The organization's directories are additive and coexist with ordinary project documentation. The real risk is a `docs/` that is a *published site* or a generated artifact, where new subdirectories get built, deployed, or wiped. Report what is already there and confirm with the Owner before creating anything inside it.
+**Where the workspace goes.** Choose the workspace root and the features folder (`workflow/workspace.md`) before anything is written. An existing `docs/` can host them — the folders are additive — unless it is a *published site* or a generated artifact, where new subdirectories get built, deployed, or wiped. A project dev-team does not own uses guest mode instead. Report what is already there and confirm with the Owner.
 
 **An existing `CLAUDE.md`.** Appending the seed section is only safe when the file does not already rule on the same subjects. Scan for existing rules on commit messages, document locations, review or approval process, and branch/PR policy. Report each conflict as a pair — the project's rule and the seed's rule — and let the Owner name the winner. Delete the loser rather than leaving both; two rules on one subject is worse than either rule alone.
 
 ## Order
 
-1. **Survey** — existing `docs/`, existing `CLAUDE.md` conflicts. Resolve both with the Owner.
+1. **Survey** — workspace location (or guest mode), existing `CLAUDE.md` conflicts. Resolve both with the Owner.
 2. **Scaffold** — seed sync creates directories and copies missing seeds.
 3. **Harvest** — Principal Engineer proposes `stack.md`, `coding.md`, `testing.md` with citations; Owner approves. Remaining standards stay as seeded.
 4. **Declare in-flight work** — status rows at true phases, `pre-adoption` approvals recorded.

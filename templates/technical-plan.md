@@ -2,14 +2,14 @@
 
 - **Status:** Draft | In Review | Approved
 - **Author:** Principal Engineer
-- **PRD:** `docs/product/<feature-slug>-prd.md`
+- **PRD:** `<feature>/prd.md`
 - **Approved by / date:**
 
 ## Overview
 <How the feature will be built, in one paragraph.>
 
 ## Architecture
-<Components, boundaries, and how they interact. Reference ADRs for significant decisions.>
+<Components, boundaries, and how they interact. Link ADRs (`<ws>/architecture/adr-NNN-…`) for significant decisions.>
 
 ## Data Model
 <Tables/collections, fields, constraints, indexes.>
@@ -36,5 +36,6 @@
 - **Inputs:**
 - **Outputs:** this plan
 - **Dependencies:**
+- **Related:** *(other features by folder name, and ADRs made or followed — `<ws>/architecture/adr-NNN-…`)*
 - **Outstanding Questions:**
-- **Next Agent:** Senior Developer — tasks in `docs/tasks/<feature-slug>/`
+- **Next Agent:** Senior Developer — tasks in `<feature>/tasks/`

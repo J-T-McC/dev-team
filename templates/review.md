@@ -24,5 +24,6 @@
 - **Inputs:**
 - **Outputs:** this review
 - **Dependencies:**
+- **Related:** *(other features by folder name, and ADRs made or followed — `<ws>/architecture/adr-NNN-…`)*
 - **Outstanding Questions:**
 - **Next Agent:** Project Owner (approval) or Senior Developer (rework)

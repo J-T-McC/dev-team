@@ -1,6 +1,6 @@
 # Project Status
 
-Maintained by the **Orchestrator**. One row per feature. Update on every phase transition, approval, or blocker change.
+Maintained by the **Orchestrator**. One row per feature **in flight**; update on every phase transition, approval, or blocker change. At Done the row moves to `status-done.md`.
 
 <!-- With a ticket system enabled, the Feature cell carries the ticket ID: `user-auth (ENG-123)` -->
 

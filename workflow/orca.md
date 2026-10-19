@@ -14,7 +14,7 @@ and deny the subagent tool in `.claude/settings.json` (`"permissions": { "deny":
 
 ## Topology
 
-- **Coordinator** — the Project Owner's own session: orchestrator skill plus this file. Routes, verifies gates, keeps `docs/status.md`, takes the Owner's ✋ approvals. It does no role work — not even inline fast-path fixes.
+- **Coordinator** — the Project Owner's own session: orchestrator skill plus this file. Routes, verifies gates, keeps `<ws>/status.md`, takes the Owner's ✋ approvals. It does no role work — not even inline fast-path fixes.
 - **Peers** — one plain `claude` session per active role, started by `worker-start --agent claude`. A peer has everything the project gives a normal session: all MCP servers, project skills, claude-mem, Bash. Its role comes from the dispatch spec, which always opens with the role line (below).
 - **Parallel siblings** — independent streams (no dependency between them in the task index, disjoint files) each get their own senior-developer peer in their own Orca worktree. Only one peer edits a worktree at a time.
 
@@ -25,8 +25,8 @@ Exact commands and settlement rules come from Orca's version-matched guide (`orc
 1. **One Run per feature**: `orca orchestration run-create --objective "<feature-slug>"`.
 2. **First dispatch to a role** launches its peer: `orca orchestration worker-start --spec "<spec>" --agent claude --worktree <selector> [--model <id> --effort <level>]`, with the role's model and effort per `workflow/overview.md` § Models per role (Orca accepts `--effort` only alongside `--model`; a role with no model launches on the Owner's default). Record the peer's terminal handle against its role.
 3. **Later dispatches reuse it**: `orca orchestration task-create --spec "<spec>" [--deps …]`, then `worker-start --task <id> --terminal <handle> --worktree <selector>`. Task dependencies mirror the task index; independent tasks dispatch as one parallel wave.
-4. **Every spec opens with the role line** — `You are the dev-team <role> peer. If the dev-team:<role> skill is not loaded in this conversation, invoke it first.` — so a fresh or cleared peer re-orients itself and a warm one does not reload. Then **point, never paste**: the artifact or task file to work from (`docs/tasks/<slug>/T03-….md`), its acceptance source, and the role's write boundary. The peer reads the docs itself.
-5. **`worker_done` is the handoff signal; the artifact is the handoff.** On settlement verify the gate per `workflow/handoffs.md` (headers only), update `docs/status.md`, decide the peer's next state (below), then acknowledge.
+4. **Every spec opens with the role line** — `You are the dev-team <role> peer. If the dev-team:<role> skill is not loaded in this conversation, invoke it first.` — so a fresh or cleared peer re-orients itself and a warm one does not reload. Then **point, never paste**: the artifact or task file to work from (`<feature>/tasks/T03-….md`), its acceptance source, and the role's write boundary. The peer reads the docs itself.
+5. **`worker_done` is the handoff signal; the artifact is the handoff.** On settlement verify the gate per `workflow/handoffs.md` (headers only), update `<ws>/status.md`, decide the peer's next state (below), then acknowledge.
 6. **Questions** stay question docs (`workflow/communication.md`). A blocked peer writes the doc, then uses its preamble's `ask` naming the path; the coordinator dispatches it to the owning role's peer and replies once it is `Answered`. Questions for the Owner are answered in the coordinator session.
 
 ## Peer lifetime — warm by default, cleared on purpose
@@ -47,7 +47,7 @@ Startup is a session's fixed cost (~35k measured: system prompt, skills, claude-
 
 **The Reviewer is never warm**: clear before every review, including delta re-reviews (prior findings live in the review doc), and never dispatch a review to a peer that implemented the change.
 
-The coordinator stays lean the same way: it reads only `worker_done` summaries and artifact headers, never peer transcripts, and between features may `/clear` and resume from `docs/status.md` plus `orca orchestration task-list --ready --brief`.
+The coordinator stays lean the same way: it reads only `worker_done` summaries and artifact headers, never peer transcripts, and between features may `/clear` and resume from `<ws>/status.md` plus `orca orchestration task-list --ready --brief`.
 
 ## Parallel streams
 
@@ -56,7 +56,7 @@ When the task index has independent chains, record the base commit in the Review
 **Each stream merges its own work**, warm, as its last dispatch:
 
 - **Serialized** — the coordinator chains the merge dispatches as Orca task dependencies, one at a time. The peer brings its stream up to date with the feature branch, verifies, then advances the feature branch; it never overwrites another stream's merge.
-- **Tests only where code combined** — docs-only changes, or a feature branch that has not moved since the stream last tested: none. Other streams' code came in: the targeted tests covering the code both touched (`docs/standards/testing.md`). The full suite runs once, on the last merge.
+- **Tests only where code combined** — docs-only changes, or a feature branch that has not moved since the stream last tested: none. Other streams' code came in: the targeted tests covering the code both touched (`<ws>/standards/testing.md`). The full suite runs once, on the last merge.
 - **Trivial conflicts only** — its own lines and index/backlog rows. A real conflict with another stream's code means the plan's disjointness was wrong: question doc to the Principal Engineer, never a guessed resolution.
 - **Last merge completes the Review manifest** (head commit, test command); the coordinator's spec says which merge is last. Then the Reviewer is dispatched and stream peers are released.
 
@@ -64,7 +64,7 @@ When an answered question lands in the feature worktree, the coordinator's reply
 
 ## Check-ins (optional)
 
-Scheduled Orca automations that keep work moving without the Owner prompting: defined in `docs/standards/checkins.md`, applied with `/dev-team:checkins`. Each has a schedule, a role, a trigger check, a job, and limits.
+Scheduled Orca automations that keep work moving without the Owner prompting: defined in `<ws>/standards/checkins.md`, applied with `/dev-team:checkins`. Each has a schedule, a role, a trigger check, a job, and limits.
 
 - **Free when idle.** Orca runs the trigger check first; it exits non-zero — no session, no tokens — when nothing changed or another coordinator holds the lock. The plugin ships `has-work`, `stalled`, and `new-tickets` (`${CLAUDE_PLUGIN_ROOT}/bin/`); any shell command works.
 - **Always reuse the session.** A run keeps its orientation instead of re-reading the project. It is not free: each run re-sends the whole session, and check-ins spaced further apart than the prompt cache lasts (minutes to an hour) pay it uncached — about the session's size. Keep check-in sessions small: the size rule for warm peers applies.
@@ -74,7 +74,7 @@ Scheduled Orca automations that keep work moving without the Owner prompting: de
 
 ## Board (optional)
 
-Add `Board: on` to the project's Runtime line to mirror `docs/status.md` onto Orca's worktree board — `docs/status.md` stays the truth. At each phase change the coordinator runs `orca worktree set --worktree <feature worktree> --workspace-status <status> --comment "<phase> · <role> · <blocker or none>"`, with status `todo` (Requirements), `in-progress` (UX Design, Technical Design, Implementation), `in-review` (Review), `completed` (Done). When the Owner is needed — an approval, an Owner question, a session not responding — it adds `--unread`. Features sharing a worktree share its card; the comment names each.
+Add `Board: on` to the project's Runtime line to mirror `<ws>/status.md` onto Orca's worktree board — `<ws>/status.md` stays the truth. At each phase change the coordinator runs `orca worktree set --worktree <feature worktree> --workspace-status <status> --comment "<phase> · <role> · <blocker or none>"`, with status `todo` (Requirements), `in-progress` (UX Design, Technical Design, Implementation), `in-review` (Review), `completed` (Done). When the Owner is needed — an approval, an Owner question, a session not responding — it adds `--unread`. Features sharing a worktree share its card; the comment names each.
 
 ## Browser
 

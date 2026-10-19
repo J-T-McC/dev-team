@@ -1,9 +1,9 @@
-> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
+> **Example artifact** — fictional; in a real project this lives at the same path under the workspace.
 
-# T5 — Logout, current-user endpoint, and auth middleware
+# T05 — Logout, current-user endpoint, and auth middleware
 
 - **Plan section:** §Architecture, §API
-- **Dependencies:** T4
+- **Dependencies:** T04
 - **Files:** `src/auth/middleware.*`, `src/auth/routes.*`, `tests/auth/test_session_flow.*`
 
 ## Acceptance Criteria

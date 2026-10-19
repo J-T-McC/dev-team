@@ -19,7 +19,7 @@ docs(standards): add commit message format
 
 Body is optional and terse — **one summarized line per fact, ≤5 lines**. Facts only: behaviour changed, migration required, deviation from the plan. No paragraphs, no restating the diff, no narrating process. Anything longer belongs in the task's completion notes or the fix record, which the commit references rather than repeats.
 
-Footer, when needed: `Refs: docs/tasks/<slug>/index.md`, `Closes: #<issue>`.
+Footer, when needed: `Refs: <feature>/tasks/index.md`, `Closes: #<issue>`.
 
 One commit per coherent unit of work: a task, a batch of tasks completed together, or one fast-path fix. Never mix pipeline work with unrelated fixes.
 

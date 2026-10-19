@@ -1,6 +1,6 @@
 # Q<NNN>: <Question title>
 
-- **Feature:** <feature-slug>
+- **Feature:** <feature folder>
 - **Requested By:** <asking agent>
 - **Directed To:** <responsible agent — see workflow/communication.md>
 - **Required By:** <date and what it blocks>

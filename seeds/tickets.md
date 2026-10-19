@@ -30,7 +30,7 @@ Phase reached → ticket status. Leave a status blank to skip that update.
 | Done | Done |
 
 ## Elevation (active)
-The allowlist of what leaves `docs/`. Anything not listed here stays in documents.
+The allowlist of what leaves the workspace. Anything not listed here stays in documents.
 - **Release comment** on the source ticket when a feature reaches Done (Orchestrator), from the template below.
 - **New tickets** from backlog items (Product Manager): `bug` with priority high. *(Add rules, e.g. `debt` filed from review follow-ups.)*
 - **Cap:** at most one comment per ticket per phase transition.

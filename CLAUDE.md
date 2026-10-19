@@ -9,7 +9,7 @@ This repo **is** the dev-team Claude Code plugin and its marketplace. Do not sca
 - `bin/` — check-in trigger scripts and the coordinator lock, run by Orca automations (copied into each project's git dir by the hook)
 - `templates/`, `workflow/` — framework reference shipped with the plugin, referenced via `${CLAUDE_PLUGIN_ROOT}`; `workflow/handoffs.md` is the canonical home of gate-validity rules, `workflow/adoption.md` of existing-project adoption rules, `workflow/orca.md` of the optional Orca runtime, `workflow/tickets.md` of ticket-system rules
 - `seeds/` — files the `bootstrap` skill copies into consuming projects (standards, stack, status, backlog index, project CLAUDE.md); project-owned after copy
-- `examples/user-authentication/` — worked example referenced by the skills
+- `examples/workspace/` — worked example (one feature folder plus its ADR) referenced by the skills
 - `hooks/` — tiny SessionStart announcement; refreshes check-in scripts
 - `.claude-plugin/` — `plugin.json` (no version field: every commit is an update) + `marketplace.json`
 

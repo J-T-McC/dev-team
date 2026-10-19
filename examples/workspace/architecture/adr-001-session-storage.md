@@ -1,4 +1,4 @@
-> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
+> **Example artifact** — fictional; in a real project this lives at the same path under the workspace.
 
 # ADR-001: Session storage — server-side tokens vs JWT
 

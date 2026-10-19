@@ -15,11 +15,11 @@
 - _Customize: brand voice, references the team admires, how far to push._
 
 ## Design tool (active)
-Where mockups live. `none` → self-contained HTML in `docs/design/<feature-slug>/`.
+Where mockups live. `none` → self-contained HTML in `<feature>/mockups/`.
 - **Tool:** none *(e.g. `figma`, `penpot` — reached through its MCP server)*
 - **MCP server:** _TBD_
 - **File / project / page for mockups:** _TBD_
-- **Snapshot in `docs/`:** yes *(a PNG or HTML copy of each key screen beside the frame links, so roles without the tool — and cheaper reads — can check UI against it)*
+- **Snapshot in the workspace:** yes *(a PNG or HTML copy of each key screen beside the frame links, so roles without the tool — and cheaper reads — can check UI against it)*
 
 ## Design system
 _TBD — component library, tokens, spacing/typography scales._

@@ -2,14 +2,14 @@
 
 - **Status:** Draft | In Review | Approved
 - **Author:** Designer
-- **PRD:** `docs/product/<feature-slug>-prd.md`
+- **PRD:** `<feature>/prd.md`
 - **Approved by / date:**
 
 ## Concept
 <The point of view, in a few lines: what this should feel like, the one idea that makes it memorable, and the visual direction (hierarchy, type, color, motion). Commit to it.>
 
 ## Mockups
-<Links to the key screens of the committed direction — frames in the configured design tool plus their `docs/design/<feature-slug>/` snapshots, or HTML mockups there — plus a **stretch** variant when the UX Direction leaves real room. Say which is recommended and why.>
+<Links to the key screens of the committed direction — frames in the configured design tool plus their `<feature>/mockups/` snapshots, or HTML mockups there — plus a **stretch** variant when the UX Direction leaves real room. Say which is recommended and why.>
 
 ## User Flows
 <One flow per UI-bearing user story: numbered steps from entry point to outcome, including failure paths.>
@@ -36,5 +36,6 @@
 - **Inputs:**
 - **Outputs:** this design spec and its mockups
 - **Dependencies:**
+- **Related:** *(other features by folder name, and ADRs made or followed — `<ws>/architecture/adr-NNN-…`)*
 - **Outstanding Questions:**
 - **Next Agent:** Principal Engineer

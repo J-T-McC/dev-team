@@ -1,4 +1,4 @@
-# B<N> — <Item name>
+# B<NNN> — <Item name>
 
 - **Type:** feature | debt | bug
 - **Priority:** high | medium | low *(Product Manager sets)*

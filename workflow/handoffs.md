@@ -5,6 +5,7 @@ Every artifact ends with a **Handoff** section containing exactly:
 - **Inputs** — documents consumed to produce this artifact
 - **Outputs** — what this artifact delivers
 - **Dependencies** — external or cross-feature dependencies
+- **Related** — other features by folder name, and the ADRs the work made or follows, so agents follow links instead of searching
 - **Outstanding Questions** — open question documents blocking downstream work
 - **Next Agent** — who consumes this artifact
 
@@ -15,7 +16,7 @@ Every artifact ends with a **Handoff** section containing exactly:
 | Product Owner → Product Manager | Feature request | Problem statement, target users | — |
 | Product Manager → Designer *(UI)* or Principal Engineer *(no UI)* | PRD | Goals, user stories, testable acceptance criteria, out of scope | ✋ Owner approves PRD |
 | Designer → Principal Engineer | Design Spec + mockups | Concept, mockups of key screens, user flows, the states that occur, components, interactions, accessibility | ✅ PM approves against the PRD |
-| Principal Engineer → Senior Developer | Technical Plan (+ ADRs) and task directory `docs/tasks/<slug>/` | Architecture, data model, API, validation, risks; ordered task files with dependencies, files, acceptance criteria, testing | ✅ PE self-certifies; ✋ Owner decides any major decision it contains |
+| Principal Engineer → Senior Developer | Technical Plan (+ ADRs) and task directory `<feature>/tasks/` | Architecture, data model, API, validation, risks; ordered task files with dependencies, files, acceptance criteria, testing | ✅ PE self-certifies; ✋ Owner decides any major decision it contains |
 | Senior Developer → Reviewer | Implementation | Code + tests per task; completion notes in task files; statuses and a complete Review manifest (tier, base/head commits, test command) in the index | All tasks complete |
 | Reviewer → Project Owner | Review | Summary, severity-classified findings, recommendation | ✋ Owner approves release |
 | Product Owner → Senior Developer *(fast path: bugs/chores)* | Request | Observed vs. expected behavior | — (fix record written with the fix) |
@@ -23,7 +24,7 @@ Every artifact ends with a **Handoff** section containing exactly:
 ## Rules
 
 - A handoff is **invalid** if its approval gate has not passed. The receiving agent must refuse it.
-- Exception, once per project: work adopted from before this organization carries `pre-adoption` in `docs/status.md` — its upstream gates are waived, its downstream gates are not (`workflow/adoption.md`).
+- Exception, once per project: work adopted from before this organization carries `pre-adoption` in `<ws>/status.md` — its upstream gates are waived, its downstream gates are not (`workflow/adoption.md`).
 - A PRD containing a **UX Direction** section must flow through the Designer: any downstream handoff (plan, tasks, implementation) for such a PRD without a PM-approved design spec is invalid. This rule is canonical here — other documents reference it.
 - Outstanding Questions must be empty — or explicitly waived by the gate's approver — before downstream work starts.
 - The receiving agent verifies the Handoff section before starting; anything missing goes back to the producing agent as a question document, not a guess.
@@ -42,9 +43,9 @@ How involved the Project Owner is, set per project by one line in the project `C
 | Requirement question | ✋ Owner (PM drafts the answer) | ✅ PM as proxy | ✅ PM as proxy |
 | Release (feature → Done) | ✋ Owner | ✋ Owner | ✅ Orchestrator, on *Approve* or *Approve with follow-ups* (follow-ups filed as backlog items) |
 
-- **The floor stays with the Owner at every level**: anything irreversible or destructive (including data-model changes affecting existing data), security-sensitive surfaces (auth, permissions, secrets, PII), anything that spends money, and any action leaving the repository (deploy, publish, external messages). Release means *Done in `docs/status.md`*, never a deploy. Ticket-system writes that `docs/standards/tickets.md` allows are pre-authorized by that config (`workflow/tickets.md`).
+- **The floor stays with the Owner at every level**: anything irreversible or destructive (including data-model changes affecting existing data), security-sensitive surfaces (auth, permissions, secrets, PII), anything that spends money, and any action leaving the repository (deploy, publish, external messages). Release means *Done in `<ws>/status.md`*, never a deploy. Ticket-system writes that `<ws>/standards/tickets.md` allows are pre-authorized by that config (`workflow/tickets.md`).
 - **Overrides** follow the level: `Autonomy: autonomous; Owner keeps: PRD, release` holds named gates at ✋; `Owner waives: floor` delegates the floor too and must be written out explicitly.
-- **Record who decided**: an approval made because of the level reads `Approved by: <role> (autonomy: <level>)` in the artifact and `docs/status.md`, so the Owner can audit everything decided without them.
+- **Record who decided**: an approval made because of the level reads `Approved by: <role> (autonomy: <level>)` in the artifact and `<ws>/status.md`, so the Owner can audit everything decided without them.
 - **Surface what was decided without the Owner.** When a feature reaches Done at any level below *supervised*, the Orchestrator's report lists, in a few lines, every decision the Owner did not sign for that feature: PRD Assumptions, major decisions made by a role, and gates the level delegated. The audit trail is useless if nobody reads it.
 - Autonomy never removes a gate, the independent review, or a role boundary — it only changes who signs. Fewer Owner checkpoints raise the bar on **Assume mistakes** below.
 
