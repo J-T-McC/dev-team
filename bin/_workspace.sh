@@ -3,6 +3,7 @@
 _dir=${1:-.}
 WS_LINE=$(grep -h '\*\*Workspace:\*\*' "$_dir/CLAUDE.local.md" "$_dir/CLAUDE.md" 2>/dev/null | head -1)
 WS=$(printf '%s' "$WS_LINE" | sed -n 's/.*\*\*Workspace:\*\* *`\([^`]*\)`.*/\1/p'); WS=${WS:-docs}
-FEATURES=$(printf '%s' "$WS_LINE" | sed -n 's/.*features *`\([^`]*\)`.*/\1/p'); FEATURES=${FEATURES:-$WS/features}
+# Settings are words after a space ("· features `x`"); a path that merely ends in "features" must not match.
+FEATURES=$(printf '%s' "$WS_LINE" | sed -n 's/.*[[:space:]]features[[:space:]][[:space:]]*`\([^`]*\)`.*/\1/p'); FEATURES=${FEATURES:-$WS/features}
 case "$WS_LINE" in *"not committed"*) WS_COMMITTED=no ;; *) WS_COMMITTED=yes ;; esac
 WS=${WS%/}; FEATURES=${FEATURES%/}

@@ -18,5 +18,5 @@ This repo **is** the dev-team Claude Code plugin and its marketplace. Do not sca
 - Keep role boundaries non-overlapping; state each cross-cutting rule once in its canonical home and reference it elsewhere in ≤1 line
 - Agent and skill `description:` frontmatter is loaded into every consuming session — keep each under ~30 words
 - Path rules: plugin-internal references use `${CLAUDE_PLUGIN_ROOT}/…`; workspace references use project-relative `docs/…`
-- Run `claude plugin validate .` before committing
+- Run `claude plugin validate .` and `tests/*.sh` before committing
 - Consuming projects pull changes with `/plugin update dev-team@dev-team`, then `/dev-team:sync` for seed drift
