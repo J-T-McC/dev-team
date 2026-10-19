@@ -29,6 +29,9 @@
 ## Out of Scope
 <Explicitly excluded items, with a note if they become their own PRD.>
 
+
+## Path
+<The phases this feature needs and why — usually the full pipeline. Downstream roles confirm or change their own phase with a reason.>
 ## Assumptions *(autonomy: autonomous only — delete otherwise)*
 <Each gap the PM filled without the Owner, one line each, so the Owner can audit it.>
 

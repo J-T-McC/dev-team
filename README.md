@@ -12,6 +12,8 @@ Owner attention is reserved for what matters — approving PRDs, releases, and *
 
 **Agents assume mistakes** — their own and each other's. Each self-reviews its output against the source documents (not its memory of them) before handing off, and questions an assignment or upstream artifact that smells wrong instead of silently complying or silently fixing it.
 
+**Work is sized by the team.** The pipeline above is the longest path. For most ticket work the product-manager writes a short **brief** (what's wanted, testable acceptance criteria, the planned path) instead of a PRD, and each role decides whether its own phase is needed — design, a technical plan, an ADR, or time-boxed **discovery** when unknowns block a decision. Large features still get the full pipeline; a brief that outgrows itself becomes a PRD. Acceptance criteria and review are never skipped (review has a **light** tier for small changes).
+
 Small work skips the pipeline entirely (**fast path**): bugs and chores go straight to the senior-developer (fix + tests + a record in the workspace's `fixes/`), doc corrections to the role owning the doc — no gates, as long as the work is truth-preserving.
 
 **Roles run inline by default.** All work — questions, fast-path fixes, and full pipeline phases in linear sequence — runs in the main conversation by invoking the owning role's skill, at a fraction of a subagent spawn's token cost. Agents spawn only when it pays for itself: **concurrency**, **independent review** (pipeline reviews always run in the reviewer agent — fresh eyes), or **context relief** (handing a big phase to a fresh context).

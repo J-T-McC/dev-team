@@ -55,6 +55,6 @@ git log --oneline -1 2>/dev/null; ls docs CLAUDE.md CLAUDE.local.md 2>/dev/null
 6. **Existing projects — harvest, then draw the line** (`workflow/adoption.md`):
    - **Harvest:** invoke the `dev-team:principal-engineer` skill to propose `<ws>/stack/stack.md`, `<ws>/standards/coding.md`, and `<ws>/standards/testing.md` from the repository — manifests, CI, lint/format config, test layout, a source sample, commit history. Every line cites the file it came from; anything unanswered stays `_TBD_`. Guest: record only what the repo does not already document. The Owner approves each file.
    - **Declare in-flight work:** one `<ws>/status.md` row per feature already under way (with its ticket ID if tickets are configured), `Phase` at its true position, `Approvals: pre-adoption`. Upstream gates are waived; downstream gates apply from today.
-   - **Never document backwards.** No PRD, plan, or ADR for work already shipped. The next *new* feature runs the pipeline from the top.
+   - **Never document backwards.** No PRD, plan, or ADR for work already shipped. The next *new* piece of work starts at Product Manager triage.
 
 7. Report what was created vs. skipped, then remind the Owner to fill placeholders in `<ws>/stack/stack.md` and `<ws>/standards/*.md` (agents stop and ask while placeholders remain), and to commit — unless the workspace is uncommitted.

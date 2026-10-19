@@ -21,7 +21,7 @@ Features already under way when the organization arrives enter at their true pha
 - Gates **downstream** apply in full from the adoption date. A feature adopted at Implementation still needs its review and its release approval.
 - A role handed pre-adoption work must not refuse it for a missing upstream artifact; it must refuse it for a missing *downstream* gate exactly as normal.
 
-Everything started after adoption runs the pipeline from the top with no exceptions.
+Everything started after adoption begins at Product Manager triage, like any new work, with no exceptions.
 
 ## Harvesting standards and the stack
 
@@ -56,4 +56,4 @@ Two collisions to settle first, because both are cheaper to resolve before the s
 2. **Scaffold** — seed sync creates directories and copies missing seeds.
 3. **Harvest** — Principal Engineer proposes `stack.md`, `coding.md`, `testing.md` with citations; Owner approves. Remaining standards stay as seeded.
 4. **Declare in-flight work** — status rows at true phases, `pre-adoption` approvals recorded.
-5. **Stop.** Nothing else is documented. The next *new* feature runs the pipeline from the top.
+5. **Stop.** Nothing else is documented. The next *new* piece of work starts at Product Manager triage.
