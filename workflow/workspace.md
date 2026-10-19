@@ -25,6 +25,7 @@ No line means `docs`, `docs/features`, `slug`, committed. Change a setting only 
 <ws>/
   status.md            features in flight: phase, role, blockers, approvals
   status-done.md       finished features, newest first
+  triage.md            requests agents cannot take (human-only), with the reason
   architecture/        ADRs, shared by all features: adr-001-session-storage.md
   backlog/             index.md (open items), archive.md (done, dropped), B001-bulk-import.md
   fixes/               fast-path records: 2026-10-18-login-timeout.md

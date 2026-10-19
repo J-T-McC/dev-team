@@ -23,6 +23,12 @@ Rules:
 - The backlog is not a queue or a status board: `<ws>/status.md` tracks work in flight, the backlog tracks work not started. An item leaves the backlog the moment it enters either path.
 - Not in the backlog: review follow-ups (they stay in the review record until the Owner acts on them), and open questions (they are question docs).
 
+## Agent limits (active)
+What agents in this project cannot do; the Product Manager checks every request against it before triage, and any role that hits one mid-work stops and marks the feature blocked on the Owner.
+- Anything on the autonomy floor: deploys and releases outside the repo, payments, deleting or migrating existing data, security-sensitive changes the Owner has not signed.
+- Steps that need a person: meetings, sign-offs, stakeholder or customer conversations.
+- _Customize: systems agents cannot reach (production data, third-party dashboards, devices), and work the team keeps for humans._
+
 ## Estimation
 _TBD — whether estimates are used at all._
 

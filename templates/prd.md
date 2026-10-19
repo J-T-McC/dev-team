@@ -30,6 +30,9 @@
 <Explicitly excluded items, with a note if they become their own PRD.>
 
 
+## Owner tasks *(split work only — delete otherwise)*
+<Steps agents cannot do, one line each: what, who (the Owner or someone they ask), and which phase waits on it.>
+
 ## Path
 <The phases this feature needs and why — usually the full pipeline. Downstream roles confirm or change their own phase with a reason.>
 ## Assumptions *(autonomy: autonomous only — delete otherwise)*

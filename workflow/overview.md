@@ -30,6 +30,7 @@ The diagram is the **full pipeline**, the longest path. Much work needs less, an
 | Brief | most ticket work | brief → [discovery] → [design] → [plan] → tasks → build → review |
 | Fast | bugs and chores | fix + record (§ Fast path) |
 
+- **Feasibility comes first.** Before sizing, the PM decides whether agents can do the work at all, against the project's **Agent limits** (`<ws>/standards/planning.md`): **agent** — triage as below; **split** — agents do their part, and the human steps go in the brief or PRD as **Owner tasks** the path waits on; **human** — no feature folder, one row in `<ws>/triage.md` (ticket, decision, reason) so it is never triaged again, and the Owner is told.
 - **The PM triages** incoming work: a **brief** (`<feature>/brief.md`) when the request — usually a ticket — already says what is wanted, a **PRD** when it does not. Either one holds testable acceptance criteria (never optional: review needs something to check) and the **planned path**.
 - **Each role decides its own phase** when the work reaches it, and records the decision on the path: the Designer runs only when the brief or PRD has UX Direction; the PE chooses a plan, tasks straight from the brief, or a single task, and writes an ADR only for a significant decision.
 - **Discovery** is an optional, time-boxed investigation any role calls when unknowns block a decision — product (PM), technical (PE), UX (Designer). Findings go in `<feature>/discovery.md` and update the path.
