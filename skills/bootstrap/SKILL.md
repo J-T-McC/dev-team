@@ -15,7 +15,7 @@ git log --oneline -1 2>/dev/null; ls docs CLAUDE.md CLAUDE.local.md 2>/dev/null
 
 1. **Own project or guest?** Guest: someone else's project whose team does not use dev-team — nothing may show up in their work (`workflow/workspace.md` § Guest mode).
 2. **Greenfield or existing?** A repository with code and history predating this session is existing — run steps 0 and 6 as well (`${CLAUDE_PLUGIN_ROOT}/workflow/adoption.md`). Genuinely ambiguous → ask the Owner.
-3. **Workspace settings** — offer the defaults, then ask about each:
+3. **Workspace settings** — offer the defaults, then ask about **each of the four**; root and features folder are separate questions. A question tool that takes only a few questions at once means asking in two rounds — never drop one:
    - **Root:** `docs` (guest: `.dev-team`).
    - **Features folder:** `<root>/features`, or anywhere else — e.g. next to the team's own feature or task folders. dev-team only ever writes into feature folders it created.
    - **Folder naming:** `slug` (small projects), `F###-slug` (large, many features), `<ticket>-slug` (work comes from tickets).
