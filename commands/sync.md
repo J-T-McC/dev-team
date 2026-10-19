@@ -21,6 +21,7 @@ mkdir -p "$WS/architecture" "$WS/backlog" "$WS/fixes" "$WS/standards" "$WS/stack
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/stack.md"           "$WS/stack/stack.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/status.md"          "$WS/status.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/status-done.md"     "$WS/status-done.md"
+cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/triage.md"          "$WS/triage.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/backlog-index.md"   "$WS/backlog/index.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/backlog-archive.md" "$WS/backlog/archive.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/standards/"*.md     "$WS/standards/"

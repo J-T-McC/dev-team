@@ -17,6 +17,9 @@
 ## Out of Scope
 <What this deliberately does not do.>
 
+## Owner tasks *(split work only — delete otherwise)*
+<Steps agents cannot do, one line each: what, who (the Owner or someone they ask), and which phase waits on it.>
+
 ## Path
 <The phases this work needs and why, e.g. `brief → tasks → build → review`. Downstream roles add or remove their own phase with a reason; upgrade to a PRD when this outgrows a brief.>
 
