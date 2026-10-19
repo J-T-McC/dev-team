@@ -14,7 +14,7 @@ How this project uses an external ticket system through its MCP server. `System:
 ## Intake (active)
 - **Work query:** _TBD_ *(e.g. team `ENG`, label `dev-team`, status `Ready`; GitHub: `assignee:@me label:dev-team`, or a Project number plus its query)*
 - **Routing** — ticket type or label → destination:
-  - feature → Product Manager (PRD)
+  - feature → Product Manager (triage: brief, or PRD when the ticket is not enough)
   - bug, chore → Senior Developer fast path (fix record)
   - idea, debt → backlog item
 - **On intake, set status to:** _TBD_ *(blank = leave unchanged)*

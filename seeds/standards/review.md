@@ -14,8 +14,9 @@
 - The Reviewer never edits code and never reviews their own work.
 
 ## Review tiers (active)
+- **light** — a small change with no plan: every acceptance criterion and the tests, plus standards on the changed lines only.
 - **standard** — diff review with targeted caller checks.
-- **deep** — the plan contains a major decision: trace every changed public interface's callers; line-by-line on security-sensitive paths. Set by the Principal Engineer in the task index.
+- **deep** — the work contains a major decision: trace every changed public interface's callers; line-by-line on security-sensitive paths. Set by the Principal Engineer in the task index.
 
 ## Checklists
 _TBD — per-project checklist (security, performance, accessibility…)._

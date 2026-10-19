@@ -2,7 +2,7 @@
 
 - **Status:** Draft | Approved
 - **Author:** Principal Engineer
-- **Technical Plan:** `<feature>/plan.md`
+- **Source:** `<feature>/plan.md`, or `<feature>/brief.md` when there is no plan
 - **Approved by / date:** <Principal Engineer (self-certified) / date>
 
 <!-- One row per task; task detail lives in the task's own file. The Senior Developer flips Status here and writes completion notes in the task file. -->
@@ -13,7 +13,7 @@
 
 ## Review manifest
 <!-- Tier set by the Principal Engineer at certification; the rest filled by the Senior Developer (base commit at first task, head + test command at completion). Defines the Reviewer's scope. -->
-- **Review tier:** standard | deep *(deep when the plan contains a major decision)*
+- **Review tier:** light | standard | deep *(deep when the work contains a major decision; light for a small change with no plan)*
 - **Base commit:** <commit before the first task>
 - **Head commit:** <commit containing the final task>
 - **Test command:** <suite invocation, summary/quiet reporter>

@@ -32,7 +32,8 @@ No line means `docs`, `docs/features`, `slug`, committed. Change a setting only 
   stack/stack.md
 <features>/
   <feature folder>/    e.g. user-auth/, F014-user-auth/, ENG-123-user-auth/
-    prd.md
+    brief.md | prd.md
+    discovery.md
     design.md  mockups/
     plan.md
     tasks/       index.md  T01-users-table.md
