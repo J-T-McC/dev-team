@@ -1,4 +1,4 @@
-> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
+> **Example artifact** — fictional; in a real project this lives at the same path under the workspace.
 
 # Q001: Session lifetime and "remember me" behavior
 

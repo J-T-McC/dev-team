@@ -1,4 +1,4 @@
-> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
+> **Example artifact** — fictional; in a real project this lives at the same path under the workspace.
 
 # PRD: User Authentication
 
@@ -41,7 +41,7 @@ The product has no concept of identity. Users cannot save work or access persona
 - Login/registration UI (its own PRD, with UX Direction)
 
 ## Open Questions
-- ~~Q001: session lifetime and remember-me behavior~~ — answered; see `docs/questions/user-authentication-q001.md`
+- ~~Q001: session lifetime and remember-me behavior~~ — answered; see `questions/q001-session-lifetime.md`
 
 ## Handoff
 - **Inputs:** Product Owner feature request (2026-07-27)

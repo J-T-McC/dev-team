@@ -1,36 +1,41 @@
 ---
 name: bootstrap
-description: Scaffold the dev-team workspace into the current project — creates the docs/ tree, seeds standards and stack config, status.md, and the project CLAUDE.md section; harvests standards from an existing codebase. Run once per project; safe to re-run.
+description: Scaffold the dev-team workspace into the current project — workspace and feature folders, seeds, status, and the dev-team section (own project or guest); harvests standards from an existing codebase. Run once per project; safe to re-run.
 ---
 
 # Bootstrap the dev-team workspace
 
-Scaffold the per-project workspace this plugin's agents work in. **Idempotent:** never overwrite an existing file; report anything skipped.
+Scaffold the per-project workspace this plugin's agents work in. **Idempotent:** never overwrite an existing file; report anything skipped. Layout and settings: `${CLAUDE_PLUGIN_ROOT}/workflow/workspace.md`.
 
-## First: greenfield or existing?
+## First: three questions
 
 ```bash
-git log --oneline -1 2>/dev/null; ls docs 2>/dev/null; ls CLAUDE.md 2>/dev/null
+git log --oneline -1 2>/dev/null; ls docs CLAUDE.md CLAUDE.local.md 2>/dev/null
 ```
 
-A repository with source code and history predating this session is an **existing project** — run step 0 and step 6 as well, per `${CLAUDE_PLUGIN_ROOT}/workflow/adoption.md`. A fresh or near-empty repository is greenfield: skip both. When it is genuinely ambiguous, ask the Owner rather than guessing — the wrong branch either interrogates the Owner for answers the code holds, or invents standards for a project with none.
+1. **Own project or guest?** Guest: someone else's project whose team does not use dev-team — nothing may show up in their work (`workflow/workspace.md` § Guest mode).
+2. **Greenfield or existing?** A repository with code and history predating this session is existing — run steps 0 and 6 as well (`${CLAUDE_PLUGIN_ROOT}/workflow/adoption.md`). Genuinely ambiguous → ask the Owner.
+3. **Workspace settings** — offer the defaults, then ask about each:
+   - **Root:** `docs` (guest: `.dev-team`).
+   - **Features folder:** `<root>/features`, or anywhere else — e.g. next to the team's own feature or task folders. dev-team only ever writes into feature folders it created.
+   - **Folder naming:** `slug` (small projects), `F###-slug` (large, many features), `<ticket>-slug` (work comes from tickets).
+   - **Committed:** yes (history with the code) or no (excluded locally; the root becomes its own git repository so history is kept).
 
 ## Steps
 
 0. **Existing projects — survey before writing** (`workflow/adoption.md`):
-   - **`docs/` already exists:** list what is in it. If it is a published site or generated output, adding subdirectories may get them built, deployed, or wiped — report that risk and get the Owner's go-ahead before creating anything inside it.
-   - **`CLAUDE.md` already exists:** scan it for rules on commit messages, document locations, review or approval process, and branch/PR policy. Report each conflict as a pair (project's rule vs. the seed's) and have the Owner name the winner. Delete the loser; never leave two rules on one subject.
+   - **The chosen folders already exist:** list what is in them. A published site or generated output may build, deploy, or wipe new folders — report that risk and get the Owner's go-ahead.
+   - **Own project, `CLAUDE.md` exists:** scan it for rules on commit messages, document locations, review or approval process, and branch/PR policy. Report each conflict as a pair (project's rule vs. the seed's) and have the Owner name the winner; delete the loser. Guest projects skip this — their rules simply win.
 
-   Resolve both before continuing.
+1. **The dev-team section** — the seed `${CLAUDE_PLUGIN_ROOT}/seeds/CLAUDE.project.md`, with its Workspace line set to the chosen values:
+   - **Own project:** append it to `CLAUDE.md` (or create the file) unless a "Development Organization" section exists.
+   - **Guest:** write it to `CLAUDE.local.md` — never `CLAUDE.md` — and replace its **Commits** convention with "follow this repository's conventions". Tell the Owner to install the plugin at local scope (`/plugin install dev-team@dev-team --scope local`) so it exists for them only.
 
-1. Run the seed sync: follow `${CLAUDE_PLUGIN_ROOT}/commands/sync.md` — it creates the `docs/` directories and copies any missing seeds (standards, stack, status, backlog index), never overwriting. Seeds become **project-owned**: customized and committed to the project repo.
+2. **Uncommitted workspace** (either mode): add the root, and the features folder if it is outside the root, to `.git/info/exclude` (never `.gitignore`), then `git init` inside the root. The plugin's Stop hook commits it whenever it changes.
 
-2. Project `CLAUDE.md`:
-   - If the project has no `CLAUDE.md`: `cp "${CLAUDE_PLUGIN_ROOT}/seeds/CLAUDE.project.md" CLAUDE.md`
-   - If one exists and does not already contain a "Development Organization" section: append the seed's content to it.
-   - If the section already exists: skip.
+3. Run the seed sync: follow `${CLAUDE_PLUGIN_ROOT}/commands/sync.md` — it creates the folders and copies missing seeds, never overwriting. Seeds become **project-owned**.
 
-3. Optional (ask the user first): check a marketplace registration into the project's `.claude/settings.json` so collaborators auto-get this plugin:
+4. Own project only, optional (ask first): check a marketplace registration into `.claude/settings.json` so collaborators get the plugin:
 
 ```json
 {
@@ -41,17 +46,15 @@ A repository with source code and history predating this session is an **existin
 }
 ```
 
-4. **Owner preferences** — ask, then record (skip any the Owner defers; the defaults apply):
-   - **Autonomy:** `supervised`, `standard` (default), or `autonomous`, plus any gates to keep (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Autonomy). Set the project `CLAUDE.md`'s `Autonomy:` line.
-   - **Ticket system:** does work come from Linear, Jira, or another tracker enabled via MCP? Yes → run the setup in `${CLAUDE_PLUGIN_ROOT}/commands/tickets.md`. No → leave `System: none`; `/dev-team:tickets` enables it later.
-   - **Orca:** does the team run Claude from Orca? Yes → add the Runtime line (`${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` § Opt in) and offer `/dev-team:checkins` to schedule check-ins.
-   - **Design tool:** does the team design in Figma, Penpot, or another tool with an MCP server? Yes → fill `docs/standards/design.md` § Design tool so the designer builds mockups there. No → mockups stay HTML in `docs/design/`.
-
-5. Report what was created vs. skipped, then remind the user:
-   - Fill in `docs/stack/stack.md` and customize `docs/standards/*.md` — agents are instructed to stop and ask rather than guess while placeholders remain. Existing projects: step 6 fills most of this from the code instead.
-   - Commit the scaffolded files to the **project** repo.
+5. **Owner preferences** — ask, then record in the dev-team section (skip any the Owner defers; defaults apply):
+   - **Autonomy:** `supervised`, `standard` (default), or `autonomous`, plus any gates to keep (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Autonomy).
+   - **Ticket system:** Linear, Jira, GitHub, or another tracker? Yes → run `${CLAUDE_PLUGIN_ROOT}/commands/tickets.md`. No → `/dev-team:tickets` enables it later.
+   - **Orca:** does the Owner run Claude from Orca? Yes → add the Runtime line (`${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` § Opt in) and offer `/dev-team:checkins`.
+   - **Design tool:** Figma, Penpot, or another tool with an MCP server? Yes → fill `<ws>/standards/design.md` § Design tool. No → mockups are HTML in each feature's `mockups/`.
 
 6. **Existing projects — harvest, then draw the line** (`workflow/adoption.md`):
-   - **Harvest:** invoke the `dev-team:principal-engineer` skill to propose `docs/stack/stack.md`, `docs/standards/coding.md`, and `docs/standards/testing.md` from the repository — manifests, CI and container config, lint/format config, test layout, a representative sample of source, and commit history. Every proposed line cites the file it came from; anything the repository does not answer stays `_TBD_`. Record what the project does, not what it should do. The Owner approves each file.
-   - **Declare in-flight work:** one `docs/status.md` row per feature already under way (Feature cell carries its ticket ID if a ticket system is configured), `Phase` at its true position, `Approvals: pre-adoption`. Upstream gates are waived by that record; downstream gates apply in full from today.
-   - **Never document backwards.** No PRD, plan, or ADR for work already shipped — documents are written forward, for the next change. The next *new* feature runs the pipeline from the top.
+   - **Harvest:** invoke the `dev-team:principal-engineer` skill to propose `<ws>/stack/stack.md`, `<ws>/standards/coding.md`, and `<ws>/standards/testing.md` from the repository — manifests, CI, lint/format config, test layout, a source sample, commit history. Every line cites the file it came from; anything unanswered stays `_TBD_`. Guest: record only what the repo does not already document. The Owner approves each file.
+   - **Declare in-flight work:** one `<ws>/status.md` row per feature already under way (with its ticket ID if tickets are configured), `Phase` at its true position, `Approvals: pre-adoption`. Upstream gates are waived; downstream gates apply from today.
+   - **Never document backwards.** No PRD, plan, or ADR for work already shipped. The next *new* feature runs the pipeline from the top.
+
+7. Report what was created vs. skipped, then remind the Owner to fill placeholders in `<ws>/stack/stack.md` and `<ws>/standards/*.md` (agents stop and ask while placeholders remain), and to commit — unless the workspace is uncommitted.

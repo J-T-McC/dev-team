@@ -39,5 +39,6 @@
 - **Inputs:**
 - **Outputs:** this PRD
 - **Dependencies:**
+- **Related:** *(other features by folder name, and ADRs made or followed — `<ws>/architecture/adr-NNN-…`)*
 - **Outstanding Questions:**
 - **Next Agent:** Designer *(mandatory if UX Direction is present)* or Principal Engineer *(no UI)*

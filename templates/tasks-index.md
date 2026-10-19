@@ -2,7 +2,7 @@
 
 - **Status:** Draft | Approved
 - **Author:** Principal Engineer
-- **Technical Plan:** `docs/plans/<feature-slug>-plan.md`
+- **Technical Plan:** `<feature>/plan.md`
 - **Approved by / date:** <Principal Engineer (self-certified) / date>
 
 <!-- One row per task; task detail lives in the task's own file. The Senior Developer flips Status here and writes completion notes in the task file. -->
@@ -22,5 +22,6 @@
 - **Inputs:**
 - **Outputs:** this task directory
 - **Dependencies:**
+- **Related:** *(other features by folder name, and ADRs made or followed — `<ws>/architecture/adr-NNN-…`)*
 - **Outstanding Questions:**
 - **Next Agent:** Senior Developer

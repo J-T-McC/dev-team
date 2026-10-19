@@ -17,4 +17,4 @@ _TBD — default guidance: test names describe behavior, not implementation._
 _TBD._
 
 ## CI integration
-_TBD — see docs/stack/stack.md CI/CD._
+_TBD — see <ws>/stack/stack.md CI/CD._

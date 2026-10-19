@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+"""Move a type-first dev-team workspace to feature folders (workflow/workspace.md).
+
+Usage, from the project root:  migrate-layout          dry run: print the plan
+                               migrate-layout --apply  move files, rewrite links
+"""
+import os, re, subprocess, sys
+from pathlib import Path
+
+APPLY = "--apply" in sys.argv
+ROOT = Path.cwd()
+
+
+def workspace():
+    line = ""
+    for name in ("CLAUDE.local.md", "CLAUDE.md"):
+        f = ROOT / name
+        if f.exists():
+            m = re.search(r".*\*\*Workspace:\*\*.*", f.read_text())
+            if m:
+                line = m.group(0)
+                break
+    ws = (re.search(r"\*\*Workspace:\*\*\s*`([^`]*)`", line) or [None, "docs"])[1].rstrip("/")
+    feats = (re.search(r"features\s*`([^`]*)`", line) or [None, f"{ws}/features"])[1].rstrip("/")
+    naming = (re.search(r"folders\s*`([^`]*)`", line) or [None, "slug"])[1]
+    return ws, feats, naming
+
+
+def tracked(p):
+    return subprocess.run(["git", "ls-files", "--error-unmatch", str(p)], cwd=ROOT,
+                          capture_output=True).returncode == 0
+
+
+def added_date(p):
+    out = subprocess.run(["git", "log", "--diff-filter=A", "--format=%as", "--", str(p)], cwd=ROOT,
+                         capture_output=True, text=True).stdout.split()
+    if out:
+        return out[-1]
+    import datetime
+    return datetime.date.fromtimestamp((ROOT / p).stat().st_mtime).isoformat()
+
+
+WS, FEATS, NAMING = workspace()
+W = ROOT / WS
+if not (W / "product").is_dir() and not (W / "plans").is_dir() and not (W / "tasks").is_dir():
+    print(f"No type-first layout under {WS}/ — nothing to do.")
+    sys.exit(0)
+
+# Artifacts per feature slug: (old path, new name inside the feature folder).
+SUFFIX = {"product": ["-prd"], "design": ["-design-spec", "-design"], "plans": ["-technical-plan", "-plan"],
+          "reviews": ["-review"]}
+TARGET = {"product": "prd.md", "design": "design.md", "plans": "plan.md", "reviews": "review.md"}
+features, unknown = {}, []
+for kind, suffixes in SUFFIX.items():
+    for f in sorted((W / kind).glob("*.md")) if (W / kind).is_dir() else []:
+        stem = f.stem
+        suf = next((s for s in suffixes if stem.endswith(s)), None)
+        if suf:
+            features.setdefault(stem[: -len(suf)], []).append((f, TARGET[kind]))
+        else:
+            unknown.append(f)
+if (W / "design").is_dir():
+    for d in sorted(p for p in (W / "design").iterdir() if p.is_dir()):
+        features.setdefault(d.name, []).append((d, "mockups"))
+if (W / "tasks").is_dir():
+    for d in sorted(p for p in (W / "tasks").iterdir() if p.is_dir()):
+        features.setdefault(d.name, []).append((d, "tasks"))
+if (W / "questions").is_dir():
+    for f in sorted((W / "questions").glob("*.md")):
+        m = re.match(r"(.+)-(q\d+.*)\.md$", f.name)
+        if m:
+            features.setdefault(m.group(1), []).append((f, f"questions/{m.group(2)}.md"))
+        else:
+            unknown.append(f)
+
+# Folder names.
+def ticket(slug):
+    prd = next((p for p, t in features[slug] if t == "prd.md"), None)
+    m = prd and re.search(r"\*\*Ticket:\*\*\s*([A-Z][A-Z0-9]+-\d+)", prd.read_text())
+    return m.group(1) if m else None
+
+order = sorted(features, key=lambda s: (min(added_date(p.relative_to(ROOT)) for p, _ in features[s]), s))
+folder = {}
+for i, slug in enumerate(order, 1):
+    if NAMING.startswith("F"):
+        folder[slug] = f"F{i:03d}-{slug}"
+    elif "ticket" in NAMING:
+        t = ticket(slug)
+        folder[slug] = f"{t}-{slug}" if t else slug
+        if not t:
+            print(f"note: no Ticket in {slug}'s PRD; folder stays '{slug}'")
+    else:
+        folder[slug] = slug
+
+moves = []
+for slug, items in features.items():
+    base = ROOT / FEATS / folder[slug]
+    for old, new in items:
+        moves.append((old, base / new))
+if (W / "fixes").is_dir():
+    for f in sorted((W / "fixes").glob("*.md")):
+        if not re.match(r"\d{4}-\d{2}-\d{2}-", f.name):
+            moves.append((f, f.with_name(f"{added_date(f.relative_to(ROOT))}-{f.name}")))
+
+rel = lambda p: str(p.relative_to(ROOT))
+print(f"Workspace {WS}/, features {FEATS}/, folders '{NAMING}': {len(features)} features, {len(moves)} moves.")
+for old, new in moves:
+    print(f"  {rel(old)} -> {rel(new)}")
+for f in unknown:
+    print(f"  left in place (unrecognized name): {rel(f)}")
+
+# Links: old root-relative paths (with or without the workspace prefix) -> new root-relative paths.
+links = []
+for old, new in moves:
+    o, n = rel(old), rel(new)
+    links.append((o, n))
+    if o.startswith(WS + "/"):
+        links.append((o[len(WS) + 1:], n))
+links.sort(key=lambda x: -len(x[0]))  # longest first, so a folder rule never eats a file rule
+
+if not APPLY:
+    print("Dry run. Re-run with --apply to move files, rewrite links, and split finished rows.")
+    sys.exit(0)
+
+for old, new in moves:
+    new.parent.mkdir(parents=True, exist_ok=True)
+    if tracked(old.relative_to(ROOT)):
+        subprocess.run(["git", "mv", rel(old), rel(new)], cwd=ROOT, check=True)
+    else:
+        os.rename(old, new)
+for kind in ("product", "design", "plans", "reviews", "questions", "tasks"):
+    d = W / kind
+    if d.is_dir() and not any(d.iterdir()):
+        d.rmdir()
+
+docs = [p for base in {W, ROOT / FEATS} if base.is_dir() for p in base.rglob("*.md")]
+changed = 0
+for p in docs:
+    s = t = p.read_text()
+    for o, n in links:
+        t = re.sub(r"(?<![\w/.-])" + re.escape(o) + r"(?![\w.-])", n, t)
+    if t != s:
+        p.write_text(t)
+        changed += 1
+
+
+def split(index, archive, header, keep, transform=lambda l: l):
+    """Move data rows that keep() rejects from index's table to the top of archive's table."""
+    if not index.exists():
+        return 0
+    lines = index.read_text().splitlines(keepends=True)
+    table = [i for i, l in enumerate(lines) if l.startswith("|")]
+    data = table[2:]  # skip the header row and the |---| separator
+    moving = [lines[i] for i in data if not keep(lines[i])]
+    if not moving:
+        return 0
+    index.write_text("".join(l for i, l in enumerate(lines) if not (i in data and l in moving)))
+    alines = (archive.read_text() if archive.exists() else header).splitlines(keepends=True)
+    sep = next(i for i, l in enumerate(alines) if re.match(r"\|\s*-", l))
+    archive.write_text("".join(alines[: sep + 1] + [transform(l) for l in moving] + alines[sep + 1:]))
+    return len(moving)
+
+
+cols = lambda l: [c.strip() for c in l.strip().strip("|").split("|")]
+done = split(W / "status.md", W / "status-done.md",
+             "# Finished Features\n\nNewest first. Written by the Orchestrator when a feature reaches Done.\n\n"
+             "| Feature | Done | Outcome | Folder |\n|---|---|---|---|\n",
+             lambda l: len(cols(l)) < 2 or cols(l)[1] != "Done",
+             lambda l: "| {} | before migration | {} | {} |\n".format(
+                 cols(l)[0], cols(l)[4] if len(cols(l)) > 4 else "",
+                 f"{FEATS}/{folder[cols(l)[0]]}/" if cols(l)[0] in folder else ""))
+archived = split(W / "backlog/index.md", W / "backlog/archive.md",
+                 "# Backlog Archive\n\nDone and dropped items, newest first. Moved here by the Product Manager.\n\n"
+                 "| ID | Item | Type | Priority | Status |\n|---|---|---|---|---|\n",
+                 lambda l: len(cols(l)) < 5 or cols(l)[4] not in ("done", "dropped"))
+print(f"Moved {len(moves)} files, rewrote links in {changed} documents, "
+      f"moved {done} finished status rows and {archived} closed backlog rows.")

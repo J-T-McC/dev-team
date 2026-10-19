@@ -1,9 +1,9 @@
-> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
+> **Example artifact** — fictional; in a real project this lives at the same path under the workspace.
 
 # Review: User Authentication
 
 - **Reviewer / date:** Reviewer / 2026-07-30
-- **Scope:** `docs/tasks/user-authentication/` (T1–T5), deep tier per the manifest
+- **Scope:** `tasks/` (T01–T05), deep tier per the manifest
 - **Reviewed range:** `3f1c9aa...8d2e714`
 - **Inputs verified:** PRD acceptance criteria, plan sections the tasks touch, task files with completion notes, independent test run (summary mode)
 

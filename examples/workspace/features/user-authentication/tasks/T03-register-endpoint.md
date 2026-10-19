@@ -1,9 +1,9 @@
-> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
+> **Example artifact** — fictional; in a real project this lives at the same path under the workspace.
 
-# T3 — Registration endpoint
+# T03 — Registration endpoint
 
 - **Plan section:** §API, §Validation
-- **Dependencies:** T1, T2
+- **Dependencies:** T01, T02
 - **Files:** `src/auth/routes.*`, `tests/auth/test_register.*`
 
 ## Acceptance Criteria

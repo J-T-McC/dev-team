@@ -4,8 +4,8 @@
 
 When an agent needs information it does not have, in strict order:
 
-1. **Existing documentation** — search `docs/`
-2. **Previous decisions** — ADRs in `docs/architecture/`, answered questions in `docs/questions/`
+1. **Existing documentation** — search the workspace (`<ws>/` and the feature folders)
+2. **Previous decisions** — ADRs in `<ws>/architecture/`, answered questions in `<feature>/questions/` (and related features' folders)
 3. **Responsible upstream agent** — via a question document
 4. **Project Owner** — last resort
 
@@ -28,7 +28,7 @@ Never bypass the chain. Example: the Senior Developer must not ask the Project O
 
 ## Question protocol
 
-1. Create `docs/questions/<feature-slug>-q<NNN>.md` from `${CLAUDE_PLUGIN_ROOT}/templates/question.md`
+1. Create `<feature>/questions/q<NNN>-<slug>.md` from `${CLAUDE_PLUGIN_ROOT}/templates/question.md`
 2. Reference it in the asking artifact's **Outstanding Questions**
 3. The responsible agent writes the answer in the same file and sets `Status: Answered`
 4. If the answer changes an artifact, its owner updates it and re-requests approval

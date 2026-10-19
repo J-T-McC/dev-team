@@ -1,6 +1,6 @@
 # Backlog
 
-Work that is real but not now. **Any role files** an item; the **Product Manager** owns this index — priority, status, and promotion. Item detail lives in its own file (`B<NN>-<slug>.md`, from the plugin's `templates/backlog-item.md`); never expand detail here. Rules: `docs/standards/planning.md`.
+Work that is real but not now. **Any role files** an item; the **Product Manager** owns this index — priority, status, and promotion. Item detail lives in its own file (`B<NNN>-<slug>.md`, from the plugin's `templates/backlog-item.md`); never expand detail here. Rules: `<ws>/standards/planning.md`.
 
 | ID | Item | Type | Priority | Status |
 |---|---|---|---|---|

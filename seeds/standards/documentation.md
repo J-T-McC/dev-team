@@ -2,10 +2,11 @@
 
 ## Active conventions
 - One document per feature per type; always start from the dev-team plugin's `templates/`.
-- Naming: `<feature-slug>-<type>.md`; tasks `docs/tasks/<feature-slug>/` (`index.md` + `T<NN>-<slug>.md`); ADRs `adr-<NNN>-<slug>.md`; questions `<feature-slug>-q<NNN>.md`; backlog `docs/backlog/` (`index.md` + `B<NN>-<slug>.md`).
+- Layout and naming: dev-team `workflow/workspace.md` — one folder per feature; shared ADRs, backlog, fixes, standards, and stack in `<ws>/`.
+- Live indexes hold only live rows: finished features move to `<ws>/status-done.md`, closed backlog items to `<ws>/backlog/archive.md`.
 - Every artifact carries Status, Author, Approval, and a Handoff section (plugin `workflow/handoffs.md`).
 - Link, never duplicate. If a section exceeds roughly a page, split the feature.
-- Approvals are recorded in the artifact **and** `docs/status.md`.
+- Approvals are recorded in the artifact **and** `<ws>/status.md`.
 
 ## Write dense
 Agents re-read these documents many times and people have to skim them; every word is paid for repeatedly.

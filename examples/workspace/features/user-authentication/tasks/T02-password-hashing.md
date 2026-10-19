@@ -1,6 +1,6 @@
-> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
+> **Example artifact** — fictional; in a real project this lives at the same path under the workspace.
 
-# T2 — Password hashing service
+# T02 — Password hashing service
 
 - **Plan section:** §Services
 - **Dependencies:** none

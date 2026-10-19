@@ -4,7 +4,7 @@
 
 ## Requirements (active)
 - Significant, hard-to-reverse decisions require an ADR (plugin `templates/adr.md`).
-- Designs stay within `docs/stack/stack.md`; deviations require an Owner-approved ADR.
+- Designs stay within `<ws>/stack/stack.md`; deviations require an Owner-approved ADR.
 - Every technical plan section must trace to a PRD acceptance criterion.
 
 ## Module boundaries

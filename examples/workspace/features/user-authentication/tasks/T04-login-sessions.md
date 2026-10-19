@@ -1,9 +1,9 @@
-> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
+> **Example artifact** — fictional; in a real project this lives at the same path under the workspace.
 
-# T4 — Sessions table and login endpoint
+# T04 — Sessions table and login endpoint
 
 - **Plan section:** §Data Model, §Services, §API; expiry semantics per Q001
-- **Dependencies:** T1, T2
+- **Dependencies:** T01, T02
 - **Files:** `src/auth/session_service.*`, `src/auth/routes.*`, `migrations/*_create_sessions.*`, `tests/auth/test_login.*`
 
 ## Acceptance Criteria

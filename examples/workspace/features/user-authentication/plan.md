@@ -1,10 +1,10 @@
-> **Example artifact** — fictional; in a real project this lives at the `docs/` path its naming implies.
+> **Example artifact** — fictional; in a real project this lives at the same path under the workspace.
 
 # Technical Plan: User Authentication
 
 - **Status:** Approved
 - **Author:** Principal Engineer
-- **PRD:** `docs/product/user-authentication-prd.md`
+- **PRD:** `prd.md`
 - **Approved by / date:** Principal Engineer (self-certified) / 2026-07-29 — ADR-001 decided by Project Owner
 
 ## Overview
@@ -25,7 +25,7 @@ Add an `auth` module providing registration, login/logout, and session validatio
 - `GET /auth/me` — → 200 current user | 401
 
 ## Services
-- `PasswordHasher` — hash/verify with a bcrypt-class KDF (final library per `docs/stack/stack.md`)
+- `PasswordHasher` — hash/verify with a bcrypt-class KDF (final library per `<ws>/stack/stack.md`)
 - `SessionService` — create (24h sliding / 30d absolute per Q001), validate, revoke
 
 ## Validation
@@ -38,7 +38,7 @@ Add an `auth` module providing registration, login/logout, and session validatio
 - Timing attacks on login → constant-time hash verification
 
 ## Dependencies
-- Web framework and database per `docs/stack/stack.md` (currently TBD; this design is stack-neutral)
+- Web framework and database per `<ws>/stack/stack.md` (currently TBD; this design is stack-neutral)
 
 ## Implementation Notes
 - Never log passwords or raw session tokens
@@ -47,6 +47,6 @@ Add an `auth` module providing registration, login/logout, and session validatio
 ## Handoff
 - **Inputs:** approved PRD, Q001 answer, ADR-001
 - **Outputs:** this plan
-- **Dependencies:** stack selections in `docs/stack/stack.md`
+- **Dependencies:** stack selections in `<ws>/stack/stack.md`
 - **Outstanding Questions:** none
-- **Next Agent:** Senior Developer — tasks in `docs/tasks/user-authentication/`
+- **Next Agent:** Senior Developer — tasks in `tasks/`

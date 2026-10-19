@@ -4,6 +4,7 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null)" || exit 1
 STATE_DIR="$(git rev-parse --path-format=absolute --git-common-dir)/dev-team"
 LOCK="$STATE_DIR/coordinator.lock"
 mkdir -p "$STATE_DIR"
+source "$(dirname "${BASH_SOURCE[0]}")/_workspace.sh" .
 
 mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1"; }
 
@@ -15,6 +16,6 @@ lock_held() {
 
 # Hash of the documents whose change means there is work to route.
 docs_fingerprint() {
-  cat docs/status.md docs/backlog/index.md docs/questions/*.md docs/tasks/*/index.md docs/reviews/*.md 2>/dev/null \
+  cat "$WS/status.md" "$WS/backlog/index.md" "$FEATURES"/*/questions/*.md "$FEATURES"/*/tasks/index.md "$FEATURES"/*/review.md 2>/dev/null \
     | shasum | cut -d' ' -f1
 }

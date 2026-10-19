@@ -24,7 +24,7 @@ Trigger checks shipped with the plugin: `has-work` (docs changed since its last 
 - **Schedule:** weekdays 09:00
 - **Role:** product-manager
 - **Runs when:** always *(work comes through the project's ticket MCP server; with `Via: orca`, `new-tickets linear <team key>` makes idle days free)*
-- **Job:** Triage new tickets assigned to the Owner: route each per `docs/standards/tickets.md`, file backlog items, set priority.
+- **Job:** Triage new tickets assigned to the Owner: route each per `<ws>/standards/tickets.md`, file backlog items, set priority.
 - **May:** flag only
 
 ## Tuning log
