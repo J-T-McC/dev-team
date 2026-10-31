@@ -1,0 +1,47 @@
+#!/bin/bash
+# seed-drift [project-dir] — what the plugin's seeds have that this project's copies lack (commands/sync.md step 4).
+# Reports seed sections missing from <ws>/standards/*.md, seed rules missing from the dev-team section, and
+# outdated Orca Runtime-line settings. Prints one line per finding (exit 1), or "up to date" (exit 0).
+P=${1:-.}
+PLUGIN=$(cd "$(dirname "$0")/.." && pwd)
+source "$PLUGIN/bin/_workspace.sh" "$P"
+found=0
+say() { echo "$1"; found=1; }
+norm() { sed -e 's/^## *//' -e 's/ *(.*) *$//' | tr '[:upper:]' '[:lower:]'; }
+
+# 1. Standards: seed "## " sections the project's copy lacks. "(active)" and case don't count.
+for seed in "$PLUGIN"/seeds/standards/*.md; do
+  f="$P/$WS/standards/$(basename "$seed")"
+  [ -f "$f" ] || continue
+  have=$(grep '^## ' "$f" | norm)
+  while IFS= read -r h; do
+    printf '%s\n' "$have" | grep -qxF "$(printf '%s\n' "$h" | norm)" ||
+      say "standards/$(basename "$seed"): missing section \"${h#\#\# }\""
+  done < <(grep '^## ' "$seed")
+done
+
+# 2. The dev-team section: seed rules (bold labels under "## Rules") it lacks. Guest mode keeps it in CLAUDE.local.md.
+section="$P/CLAUDE.md"
+grep -qs '\*\*Workspace:\*\*' "$P/CLAUDE.local.md" && section="$P/CLAUDE.local.md"
+if grep -qs -e '^# Development Organization' -e '\*\*Workspace:\*\*' "$section"; then
+  orca=$(grep -s 'Runtime: Orca' "$section")
+  label() { sed -n 's/^- \*\*\([^*:.]*\)[:.].*/\1/p'; }
+  have=$(label < "$section")
+  while IFS= read -r l; do
+    # Under the Orca runtime the Runtime line replaces the in-conversation rule.
+    [ -n "$orca" ] && [ "$l" = "Run roles in this conversation" ] && continue
+    printf '%s\n' "$have" | grep -qxF "$l" || say "$(basename "$section"): missing rule \"$l\""
+  done < <(sed -n '/^## Rules/,/^## /p' "$PLUGIN/seeds/CLAUDE.project.md" | label)
+
+  # 3. The Orca Runtime line: settings renamed or added since the project wrote it (workflow/orca.md § Opt in).
+  if [ -n "$orca" ]; then
+    case "$orca" in *"Peer clear threshold"*)
+      say "Runtime line: \"Peer clear threshold\" is now \"Peer size limit: 400k\" (a fresh session per task; the limit is the mid-task safety net)" ;;
+    *"Peer size limit"*) ;;
+    *) say "Runtime line: no \"Peer size limit\" (400k applies)" ;;
+    esac
+    case "$orca" in *"Board:"*) ;; *) say "Runtime line: no \"Board:\" setting (off applies)" ;; esac
+  fi
+fi
+[ $found = 0 ] && echo "up to date"
+exit $found

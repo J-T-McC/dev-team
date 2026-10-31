@@ -22,6 +22,7 @@ A private claude.ai artifact with its own database. The page (`${CLAUDE_PLUGIN_R
 
 - **Same turn as `<ws>/status.md`.** Every status change, dispatch, settlement, and question routed to the Owner updates the board in the same turn — one `ArtifactData` `batch`, including `meta/board.updated`. The Owner trusts the board; a lagging one is worse than none.
 - **Asks come and go at once.** A question or approval for the Owner becomes an `asks` row the moment it is routed to them, and its work row goes to `owner`. The row is deleted in the turn the answer arrives.
+- **Stacked PRs:** a row's `next` names its stack (`merges with #415 and #418`); a lower PR stays `ready` until the whole stack merges together (`<ws>/standards/coding.md` § Stacked PRs).
 - **Done rows** stay `done` until the Owner has seen them, then are deleted — at the latest the next day.
 - **Read cheaply, fix drift.** Read rows with an `ArtifactData` `list` using `out_dir` (files, not context). `${CLAUDE_PLUGIN_ROOT}/bin/board-drift <dir>` prints the work rows whose PR moved on its own — merged, a failed check, marked ready — fix only those. Run it whenever the coordinator wakes (under Orca, after every `peer watch`) and before answering the Owner on status.
 - **Only the orchestrator writes.** Roles report through their normal channels; peers never touch the board.

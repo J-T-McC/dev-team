@@ -57,7 +57,7 @@ When the task index has independent chains, record the base commit in the Review
 - **Serialized** — the coordinator dispatches the next stream's merge only after the previous one settles. The peer brings its stream up to date with the feature branch, verifies, then advances the feature branch; it never overwrites another stream's merge.
 - **Tests only where code combined** — docs-only changes, or a feature branch that has not moved since the stream last tested: none. Other streams' code came in: the targeted tests covering the code both touched (`<ws>/standards/testing.md`). The full suite runs once, on the last merge.
 - **Trivial conflicts only** — its own lines and index/backlog rows. A real conflict with another stream's code means the plan's disjointness was wrong: question doc to the Principal Engineer, never a guessed resolution.
-- **Last merge completes the Review manifest** (head commit, test command); the coordinator's spec says which merge is last. Then the Reviewer is dispatched and the stream homes are free.
+- **Last merge completes the Review manifest** (head commit, test command); the coordinator's spec says which merge is last. Then the Reviewer is dispatched, the stream homes are free, and each stream's child worktree is removed once its merge is in.
 
 When an answered question lands in the feature worktree, the coordinator `peer tell`s the waiting stream to pull the feature branch.
 
