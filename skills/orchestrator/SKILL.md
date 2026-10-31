@@ -11,7 +11,7 @@ Paths: `<ws>` is the workspace root, `<feature>` the current feature's folder �
 Traffic control: decide who acts next and where the work runs, verify prerequisites, keep `<ws>/status.md` accurate. Coordination only — this role owns no phase artifact. Runs in the main conversation; it is a set of rules, not an agent.
 
 ## Boundaries
-- **Owns** `<ws>/status.md` and `<ws>/status-done.md` — one row per feature in flight: phase, current role, blockers, approvals, path. The only files this role writes; with a ticket system enabled, it also makes the intake, status-sync, and release-comment writes `<ws>/standards/tickets.md` allows (`${CLAUDE_PLUGIN_ROOT}/workflow/tickets.md`).
+- **Owns** `<ws>/status.md` and `<ws>/status-done.md` — one row per feature in flight: phase, current role, blockers, approvals, path. The only files this role writes; with a ticket system enabled, it also makes the intake, status-sync, and release-comment writes `<ws>/standards/tickets.md` allows (`${CLAUDE_PLUGIN_ROOT}/workflow/tickets.md`). With an **Owner board** line in the project, it keeps the board current in the same turn as `<ws>/status.md` (`${CLAUDE_PLUGIN_ROOT}/workflow/board.md`).
 - **Never:** write code or phase artifacts, answer another role's domain questions, approve anything on the Project Owner's behalf (sole exception: the release an *autonomous* level delegates to it), route past a missing gate.
 - **Escalate:** missing approval → the gate's approver (Owner or delegate); question open past its Required By date → Project Owner; ambiguous pipeline state → Project Owner, never guess.
 

@@ -46,6 +46,15 @@ Projects driven from Orca can opt into a second runtime ([`workflow/orca.md`](wo
 
 **Check-ins** (`/dev-team:checkins`) are scheduled Orca automations defined in the workspace's `standards/checkins.md` — e.g. keep work moving every 30 minutes, catch stalled or failed work hourly, have the product-manager groom tickets assigned to you each weekday. Each starts with a free trigger check, so an idle project costs nothing; each reuses its session so it keeps its bearings (a run still re-sends that session, so check-in sessions are kept small). Optional extras: mirror `status.md` onto Orca's worktree board (with an unread flag when you're needed), and Orca's built-in browser for UI checks in place of Playwright.
 
+## Owner board (optional)
+
+With several roles running at once, the orchestrator's conversation moves too fast to follow, and the workspace documents are written for agents. The **Owner board** ([`workflow/board.md`](workflow/board.md)) is a live, private claude.ai page for you: questions and approvals waiting on you first, then who is on what, then every piece of work in flight with its PR, state, and next step. The orchestrator updates it in the same turn as `status.md`, and removes a question the moment you answer it; a token-free script (`bin/board-drift`) catches PRs that merged, failed, or went ready on their own. Works with either runtime. Set it up with `/dev-team:board`.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="examples/board/board-dark.png">
+  <img alt="Owner board with sample data: two questions waiting on the Owner, seven roles and their current tasks, and work grouped as Reporting, Mobile and Platform with ticket, PR, state and next step." src="examples/board/board-light.png">
+</picture>
+
 ## Ticket systems (optional)
 
 Work can come from Linear, Jira, GitHub Issues and Projects, or any tracker enabled through MCP — or through Orca's built-in Linear client or the `gh` CLI, which need no MCP server — configured per project in the workspace's `standards/tickets.md` (off by default; rules in [`workflow/tickets.md`](workflow/tickets.md)). The tracker is the **source of work and the record of outcomes**; agents still work and talk through the workspace, which is cheaper than MCP round-trips. A ticket is read once at intake and its ID carried in the PRD, fix record, and status row; phase changes sync its status; and only what the config's **Elevation** allowlist names goes back out — a release comment, high-priority bugs — never findings, questions, or task notes. Only the orchestrator and product-manager write to the tracker.
@@ -117,9 +126,10 @@ Validate with `claude plugin validate .`
 | Path | What | Updatable |
 |---|---|---|
 | `agents/`, `skills/` | The six roles (orchestrator is skill-only) + bootstrap skill | ✅ via plugin update |
-| `commands/` | `/dev-team:sync` — pull missing/updated seeds into a project; `/dev-team:tickets` — ticket-system setup/tuning; `/dev-team:checkins` — Orca check-ins | ✅ via plugin update |
+| `commands/` | `/dev-team:sync` — pull missing/updated seeds into a project; `/dev-team:tickets` — ticket-system setup/tuning; `/dev-team:checkins` — Orca check-ins; `/dev-team:board` — Owner board | ✅ via plugin update |
 | `templates/`, `workflow/` | Document templates, pipeline/handoff/communication rules | ✅ via plugin update |
-| `bin/` | Check-in trigger scripts and the coordinator lock (Orca runtime) | ✅ via plugin update |
+| `bin/` | Check-in trigger scripts, the coordinator lock and `peer` (Orca runtime); `board-drift` (Owner board) | ✅ via plugin update |
 | `hooks/` | Session-start announcement + agent-memory size sentinel | ✅ via plugin update |
 | `seeds/` | Copied into projects by bootstrap/sync | ❌ project-owned after copy |
 | `examples/workspace/` | Worked example of the full pipeline, in the workspace layout | ✅ via plugin update |
+| `examples/board/` | Owner board sample data and screenshots | ✅ via plugin update |

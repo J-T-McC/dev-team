@@ -1,0 +1,27 @@
+{
+  "meta/config": { "ticketUrl": "https://example.com/tickets/", "repo": "acme/app" },
+  "asks": [
+    { "id": "a1", "order": 1, "ticket": "APP-214", "question": "Approve the saved-searches PRD? It adds email alerts, which the ticket did not ask for." },
+    { "id": "a2", "order": 2, "ticket": "APP-231", "question": "May dt-dev-2 record 10 seconds of real microphone audio in the emulator? Fake audio passes; real audio is the open question." }
+  ],
+  "peers": [
+    { "id": "dt-product", "order": 1, "name": "dt-product", "role": "product-manager", "doing": "APP-214 saved searches: PRD waiting on you" },
+    { "id": "dt-designer", "order": 2, "name": "dt-designer", "role": "designer", "doing": "APP-219 onboarding checklist: mockups" },
+    { "id": "dt-architect", "order": 3, "name": "dt-architect", "role": "principal-engineer", "doing": "Idle" },
+    { "id": "dt-dev-1", "order": 4, "name": "dt-dev-1", "role": "senior-developer", "doing": "APP-207 CSV export: T03 of 4" },
+    { "id": "dt-dev-2", "order": 5, "name": "dt-dev-2", "role": "senior-developer", "doing": "APP-231 voice notes: waiting on the mic go" },
+    { "id": "dt-dev-3", "order": 6, "name": "dt-dev-3", "role": "senior-developer", "doing": "APP-226 fixing review findings on #412" },
+    { "id": "dt-reviewer", "order": 7, "name": "dt-reviewer", "role": "reviewer", "doing": "Reviewing #418, APP-228 rate limits" }
+  ],
+  "work": [
+    { "id": "APP-207", "group": "Reporting", "group_order": 1, "ticket": "APP-207", "title": "CSV export for invoices", "peer": "dt-dev-1", "pr": 409, "state": "building", "next": "T03 streaming writer, then T04" },
+    { "id": "APP-214", "group": "Reporting", "group_order": 1, "ticket": "APP-214", "title": "Saved searches", "peer": "dt-product", "state": "owner", "next": "PRD approval (Needs you)" },
+    { "id": "APP-219", "group": "Reporting", "group_order": 1, "ticket": "APP-219", "title": "Onboarding checklist", "peer": "dt-designer", "state": "planning", "next": "Mockups to the PM for approval" },
+    { "id": "APP-231", "group": "Mobile", "group_order": 2, "ticket": "APP-231", "title": "Voice notes on Android", "peer": "dt-dev-2", "pr": 415, "state": "owner", "next": "Recording go (Needs you)" },
+    { "id": "APP-226", "group": "Mobile", "group_order": 2, "ticket": "APP-226", "title": "Offline drafts", "peer": "dt-dev-3", "pr": 412, "state": "fixing", "next": "Two review findings, then a delta review" },
+    { "id": "APP-222", "group": "Mobile", "group_order": 2, "ticket": "APP-222", "title": "Notification settings", "pr": 405, "state": "ready", "next": "Reviewed and green: merge when you like" },
+    { "id": "APP-228", "group": "Platform", "group_order": 3, "ticket": "APP-228", "title": "Rate limits per API key", "peer": "dt-reviewer", "pr": 418, "state": "review", "next": "Security checks first, then limits" },
+    { "id": "APP-233", "group": "Platform", "group_order": 3, "ticket": "APP-233", "title": "Audit log retention", "state": "queued", "next": "Starts after APP-228" },
+    { "id": "APP-224", "group": "Platform", "group_order": 3, "ticket": "APP-224", "title": "Upgrade Node to 22", "pr": 401, "state": "done", "next": "Merged" }
+  ]
+}
