@@ -39,6 +39,9 @@ row reviewing '{"data": {"pr": 5, "state": "review"}}'
 row waiting   '{"data": {"pr": 6, "state": "owner"}}'
 row done      '{"data": {"pr": 1, "state": "done"}}'
 row nopr      '{"data": {"state": "planning"}}'
+row missing   '{"data": {"pr": 8, "state": "review"}}'
+row planned   '{"data": {"pr": 4, "state": "planning"}}'
+row queued    '{"data": {"pr": 5, "state": "queued"}}'
 printf '%s' '{"data": {"pr": 7, "repo": "acme/mobile", "state": "review"}}' > "$T/rows/sub/other.json"
 
 OUT=$("$REPO/bin/board-drift" "$T/rows"); RC=$?
@@ -48,6 +51,9 @@ ok "failed check → fixing"                 '[[ $OUT == *"failed: board says re
 ok "draft PR is not ready"                 '[[ $OUT == *"draft: board says ready, should be building or review"* ]]'
 ok "ready PR is not building"              '[[ $OUT == *"ready: board says building, should be ready or review"* ]]'
 ok "row repo wins, nested files read"      '[[ $OUT == *"other: board says review, should be done (PR closed)"* ]] && grep -q "acme/mobile" "$T/gh.log"'
+ok "missing PR is reported"               '[[ $OUT == *"missing: PR #8 not found"* ]]'
+ok "ready PR is not planning"              '[[ $OUT == *"planned: board says planning, should be ready or review"* ]]'
+ok "ready PR is not queued"                '[[ $OUT == *"queued: board says queued, should be ready or review"* ]]'
 ok "in-sync rows stay quiet"               '[[ $OUT != *reviewing* && $OUT != *waiting* && $OUT != *nopr* ]]'
 ok "done rows are not looked up"           '[ "$(grep -c "\"1\"" "$T/gh.log")" = 1 ]'
 mkdir -p "$T/sync"; printf '%s' '{"data": {"pr": 5, "state": "review"}}' > "$T/sync/a.json"
