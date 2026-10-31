@@ -23,6 +23,14 @@ Footer, when needed: `Refs: <feature>/tasks/index.md`, `Closes: #<issue>`.
 
 One commit per coherent unit of work: a task, a batch of tasks completed together, or one fast-path fix. Never mix pipeline work with unrelated fixes.
 
+## Stacked PRs (active when `gh stack` is installed)
+Applies when `gh extension list` shows `github/gh-stack`. Who syncs what is decided by what is in flight, not fixed: adapt as stacks form and change.
+
+- **Build on unmerged work; don't wait for the merge.** A task that depends on work whose PR has not merged builds on that PR's branch as a stacked PR: `gh stack checkout <PR#>` (or `gh stack init <lower-branch>`), `gh stack add <branch>`, commit, then `gh stack submit --auto` (new PRs open as drafts) and set the real title.
+- **Each PR is reviewed on its own diff.** Its base is the branch below it; that branch's head is the Review manifest's base commit.
+- **A stack merges together, bottom up,** once every PR in it is reviewed and green. A green lower PR never merges alone: `main` stays shippable for anyone releasing.
+- **Keeping branches current — the owner syncs by default.** Your own stack (every branch yours): `gh stack sync`, which rebases and force-pushes the whole stack with lease. A stack shared with others: bring only your branch up to date — merge the branch below into it and push — and never run `gh stack sync`, which would rewrite their branches. When many hands share stacks, the orchestrator (the coordinator under Orca) may name one **stack keeper** for a while: it brings lower changes up with merge commits only, never force-pushes, and tells each owner to pull. Say who syncs when a stack forms, and change it when the stack changes.
+
 ## Naming
 _TBD — casing, file naming, module naming._
 

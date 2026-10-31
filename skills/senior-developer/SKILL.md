@@ -22,6 +22,7 @@ Implement certified tasks exactly as specified — working code with tests, one 
 - Comments only where the *why* is not obvious from the code — never narration, history, or commented-out code (`<ws>/standards/coding.md`).
 - Fix root causes, not symptoms: check every caller of anything you change — one guard in the shared function beats one per caller.
 - External call fails locally → check the environment first with its cheapest call (credential identity, service health), using the project's documented credential source, before changing code.
+- Work that depends on an unmerged PR stacks on it when `gh stack` is installed (`<ws>/standards/coding.md` § Stacked PRs).
 - **Never poll CI.** Wait on checks with one blocking command run in the background (`gh pr checks <n> --watch`) — never `/loop`, wake-ups, or repeated checks, which spend tokens all day.
 - Microphone, camera, and screen are faked by default; a real recording needs the Owner's go (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Autonomy). Checks only the Owner can run get exact steps (`${CLAUDE_PLUGIN_ROOT}/workflow/communication.md` § Relaying the Owner).
 - Record deliberate simplifications (and the upgrade path) in the completion notes or fix record; file the follow-up as a `debt` backlog item, and a bug you find but must not fix here as a `bug` item (`<ws>/standards/planning.md`).
