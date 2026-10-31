@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""List Owner-board work rows whose state no longer matches their GitHub PR (workflow/board.md).
+
+Usage: board-drift <dir> [owner/repo]
+<dir> holds the board's `work` rows as JSON files, saved by an ArtifactData `list` of collection `work` with
+`out_dir`, so reading the board costs almost nothing. A row's own `repo` wins; otherwise the argument, otherwise
+this checkout's GitHub repo. Prints one line per row to fix (exit 1), or "board in sync" (exit 0). Uses `gh`.
+"""
+import glob, json, os, subprocess, sys
+
+FAIL = ("FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ERROR", "ACTION_REQUIRED")
+
+
+def gh(*a):
+    try:
+        return subprocess.run(["gh", *a], capture_output=True, text=True, timeout=60).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+if len(sys.argv) < 2:
+    sys.exit(__doc__)
+default_repo = sys.argv[2] if len(sys.argv) > 2 else gh("repo", "view", "--json", "nameWithOwner",
+                                                         "-q", ".nameWithOwner").strip()
+drift = []
+for f in sorted(glob.glob(os.path.join(sys.argv[1], "**", "*.json"), recursive=True)):
+    d = json.load(open(f))
+    row, doc = d.get("data", d), os.path.basename(f)[:-5]
+    state, pr = row.get("state"), row.get("pr")
+    if not pr or state == "done":
+        continue
+    try:
+        p = json.loads(gh("pr", "view", str(pr), "-R", row.get("repo") or default_repo,
+                          "--json", "state,isDraft,statusCheckRollup") or "{}")
+    except ValueError:
+        p = {}
+    if not p:
+        drift.append(f"{doc}: PR #{pr} not found — check the row")
+        continue
+    failed = any((c.get("conclusion") or c.get("state") or "").upper() in FAIL for c in p.get("statusCheckRollup") or [])
+    want = None
+    if p["state"] in ("MERGED", "CLOSED"):
+        want = f"done (PR {p['state'].lower()})"
+    elif failed and state not in ("fixing", "owner", "blocked"):
+        want = "fixing (a check failed" + (", draft)" if p["isDraft"] else ")")
+    elif p["isDraft"] and state == "ready" and not failed:
+        want = "building or review (the PR is a draft)"
+    elif not p["isDraft"] and state in ("building", "fixing", "planning", "queued") and not failed:
+        want = "ready or review (the PR is ready and no check failed)"
+    if want:
+        drift.append(f"{doc}: board says {state}, should be {want}  [#{pr}]")
+print("\n".join(drift) if drift else "board in sync")
+sys.exit(1 if drift else 0)

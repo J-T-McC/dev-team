@@ -1,0 +1,199 @@
+<title>{{PROJECT}} Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* The Owner board (dev-team workflow/board.md): "Needs you" first, then who's on what, then the work by group. */
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --fg: #1b2330; --muted: #5d6878; --line: #dfe3ea;
+  --accent: #2f5fd0; --accent-soft: #e7eefc;
+  --ok: #1f7a4d; --ok-soft: #e3f3ea; --warn: #9a6100; --warn-soft: #fbf0d9;
+  --bad: #b3261e; --bad-soft: #fbe5e3; --idle: #6b7585; --idle-soft: #eef0f3;
+  --sans: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161d; --panel: #1a2029; --fg: #e4e8ef; --muted: #98a2b3; --line: #2b3340;
+  --accent: #8aaaf5; --accent-soft: #1f2a42;
+  --ok: #6fd3a0; --ok-soft: #173326; --warn: #f0bf62; --warn-soft: #3a2e14;
+  --bad: #f2928a; --bad-soft: #3d1d1b; --idle: #8e98a8; --idle-soft: #232a35; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12161d; --panel: #1a2029; --fg: #e4e8ef; --muted: #98a2b3; --line: #2b3340;
+  --accent: #8aaaf5; --accent-soft: #1f2a42;
+  --ok: #6fd3a0; --ok-soft: #173326; --warn: #f0bf62; --warn-soft: #3a2e14;
+  --bad: #f2928a; --bad-soft: #3d1d1b; --idle: #8e98a8; --idle-soft: #232a35; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 0.95rem; line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+h1 { font-size: 1.5rem; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.stamp { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+a { color: var(--accent); text-decoration: none; }
+a:hover, a:focus-visible { text-decoration: underline; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.mono { font-family: var(--mono); font-size: 0.85rem; }
+
+.asks { display: grid; gap: 8px; }
+.ask { background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
+  border-radius: 8px; padding: 10px 14px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.ask .q { flex: 1 1 320px; min-width: 0; }
+.empty { color: var(--muted); font-style: italic; margin: 0; }
+
+.peers { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.peer { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  display: grid; gap: 4px; min-width: 0; }
+.peer .name { font-family: var(--mono); font-weight: 500; font-size: 0.85rem; display: flex; justify-content: space-between; gap: 8px; }
+.peer .doing { font-size: 0.88rem; }
+.peer.idle .doing { color: var(--muted); }
+
+.group { display: grid; gap: 8px; }
+.group h3 { margin: 0; font-size: 1.02rem; font-weight: 600; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.group h3 .count { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); font-weight: 400; }
+.tablebox { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.t { white-space: nowrap; }
+td.next { color: var(--muted); min-width: 220px; }
+
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; white-space: nowrap; }
+.s-planning, .s-building, .s-review { background: var(--accent-soft); color: var(--accent); }
+.s-fixing { background: var(--warn-soft); color: var(--warn); }
+.s-ready, .s-done { background: var(--ok-soft); color: var(--ok); }
+.s-blocked, .s-owner { background: var(--bad-soft); color: var(--bad); }
+.s-queued { background: var(--idle-soft); color: var(--idle); }
+.note { color: var(--muted); font-size: 0.85rem; margin: 0; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>{{PROJECT}} Board</h1>
+    <span class="stamp" id="stamp">Connecting…</span>
+  </header>
+
+  <section>
+    <h2>Needs you</h2>
+    <div class="asks" id="asks"><p class="empty">Questions for you appear here.</p></div>
+  </section>
+
+  <section>
+    <h2>Who's on what</h2>
+    <div class="peers" id="peers"><p class="empty">Each role and its current task appear here.</p></div>
+  </section>
+
+  <section>
+    <h2>Work</h2>
+    <div id="groups" style="display:grid;gap:22px"><p class="empty">Work in flight appears here once the coordinator posts it.</p></div>
+  </section>
+
+  <p class="note" id="legend">Updated by the coordinator as work moves.</p>
+</div>
+
+<script>
+const ORDER = ["owner", "blocked", "fixing", "review", "building", "planning", "ready", "queued", "done"];
+const data = { work: [], peers: [], asks: [], meta: null, config: {} };
+
+function states() {
+  const owner = data.config.owner || "you";
+  return {
+    owner: ["Waiting on " + owner, "s-owner"], blocked: ["Blocked", "s-blocked"], fixing: ["Fixing findings", "s-fixing"],
+    review: ["In review", "s-review"], building: ["Building", "s-building"], planning: ["Planning", "s-planning"],
+    ready: ["Ready to merge", "s-ready"], queued: ["Queued", "s-queued"], done: ["Done", "s-done"]
+  };
+}
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) { if (k === "class") n.className = v; else n.setAttribute(k, v); }
+  for (const k of kids) if (k != null) n.append(k);
+  return n;
+}
+function link(href, text) { return el("a", { href, target: "_blank", rel: "noopener" }, text); }
+function ticket(id) {
+  if (!id) return "—";
+  return data.config.ticketUrl ? link(data.config.ticketUrl + encodeURIComponent(id), id) : id;
+}
+function pr(d) {
+  if (!d.pr) return "—";
+  const repo = d.repo || data.config.repo;
+  const text = (d.repo && d.repo !== data.config.repo ? d.repo.split("/").pop() + " " : "") + "#" + d.pr;
+  return repo ? link(`https://github.com/${repo}/pull/${d.pr}`, text) : text;
+}
+function pill(s) { const [t, c] = states()[s] || [s || "—", "s-queued"]; return el("span", { class: "pill " + c }, t); }
+function ago(iso) {
+  if (!iso) return "";
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  return m < 1 ? "just now" : m < 60 ? m + " min ago" : Math.round(m / 60) + " h ago";
+}
+const byOrder = (x, y) => (x.order ?? 99) - (y.order ?? 99);
+
+function render() {
+  const asks = document.getElementById("asks");
+  asks.replaceChildren();
+  if (!data.asks.length) asks.append(el("p", { class: "empty" }, "Nothing waiting on you."));
+  for (const a of [...data.asks].sort(byOrder)) {
+    asks.append(el("div", { class: "ask" }, el("span", { class: "mono" }, ticket(a.ticket)), el("span", { class: "q" }, a.question || "")));
+  }
+
+  const peers = document.getElementById("peers");
+  peers.replaceChildren();
+  if (!data.peers.length) peers.append(el("p", { class: "empty" }, "No roles posted yet."));
+  for (const p of [...data.peers].sort(byOrder)) {
+    const idle = !p.doing || /^idle/i.test(p.doing);
+    peers.append(el("div", { class: "peer" + (idle ? " idle" : "") },
+      el("div", { class: "name" }, el("span", {}, p.name || p.id), el("span", { class: "stamp" }, p.role || "")),
+      el("div", { class: "doing" }, p.doing || "Idle")));
+  }
+
+  const groups = document.getElementById("groups");
+  groups.replaceChildren();
+  if (!data.work.length) groups.append(el("p", { class: "empty" }, "Nothing in flight."));
+  const byGroup = new Map();
+  for (const w of data.work) { const g = w.group || "Other"; if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(w); }
+  const gOrder = [...byGroup.keys()].sort((a, b) => (byGroup.get(a)[0].group_order ?? 99) - (byGroup.get(b)[0].group_order ?? 99));
+  for (const g of gOrder) {
+    const rows = byGroup.get(g).sort((a, b) => ORDER.indexOf(a.state) - ORDER.indexOf(b.state) || (a.ticket || "").localeCompare(b.ticket || ""));
+    const open = rows.filter(r => r.state !== "done").length;
+    const tbody = el("tbody");
+    for (const r of rows) {
+      tbody.append(el("tr", {},
+        el("td", { class: "t mono" }, ticket(r.ticket)),
+        el("td", {}, r.title || ""),
+        el("td", { class: "mono" }, r.peer || "—"),
+        el("td", { class: "mono t" }, pr(r)),
+        el("td", {}, pill(r.state)),
+        el("td", { class: "next" }, r.next || "")));
+    }
+    const head = el("thead", {}, el("tr", {}, ...["Ticket", "What", "Who", "PR", "State", "Next"].map(h => el("th", {}, h))));
+    groups.append(el("div", { class: "group" },
+      el("h3", {}, g, el("span", { class: "count" }, `${open} open · ${rows.length} total`)),
+      el("div", { class: "tablebox" }, el("table", {}, head, tbody))));
+  }
+
+  document.getElementById("legend").textContent = "Updated by the coordinator as work moves. States: " +
+    ORDER.map(s => states()[s][0].toLowerCase()).join(", ") + ".";
+  document.getElementById("stamp").textContent = data.meta?.updated ? "Updated " + ago(data.meta.updated) : "Live";
+}
+
+(async () => {
+  render();
+  const stamp = document.getElementById("stamp");
+  const timer = setTimeout(() => { stamp.textContent = "Couldn't reach the board data. Reload to try again."; }, 10000);
+  const db = await window.claude?.use?.("db");
+  if (!db) { clearTimeout(timer); stamp.textContent = "Sign in to see the live board."; return; }
+  const failed = () => { clearTimeout(timer); stamp.textContent = "Couldn't load the board data."; };
+  const watch = (name) => db.collection(name).onSnapshot(snap => {
+    clearTimeout(timer);
+    data[name] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  }, failed);
+  watch("work");
+  watch("peers");
+  watch("asks");
+  db.doc("meta/board").onSnapshot(d => { data.meta = d.exists ? d.data() : null; render(); }, () => {});
+  db.doc("meta/config").onSnapshot(d => { data.config = d.exists ? d.data() : {}; render(); }, () => {});
+  setInterval(render, 60000);
+})();
+</script>
