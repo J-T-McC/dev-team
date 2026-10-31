@@ -10,5 +10,8 @@
 ## Findings
 <What was learned, with evidence: files, docs, experiments, people asked. Facts first, opinions marked.>
 
+## Risk *(risk-gated work only — delete otherwise)*
+<What changes and where it is stored or referenced; who gains or loses access or data; what existing users, connections, or data break; how to roll back. Every claim cites the code.>
+
 ## Recommendation
 <What to do, and the path change it implies — e.g. "add a plan", "upgrade to a PRD", "no design needed".>

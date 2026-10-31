@@ -39,6 +39,11 @@ Never bypass the chain. Example: the Senior Developer must not ask the Project O
 - Be concise; link to documents instead of restating them.
 - One question per question document.
 
+## Relaying the Owner
+
+- **The Owner's words travel verbatim.** When passing an Owner observation, decision, or answer to a role, quote it exactly, then add any interpretation separately and mark it as yours. A paraphrase sends the role after the wrong cause.
+- **The Owner as the hands.** When a check needs the Owner — a device, an account, a physical step — the role writes exact steps: device and build, what to do or say, for how long, what to look for, and what to send back. The coordinator relays them unchanged. One thing per round. The role collects logs itself wherever it can (for example, a local-only diagnostic build that writes to a file) rather than asking the Owner to read them.
+
 ## Plain language
 
 Everything a role writes — artifacts, notes, questions, summaries, commit messages — is read by people and re-read by agents. Neither needs padding.

@@ -105,7 +105,7 @@ Plugin updates never touch project-owned files, so a project bootstrapped before
 
 - **Moves** an older type-first workspace to feature folders (dry run first, then `git mv` with links rewritten)
 - **Copies** any seed file the project is missing (standards, `stack/stack.md`, `status.md`, `status-done.md`, the backlog index and archive) and creates any missing folders
-- **Reports drift** in existing standards: lists seed sections (`##` headings) absent from your project's copy, ignoring your customizations
+- **Reports drift** (`bin/seed-drift`): seed sections (`##` headings) absent from your standards, seed rules absent from the project's dev-team section, and Orca Runtime-line settings renamed or added since — names only, so your customizations never show up as drift
 - **Appends only what you approve** — never overwrites, rewrites, or deletes project content
 
 After a sync, fill placeholders in newly copied files and commit them to your project repo.
@@ -128,7 +128,7 @@ Validate with `claude plugin validate .`
 | `agents/`, `skills/` | The six roles (orchestrator is skill-only) + bootstrap skill | ✅ via plugin update |
 | `commands/` | `/dev-team:sync` — pull missing/updated seeds into a project; `/dev-team:tickets` — ticket-system setup/tuning; `/dev-team:checkins` — Orca check-ins; `/dev-team:board` — Owner board | ✅ via plugin update |
 | `templates/`, `workflow/` | Document templates, pipeline/handoff/communication rules | ✅ via plugin update |
-| `bin/` | Check-in trigger scripts, the coordinator lock and `peer` (Orca runtime); `board-drift` (Owner board) | ✅ via plugin update |
+| `bin/` | Check-in trigger scripts, the coordinator lock and `peer` (Orca runtime); `board-drift` (Owner board); `seed-drift` (sync) | ✅ via plugin update |
 | `hooks/` | Session-start announcement + agent-memory size sentinel | ✅ via plugin update |
 | `seeds/` | Copied into projects by bootstrap/sync | ❌ project-owned after copy |
 | `examples/workspace/` | Worked example of the full pipeline, in the workspace layout | ✅ via plugin update |

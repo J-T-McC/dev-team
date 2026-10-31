@@ -18,5 +18,11 @@
 - **standard** — diff review with targeted caller checks.
 - **deep** — the work contains a major decision: trace every changed public interface's callers; line-by-line on security-sensitive paths. Set by the Principal Engineer in the task index.
 
+## Review order (active)
+For changes that touch access, money, or existing data, check in this order and record each step in the review:
+1. **Security** — who can read or change what, before and after. Probe base and head with a real request where possible, not only by reading.
+2. **Breakage** — callers, existing data, existing connections and integrations.
+3. **Cost** — performance and spend.
+
 ## Checklists
 _TBD — per-project checklist (security, performance, accessibility…)._
