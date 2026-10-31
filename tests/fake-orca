@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""A stand-in for the orca CLI, for tests/peer.sh. State and a call log live in $FAKE_ORCA_DIR.
+
+state.json: stage (running|settled) of the current dispatch, mode (terminal|chat), inbox batches,
+            the peer's screen, and what `terminal send` prints.
+calls.log:  one JSON argv array per call.
+"""
+import json, os, sys
+
+D = os.environ["FAKE_ORCA_DIR"]
+STATE = os.path.join(D, "state.json")
+argv = [a for a in sys.argv[1:] if a != "--json"]
+with open(os.path.join(D, "calls.log"), "a") as f:
+    f.write(json.dumps(argv) + "\n")
+s = json.load(open(STATE)) if os.path.exists(STATE) else {}
+for k, v in {"n": 0, "stage": "running", "mode": "terminal", "batches": [], "dispatches": {}}.items():
+    s.setdefault(k, v)
+
+
+def arg(name):
+    return argv[argv.index(name) + 1] if name in argv else None
+
+
+def out(result=None):
+    json.dump(s, open(STATE, "w"))
+    print(json.dumps({"ok": True, "result": result or {}}))
+    sys.exit(0)
+
+
+cmd = argv[:2]
+if cmd == ["orchestration", "run-create"]:
+    out({"run": {"id": "run_0a1b2c"}})
+if cmd == ["orchestration", "worker-start"]:
+    s["n"] += 1
+    n, wt = s["n"], arg("--worktree")
+    path = wt[5:] if wt.startswith("path:") else "/wt/" + (arg("--name") or wt)
+    s["dispatches"][f"ctx_{n}"] = {"terminal": arg("--terminal") or f"term_{n}", "path": path}
+    s["stage"] = "running"
+    out({"taskId": f"task_{n}", "dispatchId": f"ctx_{n}"})
+if cmd == ["orchestration", "worker-show"]:
+    d = s["dispatches"].get(arg("--dispatch"), {})
+    out({"worker": {"stage": s["stage"], "agentTerminalHandle": d.get("terminal"),
+                    "worktreeId": "repo1::" + d.get("path", ""), "startOptions": {"mode": {"mode": s["mode"]}}}})
+if cmd == ["orchestration", "check"]:
+    if arg("--ack"):
+        s["batches"] = [b for b in s["batches"] if b["deliveryId"] != arg("--ack")]
+        out()
+    out(s["batches"][0] if s["batches"] else {})
+if cmd == ["terminal", "read"]:
+    if "--screen" in argv:
+        print(s.get("screen", ""))
+        sys.exit(0)
+    out({"terminal": {"latestCursor": 7}})
+if cmd == ["terminal", "send"] and "--json" not in sys.argv:
+    print(s.get("send_reply", "sent"))
+    sys.exit(0)
+out()

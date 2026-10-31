@@ -15,7 +15,8 @@ Homes and the team's Run are machine-local state: <git common dir>/dev-team/peer
 import json, os, re, subprocess, sys, time
 from pathlib import Path
 
-STALL_MIN = int(os.environ.get("DEV_TEAM_STALL_MIN", "20"))
+STALL_MIN = float(os.environ.get("DEV_TEAM_STALL_MIN", "20"))
+POLL_SEC = float(os.environ.get("DEV_TEAM_WATCH_POLL", "30"))
 ROLE_LINE = ("You are the dev-team {role} peer [dev-team home {home}]. If the dev-team:{role} skill is not loaded "
              "in this conversation, invoke it first. Follow the peer rules in the dev-team workflow/orca.md § Peers: "
              "ask for any decision or go with your preamble's `ask` command, never in a status message.")
@@ -327,7 +328,7 @@ def cmd_sizes(argv):
 
 
 def cmd_watch(argv):
-    minutes = int(argv[0]) if argv else 15
+    minutes = float(argv[0]) if argv else 15
     reg = load()
     run = bind(reg)
     end, limit = time.time() + minutes * 60, size_limit()
@@ -362,9 +363,9 @@ def cmd_watch(argv):
             if cur != last.get(home):
                 last[home], since[home] = cur, now
             elif now - since[home] >= STALL_MIN * 60:
-                return print(f"STALL | {home} | terminal quiet for {STALL_MIN} min on '{h['title']}': look at it")
-        time.sleep(30)
-    print(f"nothing after {minutes} min")
+                return print(f"STALL | {home} | terminal quiet for {STALL_MIN:g} min on '{h['title']}': look at it")
+        time.sleep(POLL_SEC)
+    print(f"nothing after {minutes:g} min")
 
 
 # --- list and release -----------------------------------------------------------------------------------------------
