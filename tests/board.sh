@@ -81,6 +81,8 @@ else
   ok "render: owner state defaults to you" '[ "$(count ">Waiting on you<")" = 2 ]'
   ok "render: ticket links from config"    '[[ $DOM == *"href=\"https://example.com/tickets/APP-207\""* ]]'
   ok "render: PR links from config repo"   '[[ $DOM == *"href=\"https://github.com/acme/app/pull/409\""* ]]'
+  ok "render: stacked PRs, lower waits"     '[[ $DOM == *"merges with #420, not alone"* ]] && [[ $DOM == *"https://github.com/acme/app/pull/420"* ]] && [[ $DOM == *"stacked on #409"* ]]'
+  ok "render: a stack stays together, bottom up" 'printf "%s" "$DOM" | python3 -c "import re,sys;d=sys.stdin.read();i,j=d.find(\"invoice query\"),d.find(\"streaming writer\");sys.exit(0 if 0<=i<j and not re.search(r\"APP-2(?!07)\",d[i:j]) else 1)"'
   ok "render: updated stamp"               '[[ $DOM == *"Updated 3 min ago"* ]]'
   python3 -c 'import json,sys;s=json.load(open(sys.argv[1]));s["meta/config"]={"owner":"Sam"};s["work"][0]["repo"]="acme/mobile";json.dump(s,open(sys.argv[2],"w"))' \
     examples/board/sample.json "$T/s2.json"

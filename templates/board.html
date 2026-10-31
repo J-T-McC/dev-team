@@ -154,7 +154,12 @@ function render() {
   for (const w of data.work) { const g = w.group || "Other"; if (!byGroup.has(g)) byGroup.set(g, []); byGroup.get(g).push(w); }
   const gOrder = [...byGroup.keys()].sort((a, b) => (byGroup.get(a)[0].group_order ?? 99) - (byGroup.get(b)[0].group_order ?? 99));
   for (const g of gOrder) {
-    const rows = byGroup.get(g).sort((a, b) => ORDER.indexOf(a.state) - ORDER.indexOf(b.state) || (a.ticket || "").localeCompare(b.ticket || ""));
+    // Rows sharing a ticket (a stack, or one ticket in several PRs) stay together, placed by their most urgent row.
+    const rank = r => ORDER.indexOf(r.state);
+    const first = new Map();
+    for (const r of byGroup.get(g)) { const k = r.ticket || r.id; first.set(k, Math.min(first.get(k) ?? 99, rank(r))); }
+    const key = r => first.get(r.ticket || r.id);
+    const rows = byGroup.get(g).sort((a, b) => key(a) - key(b) || (a.ticket || "").localeCompare(b.ticket || "") || (a.pr || 0) - (b.pr || 0));
     const open = rows.filter(r => r.state !== "done").length;
     const tbody = el("tbody");
     for (const r of rows) {
