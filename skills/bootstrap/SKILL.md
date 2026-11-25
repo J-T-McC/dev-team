@@ -49,7 +49,7 @@ git log --oneline -1 2>/dev/null; ls docs CLAUDE.md CLAUDE.local.md 2>/dev/null
 5. **Owner preferences** — ask, then record in the dev-team section (skip any the Owner defers; defaults apply):
    - **Autonomy:** `supervised`, `standard` (default), or `autonomous`, plus any gates to keep (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Autonomy).
    - **Ticket system:** Linear, Jira, GitHub, or another tracker? Yes → run `${CLAUDE_PLUGIN_ROOT}/commands/tickets.md`. No → `/dev-team:tickets` enables it later.
-   - **Orca:** does the Owner run Claude from Orca? Yes → add the Runtime line (`${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` § Opt in) with the Team model, Fallback model, and Advisor the Owner picks (§ Launch settings), and offer `/dev-team:checkins`.
+   - **Orca:** does the Owner run Claude from Orca? Yes → run `${CLAUDE_PLUGIN_ROOT}/commands/orca.md`: the Runtime line and the subagent deny, with the **recommended setup** (`${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md`) offered as one choice. Then offer `/dev-team:checkins`.
    - **Owner board:** a live page of what needs the Owner, who is on what, and work in flight — recommended when several roles run at once. Yes → run `${CLAUDE_PLUGIN_ROOT}/commands/board.md`. No → `/dev-team:board` sets it up later.
    - **Stacked PRs:** `gh extension list` shows `github/gh-stack` → tell the Owner `<ws>/standards/coding.md` § Stacked PRs applies. Not installed → the section stays dormant; `gh extension install github/gh-stack` turns it on.
    - **Design tool:** Figma, Penpot, or another tool with an MCP server? Yes → fill `<ws>/standards/design.md` § Design tool. No → mockups are HTML in each feature's `mockups/`.

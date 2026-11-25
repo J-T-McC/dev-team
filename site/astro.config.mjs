@@ -21,7 +21,7 @@ export default defineConfig({
           label: 'How it works',
           items: ['pipeline', 'roles', 'autonomy', 'workspace', 'team-rules'],
         },
-        { label: 'Optional', items: ['orca', 'board', 'tickets', 'checkins'] },
+        { label: 'Optional', items: ['orca', 'orca-recommended', 'board', 'tickets', 'checkins'] },
         { label: 'Reference', items: ['reference/settings', 'reference/commands'] },
       ],
     }),

@@ -39,6 +39,14 @@ if grep -qs -e '^# Development Organization' -e '\*\*Workspace:\*\*' "$section";
     printf '%s\n' "$have" | grep -qxF "$l" || say "$(basename "$section"): missing rule \"$l\""
   done < <(sed -n '/^## Rules/,/^## /p' "$PLUGIN/seeds/CLAUDE.project.md" | label)
 
+  # The recommended Orca setup, when the project took it: rules its Team setup section lacks.
+  if grep -qs '^## Team setup' "$section"; then
+    have=$(sed -n '/^## Team setup/,/^## /p' "$section" | label)
+    while IFS= read -r l; do
+      printf '%s\n' "$have" | grep -qxF "$l" || say "$(basename "$section"): Team setup has no \"$l\" rule (dev-team workflow/orca-recommended.md)"
+    done < <(sed -n '/^## Team setup/,$p' "$PLUGIN/seeds/orca-recommended.md" | label)
+  fi
+
   # 3. The Orca Runtime line: settings renamed or added since the project wrote it (workflow/orca.md § Opt in).
   if [ -n "$orca" ]; then
     case "$orca" in *"Peer clear threshold"*)

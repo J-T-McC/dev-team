@@ -15,6 +15,7 @@ All of these go in the project's dev-team section: `CLAUDE.md`, or `CLAUDE.local
 | [`**Runtime: Orca.**`](/dev-team/orca/) | see below | the Orca runtime and its launch settings |
 | [`**Owner board:**`](/dev-team/board/) | `<artifact url>` | turns the Owner board on |
 | [`**Ticket system**`](/dev-team/tickets/) | added by `/dev-team:tickets` | who may write to the tracker |
+| [`## Team setup`](/dev-team/orca-recommended/) | a section added by `/dev-team:orca` | the recommended Orca setup's rules |
 
 ## The Runtime line
 

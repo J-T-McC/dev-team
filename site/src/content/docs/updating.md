@@ -27,9 +27,12 @@ Then it reports drift:
 - sections in the plugin's standards that your copies lack;
 - rules missing from the dev-team section;
 - settings on the Orca Runtime line that were renamed or added;
+- rules missing from the Team setup section, if you took the [recommended setup](/dev-team/orca-recommended/);
 - links inside the workspace that point back at a folder containing them, which send any tool walking the workspace round in a loop.
 
 It compares names only, so your own edits never count as drift. It adds only what you approve. Commit the result.
+
+A project on the Orca runtime without the recommended setup gets one line at the end saying `/dev-team:orca recommended` can add it.
 
 ## What changed
 

@@ -13,6 +13,7 @@ description: The slash commands, the skills, and the scripts the roles and the c
 | `/dev-team:tickets ["change"]` | sets up, tunes or turns off the ticket system ([Ticket systems](/dev-team/tickets/)) |
 | `/dev-team:checkins ["change"]` | sets up or changes the scheduled check-ins ([Check-ins](/dev-team/checkins/)) |
 | `/dev-team:board` | sets up or refreshes the Owner board ([Owner board](/dev-team/board/)) |
+| `/dev-team:orca [recommended \| "change"]` | sets up or changes the Orca runtime; `recommended` applies the [recommended setup](/dev-team/orca-recommended/) |
 
 ## Scripts
 
