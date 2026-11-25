@@ -32,7 +32,12 @@ cat > "$T/prs.json" <<'EOF'
  "acme/web#9": {"state": "OPEN", "isDraft": false, "statusCheckRollup": [{"conclusion": "FAILURE"}]},
  "acme/app#10": {"state": "OPEN", "isDraft": false, "statusCheckRollup": []},
  "acme/app#11": {"state": "MERGED", "isDraft": false, "statusCheckRollup": []},
- "acme/app#12": {"state": "CLOSED", "isDraft": false, "statusCheckRollup": []}}
+ "acme/app#12": {"state": "CLOSED", "isDraft": false, "statusCheckRollup": []},
+ "acme/web#11": {"state": "OPEN", "isDraft": false, "statusCheckRollup": []},
+ "acme/web#12": {"state": "MERGED", "isDraft": false, "statusCheckRollup": []},
+ "acme/mobile#853": {"state": "OPEN", "isDraft": false, "statusCheckRollup": []},
+ "acme/app#853": {"state": "MERGED", "isDraft": false, "statusCheckRollup": []},
+ "acme/app#854": {"state": "MERGED", "isDraft": false, "statusCheckRollup": []}}
 EOF
 row() { printf '%s' "$2" > "$T/rows/$1.json"; }
 row merged    '{"data": {"pr": 1, "state": "building"}}'
@@ -84,6 +89,28 @@ EOF
 OUT=$("$REPO/bin/board-drift" --status "$T/status.md"); RC=$?
 ok "status: rows whose PRs are all done"   '[ $RC = 1 ] && [[ $OUT == "export (APP-1): every PR it names is done (#11 merged, #12 closed)"* ]]'
 ok "status: an open PR or no PR is quiet"  '[[ $OUT != *import* && $OUT != *sync* && $OUT != *notes* ]]'
+# Another repo's PR written with a space, "mobile #853": never this repo's #853.
+cat > "$T/status2.md" <<'EOF'
+| Feature | Phase | Current Role | Blockers | Approvals | Path |
+|---|---|---|---|---|---|
+| app side | Review | reviewer | — | — | mobile #853 |
+| unplaced | Review | reviewer | — | — | Phone #854 |
+| billing | Review | reviewer | — | — | PR #11 |
+| site | Review | reviewer | — | — | site #11 |
+EOF
+printf '%s' '{"repos": {"mobile": "acme/mobile", "site": "acme/web"}}' > "$T/statuscfg.json"
+OUT=$("$REPO/bin/board-drift" --status "$T/status2.md" --config "$T/statuscfg.json")
+ok "status: '<repo> #N' is that repo's PR"   '[[ $OUT != *"app side"* && $OUT != *"site:"* ]]'
+ok "status: an unknown repo name leaves the row alone" '[[ $OUT != *unplaced* ]]'
+ok "status: 'PR #N' is this repo's"         '[[ $OUT == *"billing: every PR it names is done (#11 merged)"* ]]'
+mkdir -p "$T/g" && git -C "$T/g" init -q && mkdir -p "$T/g/.git/dev-team"
+printf '%s\n' '| Feature | Phase | Current Role | Blockers | Approvals | Path |' '|---|---|---|---|---|---|' \
+  '| site | Review | reviewer | — | — | site #12 |' > "$T/status3.md"
+OUT=$(cd "$T/g" && "$REPO/bin/board-drift" --status "$T/status3.md"); RC=$?
+ok "status: an unmapped repo name is left alone" '[ $RC = 0 ] && [ "$OUT" = "status in sync" ]'
+printf '{"rows": "%s"}' "$T/mapped" > "$T/g/.git/dev-team/board.json"
+OUT=$(cd "$T/g" && "$REPO/bin/board-drift" --status "$T/status3.md"); RC=$?
+ok "status: the stamped rows' config maps repo names" '[ $RC = 1 ] && [[ $OUT == "site: every PR it names is done (web#12 merged)"* ]]'
 mkdir -p "$T/sync"; printf '%s' '{"data": {"pr": 5, "state": "review"}}' > "$T/sync/a.json"
 OUT=$("$REPO/bin/board-drift" "$T/sync"); RC=$?
 ok "in sync exits 0"                       '[ $RC = 0 ] && [ "$OUT" = "board in sync" ]'

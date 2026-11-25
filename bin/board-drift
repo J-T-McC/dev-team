@@ -2,20 +2,26 @@
 """List Owner-board work rows whose state no longer matches their GitHub PR (workflow/board.md).
 
 Usage: board-drift <dir> [owner/repo] [--config <file>]
-       board-drift --status <ws>/status.md [owner/repo] [--config <file>]
+       board-drift --status <ws>/status.md [<dir>] [owner/repo] [--config <file>]
 
 <dir> holds the board's `work` rows as JSON files, saved by an ArtifactData `list` of collection `work` with
 `out_dir`, so reading the board costs almost nothing. A row's own `repo` wins; otherwise the argument, otherwise
 this checkout's GitHub repo. A short repo name (`mobile`) is looked up in the board config's `repos` map — the
 `meta/config` document, saved as config.json in <dir> or passed with --config — else taken as the same owner's.
---status reads the PR numbers each status.md row names (#123, repo#123, owner/repo#123) and lists the rows whose
-PRs have all merged or closed. Prints one line per row to fix (exit 1), or "board in sync" / "status in sync"
+--status reads the PR numbers each status.md row names (#123, repo#123, repo #123, owner/repo#123) and lists the
+rows whose PRs have all merged or closed. Repo names go through the config's repos map, from --config, the rows
+<dir>, or the rows the last `peer board-stamp --rows` recorded. A row naming a repo it can't place is left alone. Prints one line per row to fix (exit 1), or "board in sync" / "status in sync"
 (exit 0). Uses `gh`.
 """
 import glob, json, os, re, subprocess, sys
 
 FAIL = ("FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ERROR", "ACTION_REQUIRED")
-REF = re.compile(r"(?<![\w/#])(?:([\w.-]+(?:/[\w.-]+)?))?#(\d+)\b")
+REF = re.compile(r"(?<![\w/#])(?:([\w.-]+(?:/[\w.-]+)?)( ?))?#(\d+)\b")
+# Words that lead into this repo's own PR number ("PR #12", "and #13"), never a repo name.
+LEADS = {"pr", "prs", "pull", "request", "mr", "issue", "issues", "ticket", "fix", "fixes", "fixed", "close", "closes",
+         "closed", "resolve", "resolves", "resolved", "see", "and", "or", "in", "on", "of", "for", "with", "by", "via",
+         "from", "to", "after", "before", "also", "plus", "then", "merge", "merged", "open", "opened", "draft", "ready",
+         "stack", "stacked", "base", "under", "as", "at", "is", "was", "its", "the", "a", "an"}
 
 
 def gh(*a):
@@ -42,9 +48,25 @@ if "--status" in args:
     args.remove("--status")
 if not args and not status_file:
     sys.exit(__doc__)
-rows_dir = None if status_file else args.pop(0)
-if not config_file and rows_dir:
-    config_file = next(iter(sorted(glob.glob(os.path.join(rows_dir, "**", "config.json"), recursive=True))), None)
+
+
+def stamped_rows():
+    """The rows directory the last `peer board-stamp --rows` recorded, if any."""
+    try:
+        common = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                                capture_output=True, text=True, timeout=30).stdout.strip()
+        return json.load(open(os.path.join(common, "dev-team", "board.json"))).get("rows") if common else None
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return None
+
+
+if status_file:
+    rows_dir = None
+    config_dir = args.pop(0) if args and os.path.isdir(args[0]) else stamped_rows()
+else:
+    rows_dir = config_dir = args.pop(0)
+if not config_file and config_dir:
+    config_file = next(iter(sorted(glob.glob(os.path.join(config_dir, "**", "config.json"), recursive=True))), None)
 config = load(config_file) if config_file else {}
 default_repo = (args[0] if args else config.get("repo")) or \
     gh("repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner").strip()
@@ -67,6 +89,17 @@ def pr(n, repo):
         return {}
 
 
+def named_repo(name):
+    """owner/name for a repo written in prose ("mobile #853"): one the config or this checkout knows, else None."""
+    if "/" in name:
+        return name
+    low = name.lower()
+    for short, repo in list((config.get("repos") or {}).items()) + [(default_repo.split("/")[-1], default_repo)]:
+        if low in (short.lower(), repo.split("/")[-1].lower()):
+            return repo
+    return None
+
+
 drift = []
 if status_file:
     # status.md rows whose PRs have all merged or closed: the row should have moved to status-done.md, or been updated.
@@ -74,10 +107,22 @@ if status_file:
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if not line.lstrip().startswith("|") or len(cells) < 2 or set(cells[0]) <= set("-: ") or cells[0] == "Feature":
             continue
-        refs = sorted({(full(r), int(n)) for r, n in REF.findall(line)})
-        states = [(r, n, pr(n, r).get("state")) for r, n in refs]
+        refs, unsure = set(), False
+        for name, space, n in REF.findall(line):
+            if not name:
+                refs.add((default_repo, int(n)))
+            elif not space:
+                refs.add((full(name), int(n)))
+            elif named_repo(name) or name.lower() in LEADS:
+                refs.add((named_repo(name) or default_repo, int(n)))
+            else:  # "<word> #12": another repo's PR, under this owner if anywhere; can't tell → leave the row alone
+                state = pr(int(n), full(name)).get("state")
+                unsure = unsure or not state
+                if state:
+                    refs.add((full(name), int(n)))
+        states = [(r, n, pr(n, r).get("state")) for r, n in sorted(refs)]
         known = [x for x in states if x[2]]
-        if known and all(s in ("MERGED", "CLOSED") for _, _, s in known):
+        if not unsure and known and all(s in ("MERGED", "CLOSED") for _, _, s in known):
             what = ", ".join(f"#{n} {s.lower()}" if r == default_repo else f"{r.split('/')[-1]}#{n} {s.lower()}"
                              for r, n, s in known)
             drift.append(f"{cells[0]}: every PR it names is done ({what}) — move it to status-done.md or update it")

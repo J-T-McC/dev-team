@@ -53,7 +53,7 @@ Makes heavy jobs take turns on the machine.
 | Command | What it does |
 |---|---|
 | `board-drift <dir> [owner/repo] [--config <file>]` | lists Owner-board rows whose PR has moved on (exit 1 if any) |
-| `board-drift --status <ws>/status.md` | lists `status.md` rows whose PRs have all merged or closed |
+| `board-drift --status <ws>/status.md [--config <file>]` | lists `status.md` rows whose PRs (`#123`, `repo#123`, `repo #123`) have all merged or closed. Repo names go through the board config's `repos` map; a row naming a repo it can't place is left alone |
 | `seed-drift [project-dir]` | what the plugin's seeds have that the project's copies lack (used by `/dev-team:sync`) |
 | `migrate-layout [--apply]` | moves a type-first workspace into feature folders; a dry run without `--apply` |
 
