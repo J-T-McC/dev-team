@@ -27,6 +27,8 @@ Then it asks for the values only you know, one at a time: the full test command,
 
 Every role runs on `claude-opus-5-5`. On the plan this was tuned on, it's the strongest model without a weekly cap of its own, so the whole team can run all week. The product-manager and principal-engineer get `claude-fable-5-2` as an [advisor](/dev-team/orca/#launch-settings) for hard questions and hard calls in their plans. The capped model goes where a wrong answer costs the most.
 
+The roles that think and plan run at `xhigh` effort: the product-manager, designer, principal-engineer and reviewer, and your own coordinator session (start it with `claude --effort xhigh`). Developers run at `high`. These are the plugin's defaults, so the setup keeps them as they are; a [Role models](/dev-team/roles/#models-and-effort) line changes them for one role.
+
 There's no fallback model. A fallback only helps if it still has capacity when the team model runs out, and on that plan the only capped model is the advisor's. If your team model is the capped one, turn it round: `claude-fable-5-2` as the team model and `claude-opus-5-5` as the fallback. Plans change, so check yours.
 
 Peers never move to a smaller model to save usage. The team saves it by keeping fewer peers awake, reading less and running only the tests that matter.
