@@ -11,6 +11,8 @@ A [Claude Code](https://code.claude.com) plugin that runs feature work the way a
 
 Then ask Claude to `run the dev-team:bootstrap skill` in your project.
 
+The plugin brings no stack, skills or tools of its own: roles run on what your project gives a Claude session. Every agent, or Orca peer, starts with your `CLAUDE.md` files, installed skills and plugins, MCP servers and SessionStart hooks, so trim what the roles don't use before running several at once ([what your project costs](https://j-t-mcc.github.io/dev-team/getting-started/#check-what-your-project-costs)).
+
 ## How it works
 
 The rest of this file is the whole plugin on one page, for agents and for anyone who prefers it that way; the docs site explains each part at more length.
