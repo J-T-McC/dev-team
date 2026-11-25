@@ -21,13 +21,15 @@ and deny the subagent tool in `.claude/settings.json`, because peers are full se
 { "permissions": { "deny": ["Agent"] } }
 ```
 
+`/dev-team:orca` writes both for you. It also offers the [recommended setup](/dev-team/orca-recommended/), which sets the models, homes, git and PR flow, and test and safety rules in one step.
+
 Without the line the default runtime applies, even inside Orca. Every setting on the line is listed in the [settings reference](/dev-team/reference/settings/#the-runtime-line).
 
 ## Homes, worktrees and the Run
 
 Peers live in named **homes**: `dt-product`, `dt-designer`, `dt-architect`, `dt-reviewer`, and `dt-dev-1`, `dt-dev-2` and so on for developers. A home holds one peer, started on its first dispatch, and the spec of each dispatch gives it its role.
 
-Worktrees are chosen per dispatch. Roles that work one after another share the feature worktree; each parallel stream gets its own child worktree. Only one peer edits a worktree at a time. The whole team shares one Orca Run, created by the first dispatch. Homes and the Run are kept on the machine, in the git directory, never in the workspace.
+Worktrees are chosen per dispatch. Roles that work one after another share the feature worktree; each parallel stream gets its own child worktree. Only one peer edits a worktree at a time. (The [recommended setup](/dev-team/orca-recommended/) gives each home its own worktree instead.) The whole team shares one Orca Run, created by the first dispatch. Homes and the Run are kept on the machine, in the git directory, never in the workspace.
 
 ## A fresh session per task
 

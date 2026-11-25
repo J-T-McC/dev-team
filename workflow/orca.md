@@ -10,7 +10,7 @@ Add to the project `CLAUDE.md` rules:
 - **Runtime: Orca.** Roles run as top-level Orca peers per the dev-team `workflow/orca.md`; never spawn subagents. Team model: opus. Fallback model: sonnet. Advisor: none. Peer size limit: 400k. Worktree cards: off.
 ```
 
-and deny the subagent tool in `.claude/settings.json` (`"permissions": { "deny": ["Agent"] }`) — peers are full sessions and would otherwise carry it. Without the rule line the default runtime applies, even inside Orca. The settings are the project's to tune: models in § Launch settings, the size limit in § Peer lifetime (omitted, it is 400k — use about 120k for a peer on a 200k-window model).
+and deny the subagent tool in `.claude/settings.json` (`"permissions": { "deny": ["Agent"] }`) — peers are full sessions and would otherwise carry it. `/dev-team:orca` does both, and offers the **recommended setup** (`workflow/orca-recommended.md`): tested models, team shape, git and PR flow, test and safety rules, in one choice. Without the rule line the default runtime applies, even inside Orca. The settings are the project's to tune: models in § Launch settings, the size limit in § Peer lifetime (omitted, it is 400k — use about 120k for a peer on a 200k-window model).
 
 ## Topology
 

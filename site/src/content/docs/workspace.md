@@ -51,7 +51,7 @@ The dev-team section goes in `CLAUDE.local.md`, which is never committed, and th
 
 Their conventions win for commits, branches, PRs, code style, reviews and test commands. The workspace's standards record only what their repository doesn't already document. Code, comments, commit messages, PRs and ticket comments never mention dev-team, its roles or its paths, since teammates couldn't follow those links anyway.
 
-The workspace can be committed with their code or not. Not committed, it's listed in `.git/info/exclude` and becomes its own git repository, so its history is kept, and a Stop hook commits it whenever it changes. Keep feature folders inside the root in that case: folders outside it are excluded too, but get no history. New git worktrees don't contain an uncommitted workspace, so peers working in one use the main checkout's workspace by its full path.
+The workspace can be committed with their code or not. Not committed, it's listed in `.git/info/exclude` and becomes its own git repository, so its history is kept, and a Stop hook commits it whenever it changes. Give that repository a remote (`git -C .dev-team push -u origin HEAD`) and the hook pushes it too, so your other machines can pull the specs. Keep feature folders inside the root in that case: folders outside it are excluded too, but get no history. New git worktrees don't contain an uncommitted workspace, so peers working in one use the main checkout's workspace by its full path.
 
 ## Moving an older project
 

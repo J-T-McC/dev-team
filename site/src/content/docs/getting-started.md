@@ -28,7 +28,7 @@ Bootstrap asks three things first, one at a time:
 2. Is it new, or does it already have code and history? An existing codebase takes the adoption path below.
 3. Where do the documents go? It asks about the workspace folder (default `docs`), the features folder, how feature folders are named, and whether the workspace is committed.
 
-It then writes the dev-team section into `CLAUDE.md` (in guest mode, `CLAUDE.local.md`) and copies the seed files. Last come your preferences: how involved you want to be, whether to connect a ticket system, whether you run Claude from Orca, whether you want the Owner board, and whether you design in a tool such as Figma or Penpot. Skip any of them. Each has its own command for later.
+It then writes the dev-team section into `CLAUDE.md` (in guest mode, `CLAUDE.local.md`) and copies the seed files. Last come your preferences: how involved you want to be, whether to connect a ticket system, whether you run Claude from Orca (and if so, whether to take the [recommended setup](/dev-team/orca-recommended/)), whether you want the Owner board, and whether you design in a tool such as Figma or Penpot. Skip any of them. Each has its own command for later.
 
 Before the first real work, fill in `stack/stack.md` and the files in `standards/` inside the workspace. Roles stop and ask while placeholders remain; they don't guess. Then commit what bootstrap made.
 
