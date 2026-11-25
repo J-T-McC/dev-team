@@ -1,6 +1,21 @@
 # dev-team
 
-A reusable, documentation-first development organization for [Claude Code](https://code.claude.com), packaged as a plugin. Six specialized roles move feature work from requirements to reviewed code:
+A [Claude Code](https://code.claude.com) plugin that runs feature work the way a small software team does. Six roles take a request from requirements to reviewed code and write everything down in your repo as they go. You sign off where it matters and nowhere else.
+
+**Docs: [j-t-mcc.github.io/dev-team](https://j-t-mcc.github.io/dev-team/)**
+
+```
+/plugin marketplace add J-T-McC/dev-team
+/plugin install dev-team@dev-team
+```
+
+Then ask Claude to `run the dev-team:bootstrap skill` in your project.
+
+## How it works
+
+The rest of this file is the whole plugin on one page, for agents and for anyone who prefers it that way; the docs site explains each part at more length.
+
+Six specialized roles move feature work from requirements to reviewed code:
 
 **Product Owner → product-manager → designer** *(UI features only)* **→ principal-engineer** *(plan + ADRs + task breakdown)* **→ senior-developer → reviewer → Owner approval**, coordinated by an in-conversation **orchestrator**.
 
@@ -44,7 +59,7 @@ Bootstrap asks for three settings, recorded in one `Workspace:` line: the **root
 
 ## Orca runtime (optional)
 
-Projects driven from Orca can opt into a second runtime ([`workflow/orca.md`](workflow/orca.md)): every role runs as a **top-level peer session** launched and supervised by Orca orchestration — never a subagent. Peers are plain sessions with full project tools (MCP servers, skills, claude-mem), each in a named home (`dt-dev-1`, `dt-reviewer`, …); the dispatch spec gives each its role. Every task starts a **fresh session** — peer startup is cheap next to a subagent's — kept only for follow-ups on the same change. Every launch pins the peer's model and effort from the project's Runtime line — a team model, per-role overrides, a fallback for when a model runs out, and an advisor model for the product-manager and principal-engineer — so a `/model` in some other session never moves the team. `bin/peer` runs the coordinator's side: dispatch (here or on a connected Orca server), model switches for live peers, sleeping idle peers and cleaning up after them, messages that wake idle peers, and a token-free wait for reports, for peers in trouble — stopped on an API error or a usage limit, oversized, or stalled — and for failing checks and conflicts on the PRs each peer owns. Guard hooks keep the coordinator from ending a turn with a peer's question unanswered, work in flight unwatched, or the Owner board behind `status.md`, and `bin/slot` makes heavy jobs and long-lived containers take turns on the machine. Opt in with one line in the project `CLAUDE.md` plus a settings deny for the `Agent` tool — without it, nothing changes.
+Projects driven from Orca can opt into a second runtime ([`workflow/orca.md`](workflow/orca.md)): every role runs as a **top-level peer session** launched and supervised by Orca orchestration — never a subagent. Peers are plain sessions with full project tools (MCP servers, skills, claude-mem), each in a named home (`dt-dev-1`, `dt-reviewer`, …); the dispatch spec gives each its role. Every task starts a **fresh session** — peer startup is cheap next to a subagent's — kept only for follow-ups on the same change. Every launch pins the peer's model and effort from the project's Runtime line — a team model, per-role overrides, a fallback for when a model runs out, and an advisor model for the product-manager and principal-engineer — so a `/model` in some other session never moves the team; one task can run on another model with `peer dispatch --model` without touching the line. `bin/peer` runs the coordinator's side: dispatch (here or on a connected Orca server), model switches for live peers, sleeping idle peers and cleaning up after them, messages that wake idle peers, and a token-free wait for reports, for peers in trouble — stopped on an API error or a usage limit, oversized, or stalled — and for failing checks and conflicts on the PRs each peer owns. Guard hooks keep the coordinator from ending a turn with a peer's question unanswered, work in flight unwatched, or the Owner board behind `status.md`, and `bin/slot` makes heavy jobs and long-lived containers take turns on the machine. Opt in with one line in the project `CLAUDE.md` plus a settings deny for the `Agent` tool — without it, nothing changes.
 
 **Check-ins** (`/dev-team:checkins`) are scheduled Orca automations defined in the workspace's `standards/checkins.md` — e.g. keep work moving every 30 minutes, catch stalled or failed work hourly, have the product-manager groom tickets assigned to you each weekday. Each starts with a free trigger check, so an idle project costs nothing; each reuses its session so it keeps its bearings (a run still re-sends that session, so check-in sessions are kept small). Optional extras: mirror `status.md` onto Orca's worktree cards (with an unread flag when you're needed), and Orca's built-in browser for UI checks in place of Playwright.
 
@@ -66,7 +81,7 @@ Bootstrap asks whether to connect one. Set up or fine-tune any time with `/dev-t
 ## Install (per project)
 
 ```
-/plugin marketplace add J-T-McC/dev-team     # private repo: SSH auth is used automatically
+/plugin marketplace add J-T-McC/dev-team
 /plugin install dev-team@dev-team
 ```
 
@@ -130,8 +145,9 @@ Validate with `claude plugin validate .`
 | `agents/`, `skills/` | The six roles (orchestrator is skill-only) + bootstrap skill | ✅ via plugin update |
 | `commands/` | `/dev-team:sync` — pull missing/updated seeds into a project; `/dev-team:tickets` — ticket-system setup/tuning; `/dev-team:checkins` — Orca check-ins; `/dev-team:board` — Owner board | ✅ via plugin update |
 | `templates/`, `workflow/` | Document templates, pipeline/handoff/communication rules | ✅ via plugin update |
-| `bin/` | Check-in trigger scripts, the coordinator lock, `peer` and `slot` (Orca runtime); `board-drift` (Owner board); `seed-drift` (sync) | ✅ via plugin update |
-| `hooks/` | Session-start announcement + agent-memory size sentinel; the Orca coordinator's guard hooks | ✅ via plugin update |
+| `bin/` | Check-in trigger scripts, the coordinator lock, `peer` and `slot` (Orca runtime; `peer board-stamp` serves the Owner board under either runtime); `board-drift` (Owner board); `seed-drift` and `migrate-layout` (sync) | ✅ via plugin update |
+| `hooks/` | Session-start announcement + agent-memory size sentinel; the coordinator's guard hooks (Orca peers, Owner board); the Stop hook that commits an uncommitted workspace | ✅ via plugin update |
 | `seeds/` | Copied into projects by bootstrap/sync | ❌ project-owned after copy |
 | `examples/workspace/` | Worked example of the full pipeline, in the workspace layout | ✅ via plugin update |
 | `examples/board/` | Owner board sample data and screenshots | ✅ via plugin update |
+| `site/` | The docs site ([j-t-mcc.github.io/dev-team](https://j-t-mcc.github.io/dev-team/)), built with Astro Starlight and published to GitHub Pages | not used by projects |

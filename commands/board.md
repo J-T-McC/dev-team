@@ -21,7 +21,7 @@ Request: $ARGUMENTS
 
 4. **Publish.** Copy `${CLAUDE_PLUGIN_ROOT}/templates/board.html` to the scratchpad, replace both `{{PROJECT}}` with the project name, and publish it with the `Artifact` tool: icon `board`, a one-line description, and on a new board `capabilities: {"db": {"rules": [{"path": "", "read": "view", "write": "owner"}]}, "user": {}}` — viewers read, only the Owner (and the coordinator writing as them) changes data.
 
-5. **Status first.** `"${CLAUDE_PLUGIN_ROOT}/bin/board-drift" --status <ws>/status.md` lists the rows whose PRs have all merged or closed. Bring those rows up to date — or move them to `status-done.md` — before seeding, so the board does not start from stale rows; a row whose outcome the workspace logged elsewhere gets the same fix.
+5. **Status first.** `"${CLAUDE_PLUGIN_ROOT}/bin/board-drift" --status <ws>/status.md` lists the rows whose PRs have all merged or closed; when rows name other repos, pass the step-3 map as `--config <file>` (`{"repos": {"mobile": "acme/mobile-app"}}`). Bring those rows up to date — or move them to `status-done.md` — before seeding, so the board does not start from stale rows; a row whose outcome the workspace logged elsewhere gets the same fix.
 
 6. **Seed** with one `ArtifactData` `batch`: `meta/config` (`owner`, `ticketUrl`, `repo`, `repos` — omit empty ones), `meta/board.updated`, one `work` row per `<ws>/status.md` row, one `asks` row per pending ✋ gate or feature blocked on the Owner (a gate the Owner has parked is a `held` row, with no ask), and `peers` rows (under Orca, `peer list --board-json <dir>` writes them as files for `file_path`). A new board with nothing in flight starts empty.
 

@@ -22,7 +22,7 @@ Below, `<ws>` is the workspace root and `<feature>` a feature's folder (dev-team
 
 ## Pipeline
 
-Product Owner → **product-manager** (`<feature>/prd.md`) → **designer** (`<feature>/design.md` + `mockups/`, UI features only) → **principal-engineer** (`<feature>/plan.md` + `tasks/`; ADRs in `<ws>/architecture/`) → **senior-developer** (code + tests) → **reviewer** (`docs/reviews/`) → Owner approval.
+Product Owner → **product-manager** (`<feature>/prd.md`) → **designer** (`<feature>/design.md` + `mockups/`, UI features only) → **principal-engineer** (`<feature>/plan.md` + `tasks/`; ADRs in `<ws>/architecture/`) → **senior-developer** (code + tests) → **reviewer** (`<feature>/review.md`) → Owner approval.
 
 **Sized by the team:** that is the full pipeline. The product-manager triages each request — a short **brief** when the request (usually a ticket) already says what is wanted, a **PRD** when it does not — and records the planned **path**; each role then decides whether its own phase is needed (design, plan, ADR, discovery). Acceptance criteria and review are never skipped.
 

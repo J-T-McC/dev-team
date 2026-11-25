@@ -64,6 +64,8 @@ ln -s "$T/p" "$T/p/docs/root"; ln -s ../stack "$T/p/docs/features/stack"; ln -s 
 run
 ok "links back into the workspace reported"  '[[ $OUT == *"docs/features/self: links to a folder that contains it (../../docs)"* ]] && [[ $OUT == *"docs/root: links to a folder"* ]] && [[ $OUT == *"docs/features/a/up: links to a folder"* ]]'
 ok "links elsewhere are fine"                '[[ $OUT != *"features/stack"* ]] && [[ $OUT != *status-link* ]]'
+OUT=$(cd "$T/p" && "$REPO/bin/seed-drift" .)
+ok "run as '.' from the project: same links"  '[[ $OUT == *"docs/features/self: links to a folder that contains it (../../docs)"* ]] && [[ $OUT != *"features/stack"* ]] && [[ $OUT != *status-link* ]]'
 
 fresh CLAUDE.md
 drop "$T/p/CLAUDE.md" "- **Run roles in this conversation.**" "- Run roles here:"

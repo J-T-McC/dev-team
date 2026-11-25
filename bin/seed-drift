@@ -60,9 +60,10 @@ fi
 # down: every tool that walks the workspace loops on them.
 if [ -d "$P/$WS" ]; then
   while IFS= read -r l; do
+    target=$(readlink "$l") || continue  # read before any cd: $l may be relative to where we started
     here=$(cd "$(dirname "$l")" 2>/dev/null && pwd -P) || continue
-    t=$(cd "$here" && cd "$(readlink "$l")" 2>/dev/null && pwd -P) || continue
-    case "$here/" in "${t%/}"/*) say "${l#"$P"/}: links to a folder that contains it ($(readlink "$l")) — remove the link" ;; esac
+    t=$(cd "$here" && cd "$target" 2>/dev/null && pwd -P) || continue
+    case "$here/" in "${t%/}"/*) say "${l#"$P"/}: links to a folder that contains it ($target) — remove the link" ;; esac
   done < <(find "$P/$WS" -type l 2>/dev/null)
 fi
 
