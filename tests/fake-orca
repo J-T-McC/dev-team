@@ -2,7 +2,9 @@
 """A stand-in for the orca CLI, for tests/peer.sh. State and a call log live in $FAKE_ORCA_DIR.
 
 state.json: stage (running|settled) of the current dispatch, inbox batches, terminals (open, worktree, command),
-            each terminal's screen (screens, else screen), and what a plain `terminal send` prints.
+            each terminal's screen (screens, else screen), what a plain `terminal send` prints, the Orca version,
+            orphaned terminals, start_fail (worker-start fails at agent readiness), and recheck_fail (the dispatch
+            reads failed after a ready start). worker-start --on starts a remote terminal itself (rterm_N).
 calls.log:  one JSON argv array per call.
 """
 import json, os, sys
@@ -40,18 +42,31 @@ cmd = argv[:2]
 term = arg("--terminal")
 if cmd == ["orchestration", "run-create"]:
     out({"run": {"id": "run_0a1b2c"}})
+if cmd == ["status"]:
+    out({"runtime": {"state": "ready", "appVersion": s.get("version", "1.0.0")}})
 if cmd == ["orchestration", "worker-start"]:
     if s.get("start_fail"):
         out({"failedStage": "agent_readiness"}, ok=False)
     s["n"] += 1
     n = s["n"]
-    s["dispatches"][f"ctx_{n}"] = {"terminal": term, "path": path_of(arg("--worktree"))}
+    sel = arg("--worktree")
+    if arg("--on"):
+        s["nt"] += 1
+        term = f"rterm_{s['nt']}"
+        path = "/remote/" + arg("--name") if sel == "new-top-level" else sel.split("::", 1)[-1]
+        s["terminals"][term] = {"open": True, "path": path, "env": arg("--on")}
+    else:
+        path = path_of(sel)
+    s["dispatches"][f"ctx_{n}"] = {"terminal": term, "path": path}
     s["stage"] = "running"
     out({"taskId": f"task_{n}", "dispatchId": f"ctx_{n}"})
 if cmd == ["orchestration", "worker-show"]:
     d = s["dispatches"].get(arg("--dispatch"), {})
-    out({"worker": {"stage": s["stage"], "agentTerminalHandle": d.get("terminal"),
-                    "worktreeId": "repo1::" + d.get("path", "")}})
+    failed = s.get("recheck_fail")
+    out({"worker": {"stage": "settled" if failed else s["stage"], "state": "failed" if failed else "running",
+                    "agentTerminalHandle": d.get("terminal"), "worktreeId": "repo1::" + d.get("path", "")},
+         "dispatch": {"status": "failed" if failed else "dispatched",
+                      "lastFailure": json.dumps({"subject": "terminal already owns an active dispatch"}) if failed else None}})
 if cmd == ["orchestration", "check"]:
     if arg("--ack"):
         s["batches"] = [b for b in s["batches"] if b["deliveryId"] != arg("--ack")]
@@ -68,9 +83,12 @@ t = s["terminals"].get(term) or {}
 if cmd == ["terminal", "show"]:
     if not t.get("open") and not s.get("stay_open"):
         out({"error": "terminal_not_found"}, ok=False)
-    out({"terminal": {"handle": term, "agentIdentity": "claude", "worktreePath": t.get("path")}})
+    out({"terminal": {"handle": term, "agentIdentity": "claude", "worktreePath": t.get("path"),
+                      "orphaned": term in s.get("orphaned", [])}})
 if cmd == ["terminal", "close"]:
-    if term in s["terminals"] and not s.get("stay_open"):
+    if term in s["terminals"] and s.get("orphan_on_close"):
+        s.setdefault("orphaned", []).append(term)  # Orca keeps showing it, as orphaned
+    elif term in s["terminals"] and not s.get("stay_open"):
         s["terminals"][term]["open"] = False
     out()
 if cmd == ["terminal", "read"]:

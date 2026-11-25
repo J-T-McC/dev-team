@@ -1,18 +1,35 @@
 #!/usr/bin/env python3
 """Heavy jobs take turns (workflow/orca.md § Machine resources): a few machine-wide slots, critical path first.
 
-  slot run <label> [--prio N] -- <command...>   wait for a free slot, run the command, free the slot when it ends
-  slot status                                   who holds a slot and who waits
+  slot run <label> [--prio N] [--pool <name>] -- <command...>   wait for a free slot, run the command, free the
+                                                                slot when it ends
+  slot status                                   who holds a slot and who waits, in every pool
 
 Lower --prio goes first (default 5; the critical path takes 1); the same prio is first come, first served.
 DEV_TEAM_SLOTS sets the number of slots (default 2), DEV_TEAM_SLOT_WAIT the longest wait in minutes (default 60;
 past it, exit 75). A slot frees itself when its holder exits, however it exits.
+
+A pool is a separate set of slots, so long-lived jobs never block test runs: --pool containers holds a slot while a
+container runs — `slot run db --pool containers -- docker compose up db` (run it in the background), or for one
+already started detached, `slot run db --pool containers -- docker wait <container>`. DEV_TEAM_SLOTS_<POOL> sets a
+pool's size (default 2).
 """
 import fcntl, os, re, subprocess, sys, time
 from pathlib import Path
 
-DIR = Path(os.environ.get("DEV_TEAM_SLOT_DIR") or Path.home() / ".cache" / "dev-team" / "slots")
-SLOTS = int(os.environ.get("DEV_TEAM_SLOTS", "2"))
+BASE = Path(os.environ.get("DEV_TEAM_SLOT_DIR") or Path.home() / ".cache" / "dev-team" / "slots")
+DIR, SLOTS = BASE, int(os.environ.get("DEV_TEAM_SLOTS", "2"))
+
+
+def use_pool(name):
+    """Point DIR and SLOTS at a pool: the default pool is the base directory, others a folder in it."""
+    global DIR, SLOTS
+    if name in (None, "", "default"):
+        DIR, SLOTS = BASE, int(os.environ.get("DEV_TEAM_SLOTS", "2"))
+        return "default"
+    name = re.sub(r"[^a-z0-9_]", "_", name.lower())
+    DIR, SLOTS = BASE / "pools" / name, int(os.environ.get(f"DEV_TEAM_SLOTS_{name.upper()}", "2"))
+    return name
 WAIT_MIN = float(os.environ.get("DEV_TEAM_SLOT_WAIT", "60"))
 POLL = float(os.environ.get("DEV_TEAM_SLOT_POLL", "2"))
 
@@ -56,6 +73,8 @@ def run(argv):
     cmd, head = argv[argv.index("--") + 1:], argv[:argv.index("--")]
     label = re.sub(r"[^A-Za-z0-9._]", "_", head[0])
     prio = int(head[head.index("--prio") + 1]) if "--prio" in head else 5
+    pool = use_pool(head[head.index("--pool") + 1] if "--pool" in head else None)
+    where = "" if pool == "default" else f" in pool {pool}"
     (DIR / "wait").mkdir(parents=True, exist_ok=True)
     me = DIR / "wait" / f"{prio:03d}-{time.time_ns()}-{os.getpid()}-{label}"
     me.touch()
@@ -72,7 +91,7 @@ def run(argv):
                     break
             if not said:
                 place = next((n for n, w in enumerate(waiting, 1) if w[2] == me), 1)
-                print(f"slot: {label} waiting, {place} in line for {SLOTS} slot(s)", file=sys.stderr)
+                print(f"slot: {label} waiting, {place} in line for {SLOTS} slot(s){where}", file=sys.stderr)
                 said = True
             if time.time() - start > WAIT_MIN * 60:
                 print(f"slot: {label} gave up after {WAIT_MIN:g} min", file=sys.stderr)
@@ -81,7 +100,7 @@ def run(argv):
     finally:
         me.unlink(missing_ok=True)
     (DIR / f"slot-{i}.info").write_text(f"{label}\t{os.getpid()}\t{time.strftime('%H:%M:%S')}\n")
-    print(f"slot: {label} has slot {i + 1} of {SLOTS}", file=sys.stderr)
+    print(f"slot: {label} has slot {i + 1} of {SLOTS}{where}", file=sys.stderr)
     try:
         rc = subprocess.run(cmd).returncode
     except KeyboardInterrupt:
@@ -90,18 +109,27 @@ def run(argv):
 
 
 def status():
+    pools = sorted(p.name for p in (BASE / "pools").glob("*") if p.is_dir()) if (BASE / "pools").is_dir() else []
+    for name in ["default"] + pools:
+        use_pool(name)
+        if name != "default":
+            print(f"pool {name}:")
+        pool_status("  " if name != "default" else "")
+
+
+def pool_status(indent):
     (DIR / "wait").mkdir(parents=True, exist_ok=True)
     for i in range(SLOTS):
         fd = take(i)
         if fd is not None:
             os.close(fd)
-            print(f"slot {i + 1}: free")
+            print(f"{indent}slot {i + 1}: free")
         else:
             info = (DIR / f"slot-{i}.info")
             label, pid, since = (info.read_text().split("\t") + ["?"] * 3)[:3] if info.exists() else ("?", "?", "?")
-            print(f"slot {i + 1}: {label} (pid {pid}, since {since.strip()})")
+            print(f"{indent}slot {i + 1}: {label} (pid {pid}, since {since.strip()})")
     for n, (prio, _, _, label) in enumerate(line(), 1):
-        print(f"waiting {n}: {label} (prio {prio})")
+        print(f"{indent}waiting {n}: {label} (prio {prio})")
 
 
 if __name__ == "__main__":

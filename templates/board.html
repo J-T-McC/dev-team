@@ -64,7 +64,8 @@ td.next { color: var(--muted); min-width: 220px; }
 .s-fixing { background: var(--warn-soft); color: var(--warn); }
 .s-ready, .s-done { background: var(--ok-soft); color: var(--ok); }
 .s-blocked, .s-owner { background: var(--bad-soft); color: var(--bad); }
-.s-queued { background: var(--idle-soft); color: var(--idle); }
+.s-queued, .s-held { background: var(--idle-soft); color: var(--idle); }
+tr.held td { color: var(--muted); }
 .note { color: var(--muted); font-size: 0.85rem; margin: 0; }
 </style>
 
@@ -93,7 +94,7 @@ td.next { color: var(--muted); min-width: 220px; }
 </div>
 
 <script>
-const ORDER = ["owner", "blocked", "fixing", "review", "building", "planning", "ready", "queued", "done"];
+const ORDER = ["owner", "blocked", "fixing", "review", "building", "planning", "ready", "queued", "held", "done"];
 const data = { work: [], peers: [], asks: [], meta: null, config: {} };
 
 function states() {
@@ -101,7 +102,8 @@ function states() {
   return {
     owner: ["Waiting on " + owner, "s-owner"], blocked: ["Blocked", "s-blocked"], fixing: ["Fixing findings", "s-fixing"],
     review: ["In review", "s-review"], building: ["Building", "s-building"], planning: ["Planning", "s-planning"],
-    ready: ["Ready to merge", "s-ready"], queued: ["Queued", "s-queued"], done: ["Done", "s-done"]
+    ready: ["Ready to merge", "s-ready"], queued: ["Queued", "s-queued"], held: ["Held by " + owner, "s-held"],
+    done: ["Done", "s-done"]
   };
 }
 function el(tag, attrs = {}, ...kids) {
@@ -117,8 +119,9 @@ function ticket(id) {
 }
 function pr(d) {
   if (!d.pr) return "—";
-  const repo = d.repo || data.config.repo;
-  const text = (d.repo && d.repo !== data.config.repo ? d.repo.split("/").pop() + " " : "") + "#" + d.pr;
+  // A row's repo may be a short name, mapped to owner/name by the config's repos.
+  const repo = (data.config.repos || {})[d.repo] || d.repo || data.config.repo;
+  const text = (d.repo && repo !== data.config.repo ? d.repo.split("/").pop() + " " : "") + "#" + d.pr;
   return repo ? link(`https://github.com/${repo}/pull/${d.pr}`, text) : text;
 }
 function pill(s) { const [t, c] = states()[s] || [s || "—", "s-queued"]; return el("span", { class: "pill " + c }, t); }
@@ -163,7 +166,7 @@ function render() {
     const open = rows.filter(r => r.state !== "done").length;
     const tbody = el("tbody");
     for (const r of rows) {
-      tbody.append(el("tr", {},
+      tbody.append(el("tr", r.state === "held" ? { class: "held" } : {},
         el("td", { class: "t mono" }, ticket(r.ticket)),
         el("td", {}, r.title || ""),
         el("td", { class: "mono" }, r.peer || "—"),

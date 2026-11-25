@@ -1,7 +1,8 @@
 #!/bin/bash
 # seed-drift [project-dir] — what the plugin's seeds have that this project's copies lack (commands/sync.md step 4).
 # Reports seed sections missing from <ws>/standards/*.md, workspace seed files and seed rules missing from the
-# dev-team section, and outdated Orca Runtime-line settings. Prints one line per finding (exit 1), or "up to date" (exit 0).
+# dev-team section, outdated Orca Runtime-line settings, and links inside the workspace to a folder that holds them.
+# Prints one line per finding (exit 1), or "up to date" (exit 0).
 P=${1:-.}
 PLUGIN=$(cd "$(dirname "$0")/.." && pwd)
 source "$PLUGIN/bin/_workspace.sh" "$P"
@@ -45,11 +46,25 @@ if grep -qs -e '^# Development Organization' -e '\*\*Workspace:\*\*' "$section";
     *"Peer size limit"*) ;;
     *) say "Runtime line: no \"Peer size limit\" (400k applies)" ;;
     esac
-    case "$orca" in *"Board:"*) ;; *) say "Runtime line: no \"Board:\" setting (off applies)" ;; esac
+    case "$orca" in *"Worktree cards:"*) ;;
+    *"Board:"*) say "Runtime line: \"Board:\" is now \"Worktree cards:\" — it switches only Orca's worktree cards; the Owner board is the **Owner board:** line (workflow/board.md)" ;;
+    *) say "Runtime line: no \"Worktree cards:\" setting (off applies)" ;;
+    esac
     case "$orca" in *"Team model:"*) ;; *) say "Runtime line: no \"Team model:\" setting — peers will not launch until it names one (workflow/orca.md § Launch settings)" ;; esac
     case "$orca" in *"Fallback model:"*) ;; *) say "Runtime line: no \"Fallback model:\" setting (none applies)" ;; esac
     case "$orca" in *"Advisor:"*) ;; *) say "Runtime line: no \"Advisor:\" setting (none applies)" ;; esac
   fi
 fi
+
+# 4. Links inside the workspace to a folder that contains them — the workspace, a folder above it, or one on the way
+# down: every tool that walks the workspace loops on them.
+if [ -d "$P/$WS" ]; then
+  while IFS= read -r l; do
+    here=$(cd "$(dirname "$l")" 2>/dev/null && pwd -P) || continue
+    t=$(cd "$here" && cd "$(readlink "$l")" 2>/dev/null && pwd -P) || continue
+    case "$here/" in "${t%/}"/*) say "${l#"$P"/}: links to a folder that contains it ($(readlink "$l")) — remove the link" ;; esac
+  done < <(find "$P/$WS" -type l 2>/dev/null)
+fi
+
 [ $found = 0 ] && echo "up to date"
 exit $found

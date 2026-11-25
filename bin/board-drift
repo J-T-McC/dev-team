@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """List Owner-board work rows whose state no longer matches their GitHub PR (workflow/board.md).
 
-Usage: board-drift <dir> [owner/repo]
+Usage: board-drift <dir> [owner/repo] [--config <file>]
+       board-drift --status <ws>/status.md [owner/repo] [--config <file>]
+
 <dir> holds the board's `work` rows as JSON files, saved by an ArtifactData `list` of collection `work` with
 `out_dir`, so reading the board costs almost nothing. A row's own `repo` wins; otherwise the argument, otherwise
-this checkout's GitHub repo. Prints one line per row to fix (exit 1), or "board in sync" (exit 0). Uses `gh`.
+this checkout's GitHub repo. A short repo name (`mobile`) is looked up in the board config's `repos` map — the
+`meta/config` document, saved as config.json in <dir> or passed with --config — else taken as the same owner's.
+--status reads the PR numbers each status.md row names (#123, repo#123, owner/repo#123) and lists the rows whose
+PRs have all merged or closed. Prints one line per row to fix (exit 1), or "board in sync" / "status in sync"
+(exit 0). Uses `gh`.
 """
-import glob, json, os, subprocess, sys
+import glob, json, os, re, subprocess, sys
 
 FAIL = ("FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ERROR", "ACTION_REQUIRED")
+REF = re.compile(r"(?<![\w/#])(?:([\w.-]+(?:/[\w.-]+)?))?#(\d+)\b")
 
 
 def gh(*a):
@@ -18,36 +25,93 @@ def gh(*a):
         return ""
 
 
-if len(sys.argv) < 2:
-    sys.exit(__doc__)
-default_repo = sys.argv[2] if len(sys.argv) > 2 else gh("repo", "view", "--json", "nameWithOwner",
-                                                         "-q", ".nameWithOwner").strip()
-drift = []
-for f in sorted(glob.glob(os.path.join(sys.argv[1], "**", "*.json"), recursive=True)):
-    d = json.load(open(f))
-    row, doc = d.get("data", d), os.path.basename(f)[:-5]
-    state, pr = row.get("state"), row.get("pr")
-    if not pr or state == "done":
-        continue
+def load(f):
     try:
-        p = json.loads(gh("pr", "view", str(pr), "-R", row.get("repo") or default_repo,
-                          "--json", "state,isDraft,statusCheckRollup") or "{}")
+        d = json.load(open(f))
+    except (OSError, ValueError):
+        return {}
+    return d.get("data", d) if isinstance(d, dict) else {}
+
+
+args = sys.argv[1:]
+config_file = args.pop(args.index("--config") + 1) if "--config" in args else None
+if "--config" in args:
+    args.remove("--config")
+status_file = args.pop(args.index("--status") + 1) if "--status" in args else None
+if "--status" in args:
+    args.remove("--status")
+if not args and not status_file:
+    sys.exit(__doc__)
+rows_dir = None if status_file else args.pop(0)
+if not config_file and rows_dir:
+    config_file = next(iter(sorted(glob.glob(os.path.join(rows_dir, "**", "config.json"), recursive=True))), None)
+config = load(config_file) if config_file else {}
+default_repo = (args[0] if args else config.get("repo")) or \
+    gh("repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner").strip()
+
+
+def full(repo):
+    """owner/name for a row's repo: as given, from the config's repos map, or under the default repo's owner."""
+    if not repo:
+        return default_repo
+    if "/" in repo:
+        return repo
+    mapped = (config.get("repos") or {}).get(repo)
+    return mapped or (default_repo.split("/")[0] + "/" + repo if "/" in default_repo else repo)
+
+
+def pr(n, repo):
+    try:
+        return json.loads(gh("pr", "view", str(n), "-R", repo, "--json", "state,isDraft,statusCheckRollup") or "{}")
     except ValueError:
-        p = {}
+        return {}
+
+
+drift = []
+if status_file:
+    # status.md rows whose PRs have all merged or closed: the row should have moved to status-done.md, or been updated.
+    for line in open(status_file):
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if not line.lstrip().startswith("|") or len(cells) < 2 or set(cells[0]) <= set("-: ") or cells[0] == "Feature":
+            continue
+        refs = sorted({(full(r), int(n)) for r, n in REF.findall(line)})
+        states = [(r, n, pr(n, r).get("state")) for r, n in refs]
+        known = [x for x in states if x[2]]
+        if known and all(s in ("MERGED", "CLOSED") for _, _, s in known):
+            what = ", ".join(f"#{n} {s.lower()}" if r == default_repo else f"{r.split('/')[-1]}#{n} {s.lower()}"
+                             for r, n, s in known)
+            drift.append(f"{cells[0]}: every PR it names is done ({what}) — move it to status-done.md or update it")
+    print("\n".join(drift) if drift else "status in sync")
+    sys.exit(1 if drift else 0)
+
+for f in sorted(glob.glob(os.path.join(rows_dir, "**", "*.json"), recursive=True)):
+    doc = os.path.basename(f)[:-5]
+    row = load(f)
+    state, n = row.get("state"), row.get("pr")
+    if doc in ("config", "board") or not n or state == "done":
+        continue
+    repo = full(row.get("repo"))
+    if "/" not in repo:
+        drift.append(f"{doc}: repo '{row.get('repo')}' is not in the board config's repos map — add it, or use owner/name")
+        continue
+    p = pr(n, repo)
     if not p:
-        drift.append(f"{doc}: PR #{pr} not found — check the row")
+        drift.append(f"{doc}: PR #{n} not found — check the row")
         continue
     failed = any((c.get("conclusion") or c.get("state") or "").upper() in FAIL for c in p.get("statusCheckRollup") or [])
     want = None
     if p["state"] in ("MERGED", "CLOSED"):
         want = f"done (PR {p['state'].lower()})"
+    elif state == "held":
+        pass  # the Owner's hold: only a merge or close moves it
     elif failed and state not in ("fixing", "owner", "blocked"):
         want = "fixing (a check failed" + (", draft)" if p["isDraft"] else ")")
-    elif p["isDraft"] and state == "ready" and not failed:
-        want = "building or review (the PR is a draft)"
-    elif not p["isDraft"] and state in ("building", "fixing", "planning", "queued") and not failed:
+    elif p["isDraft"] and state in ("ready", "fixing") and not failed:
+        want = "building or review (the PR is a draft and no check failed)"
+    elif not p["isDraft"] and state in ("building", "planning", "queued") and not failed:
+        # A ready PR may be fixing — after the Owner's own test or a late finding — without going back to draft.
         want = "ready or review (the PR is ready and no check failed)"
     if want:
-        drift.append(f"{doc}: board says {state}, should be {want}  [#{pr}]")
+        drift.append(f"{doc}: board says {state}, should be {want}  [#{n}]")
 print("\n".join(drift) if drift else "board in sync")
 sys.exit(1 if drift else 0)

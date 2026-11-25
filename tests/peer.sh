@@ -6,11 +6,27 @@ REPO=$PWD PEER=$PWD/bin/peer
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 mkdir -p "$T/bin" "$T/orca" "$T/claude" "$T/proj"
 ln -s "$REPO/tests/fake-orca" "$T/bin/orca"
+cat > "$T/bin/gh" <<'EOF'
+#!/usr/bin/env python3
+# A stand-in for gh: PRs from $FAKE_GH_PRS ({"owner/repo#n": {...}, "mine": [n, ...]}).
+import json, os, sys
+a = sys.argv[1:]
+prs = json.load(open(os.environ["FAKE_GH_PRS"])) if os.path.exists(os.environ["FAKE_GH_PRS"]) else {}
+if a[:2] == ["repo", "view"]:
+    print("acme/app")
+elif a[:2] == ["pr", "view"]:
+    p = prs.get(a[a.index("-R") + 1] + "#" + a[2])
+    print(json.dumps(p)) if p else sys.exit(1)
+elif a[:2] == ["pr", "list"]:
+    print("\n".join(str(n) for n in prs.get("mine", [])))
+EOF
+chmod +x "$T/bin/gh"
 unset CLAUDE_CODE_SESSION_ID DEV_TEAM_CLAUDE
-export PATH="$T/bin:$PATH" FAKE_ORCA_DIR="$T/orca" CLAUDE_CONFIG_DIR="$T/claude" DEV_TEAM_WATCH_POLL=0 DEV_TEAM_STEP_SEC=0
+export PATH="$T/bin:$PATH" FAKE_ORCA_DIR="$T/orca" CLAUDE_CONFIG_DIR="$T/claude" DEV_TEAM_WATCH_POLL=0 DEV_TEAM_STEP_SEC=0 \
+       DEV_TEAM_RECHECK_SEC=0 FAKE_GH_PRS="$T/prs.json"
 export ORCA_TERMINAL_HANDLE=term_coord
 cd "$T/proj" && git init -q
-runtime() { printf -- '- **Runtime: Orca.** Roles run as Orca peers. %s Peer size limit: 2k. Board: off.\n- **Role models:** senior-developer: sonnet/medium; reviewer: high\n' "$1" > CLAUDE.md; }
+runtime() { printf -- '- **Runtime: Orca.** Roles run as Orca peers. %s Peer size limit: 2k. Worktree cards: off.\n- **Role models:** senior-developer: sonnet/medium; reviewer: high\n' "$1" > CLAUDE.md; }
 runtime "Team model: opus. Fallback model: sonnet. Advisor: fable."
 fail=0
 
@@ -25,6 +41,9 @@ command() { python3 -c 'import json,sys;print([c for c in map(json.loads,open(sy
 start_args() { grep '"worker-start"' "$T/orca/calls.log"; }
 reg()   { python3 -c 'import json,sys;r=json.load(open(".git/dev-team/peers.json"));print(eval(sys.argv[1]))' "$1"; }
 home()  { reg "r['homes']['$1']['$2']"; }
+setreg() { python3 -c 'import json,sys;p=".git/dev-team/peers.json";r=json.load(open(p));exec(sys.argv[1]);json.dump(r,open(p,"w"))' "$1"; }
+fake()  { python3 -c 'import json,sys;p=sys.argv[1];s=json.load(open(p));exec(sys.argv[2]);json.dump(s,open(p,"w"))' "$T/orca/state.json" "$1"; }
+prs()   { python3 -c 'import json,sys;p=sys.argv[1];s=json.load(open(p));exec(sys.argv[2]);json.dump(s,open(p,"w"))' "$T/prs.json" "$1"; }
 
 # dispatch: a new home, launched with the pinned settings
 run dispatch dt-dev-1 senior-developer "Implement T01"
@@ -43,7 +62,7 @@ ok "team model, role effort, fallback, advisor" '[ "$(command)" = "claude --mode
 ok "advisor roles hear about it"           'start_args | grep -q "You have an advisor model"'
 DEV_TEAM_CLAUDE="claude --permission-mode acceptEdits" run dispatch dt-reviewer reviewer "Review F1" --worktree path:/wt/feat-a
 ok "effort-only override, no advisor"      '[ "$(command)" = "claude --permission-mode acceptEdits --model opus --effort high --fallback-model sonnet" ] && ! start_args | grep -q "advisor model"'
-runtime "Board: off."
+runtime "Worktree cards: off."
 run dispatch dt-product product-manager "Brief APP-1" --worktree path:/wt/feat-a
 ok "no Team model: refuses to launch"      '[ $RC = 2 ] && [[ $OUT == *"no Team model"* ]] && ! launched'
 runtime "Team model: opus. Fallback model: sonnet. Advisor: fable."
@@ -215,5 +234,185 @@ DEV_TEAM_STALL_MIN=999 run watch 0.02
 ok "SIZE fires once per session"           '[[ $OUT == "nothing after 0.02 min" ]]'
 DEV_TEAM_STALL_MIN=0 run watch 0.02
 ok "watch reports STALL"                   '[[ $OUT == "STALL | "* ]]'
+
+# --- a second project: one-task models, re-check after start, stale shells, orphaned and dead sessions -----------
+mkdir -p "$T/p2" && cd "$T/p2" && git init -q && rm -f "$T/orca/state.json"
+runtime "Team model: opus. Fallback model: sonnet. Advisor: none."
+run dispatch dt-dev-1 senior-developer "Spike" --worktree path:/wt/a --model haiku --effort low
+ok "one-task model and effort"             '[ $RC = 0 ] && [ "$(command)" = "claude --model haiku --effort low --fallback-model sonnet" ] && [ "$(home dt-dev-1 once)" = True ]'
+ok "list marks it as this task's"          '[[ $("$PEER" list) == *"haiku/low (this task)"* ]]'
+run switch
+ok "switch leaves a one-task model alone"  '[[ $OUT == *"dt-dev-1: on a model chosen for this one task"* ]] && ! called "/model"'
+state stage '"settled"'
+run dispatch --keep dt-dev-1 senior-developer "Fix" --model opus
+ok "--keep refuses a one-task model"       '[ $RC = 2 ] && [[ $OUT == *"needs a fresh session"* ]]'
+run dispatch dt-dev-1 senior-developer "T02"
+ok "the next task is on the team settings" '[ "$(command)" = "claude --model sonnet --effort medium" ] && [ "$(home dt-dev-1 once)" = False ]'
+state stage '"settled"'; state recheck_fail true
+run dispatch dt-dev-1 senior-developer "T03"
+ok "a dispatch that fails after ready is caught" '[ $RC = 1 ] && [[ $OUT == *"reported ready, but the dispatch failed"*"already owns an active dispatch"* ]] && [ "$(home dt-dev-1 dispatch)" != None ]'
+state recheck_fail false; state stage '"settled"'; state version '"1.1.0"'
+run dispatch --keep dt-dev-1 senior-developer "Fix findings"
+ok "--keep refuses a shell from an older Orca" '[ $RC = 2 ] && [[ $OUT == *"started under Orca 1.0.0, and Orca is now 1.1.0"* ]] && ! called worker-start'
+setreg 'r["homes"]["dt-dev-1"]["orca"] = None'; state start_fail true
+run dispatch --keep dt-dev-1 senior-developer "Fix findings"
+ok "a keep stuck at readiness says why"    '[ $RC = 1 ] && [[ $OUT == *"may predate the running Orca"* ]]'
+state start_fail false; state orphan_on_close true
+run sleep dt-dev-1
+ok "an orphaned terminal counts as closed" '[[ $OUT == *"dt-dev-1: asleep"* ]] && [[ $OUT != *"did not close"* ]] && [ "$(home dt-dev-1 terminal)" = None ]'
+state orphan_on_close false
+run dispatch dt-dev-1 senior-developer "T04"
+state stage '"settled"'; fake "s['orphaned'] = ['$(home dt-dev-1 terminal)']"
+run list
+ok "list clears an orphaned terminal"      '[[ $OUT == *"dt-dev-1"*"asleep"* ]] && [ "$(home dt-dev-1 terminal)" = None ]'
+state orphaned '[]'
+run dispatch dt-dev-1 senior-developer "T05"
+state stage '"settled"'
+shows "$(home dt-dev-1 terminal)" "✻ Working… (esc to interrupt) · ← 1 agent
+Resume this session with:
+claude --resume 0f3c
+$ "
+run dispatch dt-dev-1 senior-developer "T06"
+ok "a dead session's last screen is not busy" '[ $RC = 0 ] && [[ $OUT == *"(fresh,"* ]]'
+state stage '"settled"'; TT=$(home dt-dev-1 terminal)
+shows "$TT" "  2 background shells · ↓ to manage"
+# Stand-ins run on python3: macOS hides the environment of system binaries such as /bin/sleep.
+bg() { ORCA_TERMINAL_HANDLE=$1 sh -c "$2 >/dev/null 2>&1 & echo \$!"; }  # started outside this shell's jobs
+M=$(bg "$TT" "python3 -c 'import time; time.sleep(60)' fake-mcp-server")
+V=$(bg "$TT" "python3 -c 'import time; time.sleep(60)' vite-dev")
+sleep 1
+run dispatch dt-dev-1 senior-developer "T07"
+ok "no Claude process in it: not busy"     '[ $RC = 0 ]'
+ok "MCP servers it left are stopped"       '[[ $OUT == *"stopped 1 MCP server process(es)"*"fake-mcp-server"* ]] && ! kill -0 $M 2>/dev/null'
+ok "anything else it left is named"        '[[ $OUT == *"still running from its closed session"*"vite-dev"* ]] && kill -0 $V'
+kill $V
+state stage '"settled"'; TT=$(home dt-dev-1 terminal)
+shows "$TT" "✻ Working… (esc to interrupt)"
+mkdir -p "$T/standin"; printf '#!/usr/bin/env python3\nimport time; time.sleep(60)\n' > "$T/standin/claude"; chmod +x "$T/standin/claude"
+C=$(bg "$TT" "$T/standin/claude")
+sleep 1
+run dispatch dt-dev-1 senior-developer "T08"
+ok "a live Claude mid-turn is busy"        '[ $RC = 2 ] && [[ $OUT == *"is busy"* ]]'
+kill $C
+shows "$TT" "✻ Pondering… (1m 12s · ↑ 1.2k tokens)"
+run dispatch dt-dev-1 senior-developer "T08"
+ok "the working line is busy"              '[ $RC = 2 ] && [[ $OUT == *"Pondering… (1m 12s"* ]]'
+shows "$TT" "❯ 
+  ⏵⏵ accept edits on · ← 1 agent · 1 monitor"
+run sleep dt-dev-1
+ok "a monitor beside '← 1 agent' is busy"   '[[ $OUT == *"is busy ('"'"'1 monitor'"'"'"* ]] && [ "$(home dt-dev-1 terminal)" = "$TT" ]'
+shows "$TT" "❯ 
+  ⏵⏵ accept edits on · ← 1 agent"
+run sleep dt-dev-1
+ok "an idle prompt's '← 1 agent' is not busy" '[[ $OUT == "dt-dev-1: asleep" ]]'
+run dispatch dt-dev-1 senior-developer "T08"
+state stage '"settled"'; shows "$(home dt-dev-1 terminal)" "❯ "
+runtime "Team model: opus. Fallback model: sonnet. Advisor: none. Session caches: \`.cache/mcp-*\`, \`../outside\`."
+mkdir -p "$T/wt2/.cache/mcp-browser" "$T/outside"
+run dispatch dt-dev-2 senior-developer "T09" --worktree "path:$T/wt2"
+state stage '"settled"'
+run sleep dt-dev-2
+ok "session caches cleared, inside the worktree only" '[[ $OUT == *"cleared $T/wt2/.cache/mcp-browser"* ]] && [ ! -e "$T/wt2/.cache/mcp-browser" ] && [ -d "$T/outside" ]'
+
+# adopt: a terminal started outside peer becomes a home
+fake 's["terminals"]["term_99"] = {"open": True, "path": "/wt/hand"}'
+run adopt dt-dev-3 senior-developer term_99
+ok "adopt makes a home of an open terminal" '[ $RC = 0 ] && [ "$(home dt-dev-3 worktree)" = /wt/hand ]'
+run adopt dt-dev-4 senior-developer term_404
+ok "adopt refuses a terminal that is not open" '[ $RC = 2 ]'
+run dispatch dt-dev-3 senior-developer "T10"
+ok "its next dispatch closes that terminal" '[ $RC = 0 ] && called "\"terminal\", \"close\", \"--terminal\", \"term_99\"" && launched | grep -q "path:/wt/hand"'
+
+# a remote Orca server
+state stage '"settled"'
+run dispatch dt-dev-r senior-developer "Remote T1" --on gpu-box --worktree current
+ok "remote: current is refused"            '[ $RC = 2 ] && [[ $OUT == *"ambiguous"* ]]'
+run dispatch dt-dev-r senior-developer "Remote T1" --on gpu-box --worktree new-top-level --name feat-r
+ok "remote: new-top-level needs --repo"    '[ $RC = 2 ] && [[ $OUT == *"needs --repo and --name"* ]]'
+run dispatch dt-dev-r senior-developer "Remote T1" --on gpu-box --worktree new-top-level --repo name:app --name feat-r --model opus
+ok "remote: Orca starts it, model and effort pinned" '[ $RC = 0 ] && ! launched && start_args | grep -q "\"--on\", \"gpu-box\", \"--agent\", \"claude\", \"--model\", \"opus\", \"--effort\", \"medium\", \"--worktree\", \"new-top-level\", \"--repo\", \"name:app\", \"--name\", \"feat-r\""'
+ok "remote: what a launch there cannot take is said" '[[ $OUT == *"on gpu-box a launch takes only the model and effort"* ]]'
+ok "remote: home keeps server, terminal, selector" '[ "$(home dt-dev-r env)" = gpu-box ] && [[ $(home dt-dev-r terminal) == rterm_* ]] && [ "$(home dt-dev-r worktree_sel)" = "id:repo1::/remote/feat-r" ]'
+run tell dt-dev-r "Go" "Yes"
+ok "remote: tell nudges through its server" '[[ $OUT == *"nudge delivered"* ]] && called "\"--enter\", \"--environment\", \"gpu-box\""'
+shows "$(home dt-dev-r terminal)" "  ⎿  API Error: 500 internal
+❯ "
+DEV_TEAM_STUCK_MIN=0 run watch 0.02
+ok "remote: watch reads its screen there"  '[[ $OUT == "STUCK | dt-dev-r"* ]] && called "\"--screen\", \"--environment\", \"gpu-box\""'
+hook stop '{"session_id":"x"}'
+ok "remote: in flight for the guard hook"  '[[ $OUT == *"in flight ("*"dt-dev-r"* ]]'
+state stage '"settled"'; RT=$(home dt-dev-r terminal)
+run dispatch dt-dev-r senior-developer "Remote T2"
+ok "remote: fresh closes there, relaunches in its worktree" '[ $RC = 0 ] && called "\"close\", \"--terminal\", \"$RT\", \"--environment\", \"gpu-box\"" && start_args | grep -q "\"--worktree\", \"id:repo1::/remote/feat-r\""'
+state stage '"settled"'
+run dispatch --keep dt-dev-r senior-developer "Fix"
+ok "remote: --keep is refused"             '[ $RC = 2 ] && [[ $OUT == *"takes each task fresh"* ]]'
+run sizes
+ok "remote: no local transcript"           '[[ $OUT == *"dt-dev-r"*"on gpu-box: no local transcript"* ]]'
+
+# PRs: owners, CI and conflict alerts, PR changes with the Owner board on, sweep
+cat > "$T/prs.json" <<'EOF'
+{"acme/app#12": {"state": "OPEN", "isDraft": true, "mergeable": "MERGEABLE", "statusCheckRollup": [{"name": "unit", "conclusion": "SUCCESS"}]},
+ "acme/mobile#7": {"state": "OPEN", "isDraft": false, "mergeable": "MERGEABLE", "statusCheckRollup": []},
+ "acme/app#30": {"state": "OPEN", "isDraft": false, "mergeable": "CONFLICTING", "statusCheckRollup": []},
+ "mine": [12, 30]}
+EOF
+run pr dt-dev-1 12 https://github.com/acme/mobile/pull/7
+ok "pr records the owner"                  '[[ $OUT == "dt-dev-1 owns #12, mobile#7" ]]'
+DEV_TEAM_STALL_MIN=999 run watch 0.02
+ok "a first look only records the PR"      '[[ $OUT == "nothing after 0.02 min" ]] && [ "$(reg "r[\"prs\"][\"acme/app#12\"][\"draft\"]")" = True ]'
+prs 's["acme/app#12"]["statusCheckRollup"] = [{"name": "unit", "conclusion": "FAILURE"}]'
+DEV_TEAM_STALL_MIN=999 run watch 0.02
+ok "a failing check on an idle owner's PR" '[[ $OUT == "CI | #12 | dt-dev-1 | failed: unit: route it to dt-dev-1"* ]]'
+DEV_TEAM_STALL_MIN=999 run watch 0.02
+ok "the same failure wakes it once"        '[[ $OUT == "nothing after 0.02 min" ]]'
+state stage '"running"'; prs 's["acme/app#12"]["statusCheckRollup"].append({"name": "lint", "conclusion": "FAILURE"})'
+DEV_TEAM_STALL_MIN=999 run watch 0.02
+ok "not while its owner is working"        '[[ $OUT == "nothing after 0.02 min" ]]'
+state stage '"settled"'
+DEV_TEAM_STALL_MIN=999 run watch 0.02
+ok "once the owner is idle"                '[[ $OUT == "CI | #12 | dt-dev-1 | failed: lint"* ]]'
+prs 's["acme/mobile#7"]["mergeable"] = "CONFLICTING"'
+DEV_TEAM_STALL_MIN=999 run watch 0.02
+ok "a merge conflict wakes it"             '[[ $OUT == "CONFLICT | mobile#7 | dt-dev-1 | merge conflict"* ]]'
+printf -- '- **Owner board:** https://claude.ai/artifact/x\n' >> CLAUDE.md
+prs 's["acme/app#12"]["isDraft"] = False; s["acme/mobile#7"]["state"] = "MERGED"'
+DEV_TEAM_STALL_MIN=999 run watch 0.02
+ok "board on: ready and merged wake it"    '[[ $OUT == *"PR | #12 | dt-dev-1 | marked ready"* ]] && [[ $OUT == *"PR | mobile#7 | dt-dev-1 | merged"* ]]'
+state batches "[{\"deliveryId\":\"dlv_9\",\"messages\":[{\"type\":\"worker_done\",\"id\":\"msg_9\",\"from_handle\":\"$(home dt-dev-3 terminal)\",\"subject\":\"Done\",\"body\":\"Opened https://github.com/acme/app/pull/31\"}]}]"
+run pending
+ok "a PR link in a report records its owner" '[ "$(reg "r[\"prs\"][\"acme/app#31\"][\"home\"]")" = dt-dev-3 ]'
+state batches '[]'
+run prs --sweep
+ok "sweep: failing and conflicting PRs, owners" '[ $RC = 1 ] && [[ $OUT == *"#12"*"dt-dev-1"*"failing: lint, unit"* ]] && [[ $OUT == *"#30"*"?"*"merge conflict"* ]]'
+
+# the Owner board: stamp, guard, drift after a watch, peers rows
+mkdir -p docs; echo "| f | Implementation |" > docs/status.md
+hook prompt '{"session_id":"x"}'
+ok "board guard: no stamp yet"             '[[ $OUT == *"no board write recorded yet: update the board, then"*"peer board-stamp"* ]]'
+mkdir -p "$T/rows"
+run board-stamp --rows "$T/rows"
+hook stop '{"session_id":"x"}'
+ok "board guard: quiet once stamped"       '[ -z "$OUT" ]'
+echo "| g | Review |" >> docs/status.md
+hook stop '{"session_id":"x"}'
+ok "board guard: a status change blocks the stop" '[[ $OUT == *"block"*"status changed since the last board write: update the board, then"* ]]'
+hook prompt '{"session_id":"x"}'
+ok "board guard: the prompt hears it too"  '[[ $OUT == *"additionalContext"*"status changed since the last board write"* ]]'
+ORCA_TERMINAL_HANDLE=$(home dt-dev-3 terminal) hook stop '{"session_id":"p"}'
+ok "board guard: not in a peer's session"  '[ -z "$OUT" ]'
+printf '%s' '{"data": {"pr": 7, "repo": "acme/mobile", "state": "review"}}' > "$T/rows/r1.json"
+run board-stamp
+DEV_TEAM_STALL_MIN=999 run watch 0.02
+ok "watch reports drift on the listed rows" '[[ $OUT == *"BOARD | r1: board says review, should be done (PR merged)"* ]]'
+run list --board-json "$T/bj"
+ok "board json: one peers row per home"    'python3 -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(not (d[\"name\"]==\"dt-dev-1\" and d[\"role\"]==\"senior-developer\" and d[\"doing\"].startswith(\"Idle · last: \") and d[\"order\"]==1))" "$T/bj/peers/dt-dev-1.json"'
+ok "board json: a sleeping home says so"   'grep -q "\"doing\": \"Asleep · last: T09\"" "$T/bj/peers/dt-dev-2.json"'
+mkdir -p "$T/p3/docs" && cd "$T/p3" && git init -q && echo x > docs/status.md
+printf -- '- **Owner board:** https://claude.ai/artifact/x\n' > CLAUDE.md
+OUT=$(echo '{}' | CLAUDE_PROJECT_DIR="$T/p3" CLAUDE_PLUGIN_ROOT="$REPO" "$REPO/hooks/coordinator.sh" stop)
+ok "board guard without Orca, via the hook script" '[[ $OUT == *"block"*"no board write recorded yet"* ]]'
+rm CLAUDE.md; OUT=$(echo '{}' | CLAUDE_PROJECT_DIR="$T/p3" CLAUDE_PLUGIN_ROOT="$REPO" "$REPO/hooks/coordinator.sh" stop)
+ok "no board, no peers: the hook script is silent" '[ -z "$OUT" ]'
 
 exit $fail

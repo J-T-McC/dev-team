@@ -28,7 +28,11 @@ cat > "$T/prs.json" <<'EOF'
  "acme/app#4": {"state": "OPEN", "isDraft": false, "statusCheckRollup": [{"state": "PENDING"}]},
  "acme/app#5": {"state": "OPEN", "isDraft": false, "statusCheckRollup": []},
  "acme/app#6": {"state": "OPEN", "isDraft": true,  "statusCheckRollup": [{"conclusion": "FAILURE"}]},
- "acme/mobile#7": {"state": "CLOSED", "isDraft": false, "statusCheckRollup": []}}
+ "acme/mobile#7": {"state": "CLOSED", "isDraft": false, "statusCheckRollup": []},
+ "acme/web#9": {"state": "OPEN", "isDraft": false, "statusCheckRollup": [{"conclusion": "FAILURE"}]},
+ "acme/app#10": {"state": "OPEN", "isDraft": false, "statusCheckRollup": []},
+ "acme/app#11": {"state": "MERGED", "isDraft": false, "statusCheckRollup": []},
+ "acme/app#12": {"state": "CLOSED", "isDraft": false, "statusCheckRollup": []}}
 EOF
 row() { printf '%s' "$2" > "$T/rows/$1.json"; }
 row merged    '{"data": {"pr": 1, "state": "building"}}'
@@ -42,6 +46,11 @@ row nopr      '{"data": {"state": "planning"}}'
 row missing   '{"data": {"pr": 8, "state": "review"}}'
 row planned   '{"data": {"pr": 4, "state": "planning"}}'
 row queued    '{"data": {"pr": 5, "state": "queued"}}'
+row fixready  '{"data": {"pr": 5, "state": "fixing"}}'
+row fixdraft  '{"data": {"pr": 3, "state": "fixing"}}'
+row held      '{"data": {"pr": 3, "state": "held"}}'
+row heldgone  '{"data": {"pr": 11, "state": "held"}}'
+row short     '{"data": {"pr": 9, "repo": "web", "state": "review"}}'
 printf '%s' '{"data": {"pr": 7, "repo": "acme/mobile", "state": "review"}}' > "$T/rows/sub/other.json"
 
 OUT=$("$REPO/bin/board-drift" "$T/rows"); RC=$?
@@ -55,7 +64,26 @@ ok "missing PR is reported"               '[[ $OUT == *"missing: PR #8 not found
 ok "ready PR is not planning"              '[[ $OUT == *"planned: board says planning, should be ready or review"* ]]'
 ok "ready PR is not queued"                '[[ $OUT == *"queued: board says queued, should be ready or review"* ]]'
 ok "in-sync rows stay quiet"               '[[ $OUT != *reviewing* && $OUT != *waiting* && $OUT != *nopr* ]]'
+ok "a ready PR may be fixing"              '[[ $OUT != *fixready* ]]'
+ok "a draft PR, no failed check, not fixing" '[[ $OUT == *"fixdraft: board says fixing, should be building or review"* ]]'
+ok "held rows: only a merge or close moves them" '[[ $OUT != *"held: "* ]] && [[ $OUT == *"heldgone: board says held, should be done (PR merged)"* ]]'
+ok "short repo name: same owner by default" '[[ $OUT == *"short: board says review, should be fixing"* ]] && grep -q "acme/web" "$T/gh.log"'
 ok "done rows are not looked up"           '[ "$(grep -c "\"1\"" "$T/gh.log")" = 1 ]'
+mkdir -p "$T/mapped/meta"; printf '%s' '{"data": {"pr": 9, "repo": "site", "state": "review"}}' > "$T/mapped/a.json"
+printf '%s' '{"data": {"repo": "acme/app", "repos": {"site": "acme/web"}}}' > "$T/mapped/meta/config.json"
+OUT=$("$REPO/bin/board-drift" "$T/mapped")
+ok "short repo name mapped in config"      '[[ $OUT == "a: board says review, should be fixing"* ]]'
+cat > "$T/status.md" <<'EOF'
+| Feature | Phase | Current Role | Blockers | Approvals | Path |
+|---|---|---|---|---|---|
+| export (APP-1) | Review | reviewer | — | — | #11, #12 |
+| import (APP-2) | Implementation | senior-developer | — | — | #10 |
+| sync (APP-3) | Review | reviewer | — | — | #11 and web#9 |
+| notes | Requirements | product-manager | — | — | brief |
+EOF
+OUT=$("$REPO/bin/board-drift" --status "$T/status.md"); RC=$?
+ok "status: rows whose PRs are all done"   '[ $RC = 1 ] && [[ $OUT == "export (APP-1): every PR it names is done (#11 merged, #12 closed)"* ]]'
+ok "status: an open PR or no PR is quiet"  '[[ $OUT != *import* && $OUT != *sync* && $OUT != *notes* ]]'
 mkdir -p "$T/sync"; printf '%s' '{"data": {"pr": 5, "state": "review"}}' > "$T/sync/a.json"
 OUT=$("$REPO/bin/board-drift" "$T/sync"); RC=$?
 ok "in sync exits 0"                       '[ $RC = 0 ] && [ "$OUT" = "board in sync" ]'
@@ -90,5 +118,10 @@ else
   ok "render: owner name from config"      '[[ $DOM == *">Waiting on Sam<"* ]]'
   ok "render: no ticket URL, plain IDs"    '[[ $DOM != *"example.com/tickets"* ]] && [[ $DOM == *">APP-207<"* ]]'
   ok "render: no repo, row repo still links" '[[ $DOM == *"https://github.com/acme/mobile/pull/409"* ]] && [[ $DOM != *"acme/app/pull"* ]]'
+  python3 -c 'import json,sys;s=json.load(open(sys.argv[1]));s["meta/config"]["repos"]={"web":"acme/web"};s["work"][0].update(repo="web",state="held");json.dump(s,open(sys.argv[2],"w"))' \
+    examples/board/sample.json "$T/s3.json"
+  DOM=$(dom "$T/s3.json")
+  ok "render: held is the Owner's, muted"  '[[ $DOM == *"<tr class=\"held\">"* ]] && [[ $DOM == *">Held by you<"* ]]'
+  ok "render: short repo name links via config" '[[ $DOM == *"https://github.com/acme/web/pull/409"* ]] && [[ $DOM == *">web #409<"* ]]'
 fi
 exit $fail
