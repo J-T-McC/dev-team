@@ -15,7 +15,7 @@ git log --oneline -1 2>/dev/null; ls docs CLAUDE.md CLAUDE.local.md 2>/dev/null
 
 1. **Own project or guest?** Guest: someone else's project whose team does not use dev-team — nothing may show up in their work (`workflow/workspace.md` § Guest mode).
 2. **Greenfield or existing?** A repository with code and history predating this session is existing — run steps 0 and 6 as well (`${CLAUDE_PLUGIN_ROOT}/workflow/adoption.md`). Genuinely ambiguous → ask the Owner.
-3. **Workspace settings** — offer the defaults, then ask about **each of the four**; root and features folder are separate questions. A question tool that takes only a few questions at once means asking in two rounds — never drop one:
+3. **Workspace settings** — offer the defaults, then ask about **each of the four**, in chat (`${CLAUDE_PLUGIN_ROOT}/workflow/communication.md` § Talking to the Owner); root and features folder are separate questions:
    - **Root:** `docs` (guest: `.dev-team`).
    - **Features folder:** `<root>/features`, or anywhere else — e.g. next to the team's own feature or task folders. dev-team only ever writes into feature folders it created.
    - **Folder naming:** `slug` (small projects), `F###-slug` (large, many features), `<ticket>-slug` (work comes from tickets).
@@ -49,7 +49,7 @@ git log --oneline -1 2>/dev/null; ls docs CLAUDE.md CLAUDE.local.md 2>/dev/null
 5. **Owner preferences** — ask, then record in the dev-team section (skip any the Owner defers; defaults apply):
    - **Autonomy:** `supervised`, `standard` (default), or `autonomous`, plus any gates to keep (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Autonomy).
    - **Ticket system:** Linear, Jira, GitHub, or another tracker? Yes → run `${CLAUDE_PLUGIN_ROOT}/commands/tickets.md`. No → `/dev-team:tickets` enables it later.
-   - **Orca:** does the Owner run Claude from Orca? Yes → add the Runtime line (`${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` § Opt in) and offer `/dev-team:checkins`.
+   - **Orca:** does the Owner run Claude from Orca? Yes → add the Runtime line (`${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` § Opt in) with the Team model, Fallback model, and Advisor the Owner picks (§ Launch settings), and offer `/dev-team:checkins`.
    - **Owner board:** a live page of what needs the Owner, who is on what, and work in flight — recommended when several roles run at once. Yes → run `${CLAUDE_PLUGIN_ROOT}/commands/board.md`. No → `/dev-team:board` sets it up later.
    - **Stacked PRs:** `gh extension list` shows `github/gh-stack` → tell the Owner `<ws>/standards/coding.md` § Stacked PRs applies. Not installed → the section stays dormant; `gh extension install github/gh-stack` turns it on.
    - **Design tool:** Figma, Penpot, or another tool with an MCP server? Yes → fill `<ws>/standards/design.md` § Design tool. No → mockups are HTML in each feature's `mockups/`.
@@ -59,4 +59,4 @@ git log --oneline -1 2>/dev/null; ls docs CLAUDE.md CLAUDE.local.md 2>/dev/null
    - **Declare in-flight work:** one `<ws>/status.md` row per feature already under way (with its ticket ID if tickets are configured), `Phase` at its true position, `Approvals: pre-adoption`. Upstream gates are waived; downstream gates apply from today.
    - **Never document backwards.** No PRD, plan, or ADR for work already shipped. The next *new* piece of work starts at Product Manager triage.
 
-7. Report what was created vs. skipped, then remind the Owner to fill placeholders in `<ws>/stack/stack.md` and `<ws>/standards/*.md` (agents stop and ask while placeholders remain), and to commit — unless the workspace is uncommitted.
+7. Report what was created vs. skipped, and that every role logs friction in `<ws>/friction-log.md`, fixed as maintenance (`${CLAUDE_PLUGIN_ROOT}/workflow/friction.md`). Then remind the Owner to fill placeholders in `<ws>/stack/stack.md` and `<ws>/standards/*.md` (agents stop and ask while placeholders remain), and to commit — unless the workspace is uncommitted.

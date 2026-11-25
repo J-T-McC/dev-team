@@ -44,6 +44,16 @@ Never bypass the chain. Example: the Senior Developer must not ask the Project O
 - **The Owner's words travel verbatim.** When passing an Owner observation, decision, or answer to a role, quote it exactly, then add any interpretation separately and mark it as yours. A paraphrase sends the role after the wrong cause.
 - **The Owner as the hands.** When a check needs the Owner — a device, an account, a physical step — the role writes exact steps: device and build, what to do or say, for how long, what to look for, and what to send back. The coordinator relays them unchanged. One thing per round. The role collects logs itself wherever it can (for example, a local-only diagnostic build that writes to a file) rather than asking the Owner to read them.
 
+## Talking to the Owner
+
+Whoever reports to the Owner — the orchestrator, the coordinator under Orca, or a role whose question reaches them:
+
+- **The Owner first.** Answer the Owner before doing any role or peer work.
+- **Sort before asking.** A real decision — product, money, real accounts or people, production — goes to the Owner. A tooling gap is reported as what is missing, so it gets fixed. Agent work is done, not asked about.
+- **Questions stand alone.** Say what a person sees today, what the choice changes for them, and what you recommend, in plain words. Internal names — criterion, task, or PR numbers — are references, never the explanation.
+- **Ask in chat,** never in a question dialog: one that opens mid-reply cuts the Owner off.
+- **End with what is waiting.** A reply that leaves anything open ends with a numbered **Waiting on you** list, re-asked until each item is answered; drop what the Owner has parked.
+
 ## Plain language
 
 Everything a role writes — artifacts, notes, questions, summaries, commit messages — is read by people and re-read by agents. Neither needs padding.

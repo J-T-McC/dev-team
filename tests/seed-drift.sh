@@ -6,9 +6,12 @@ REPO=$PWD
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 fail=0
 ok() { if eval "$2"; then echo "ok   $1"; else echo "FAIL $1"; fail=1; fi; }
-fresh() {  # fresh <claude-file> [workspace root]: a project whose dev-team section and standards match the seeds
-  rm -rf "$T/p"; mkdir -p "$T/p/${2:-docs}/standards"
-  cp "$REPO"/seeds/standards/*.md "$T/p/${2:-docs}/standards/"
+fresh() {  # fresh <claude-file> [workspace root]: a project whose dev-team section, files, and standards match the seeds
+  rm -rf "$T/p"; W="$T/p/${2:-docs}"; mkdir -p "$W/standards" "$W/stack" "$W/backlog"
+  cp "$REPO"/seeds/standards/*.md "$W/standards/"
+  cp "$REPO/seeds/stack.md" "$W/stack/stack.md"; cp "$REPO/seeds/backlog-index.md" "$W/backlog/index.md"
+  cp "$REPO/seeds/backlog-archive.md" "$W/backlog/archive.md"
+  for f in status status-done triage friction-log; do cp "$REPO/seeds/$f.md" "$W/$f.md"; done
   sed "s|\`docs\` · features \`docs/features\`|\`${2:-docs}\` · features \`${2:-docs}/features\`|" \
     "$REPO/seeds/CLAUDE.project.md" > "$T/p/$1"
 }
@@ -26,11 +29,17 @@ ok "missing section reported"                '[ $RC = 1 ] && [[ $OUT == *"standa
 ok "renamed suffix or case is not drift"     '[[ $OUT != *"Test types"* ]]'
 
 fresh CLAUDE.md
+rm "$T/p/docs/friction-log.md"; run
+ok "missing workspace file reported"         '[ $RC = 1 ] && [ "$OUT" = "docs/friction-log.md: missing file (seed friction-log.md)" ]'
+
+fresh CLAUDE.md
 drop "$T/p/CLAUDE.md" "- **Build small.**" "- Keep it small:"
 drop "$T/p/CLAUDE.md" "**Autonomy: standard.**" "**Autonomy: autonomous; Owner keeps: release.**"
+drop "$T/p/CLAUDE.md" "- **Not now is not lost.**" "- **Not now is not lost (Owner, 2026-01-05).**"
 run
 ok "missing rule reported"                   '[[ $OUT == *"CLAUDE.md: missing rule \"Build small\""* ]]'
 ok "changed rule value is not drift"         '[[ $OUT != *Autonomy* ]]'
+ok "a note in brackets is not drift"         '[[ $OUT != *"Not now"* ]]'
 
 fresh CLAUDE.md
 drop "$T/p/CLAUDE.md" "- **Run roles in this conversation.**" "- **Runtime: Orca.** Roles run as Orca peers. Peer clear threshold: 25% of the peer's context window. Board: off.
@@ -41,7 +50,8 @@ ok "Orca: clear threshold rename reported"   '[[ $OUT == *"\"Peer clear threshol
 drop "$T/p/CLAUDE.md" "Peer clear threshold: 25% of the peer's context window. Board: off." "Peer size limit: 300k."
 run
 ok "Orca: missing Board setting reported"    '[[ $OUT == *"no \"Board:\" setting"* ]] && [[ $OUT != *"Peer size limit"* ]]'
-drop "$T/p/CLAUDE.md" "Peer size limit: 300k." "Peer size limit: 300k. Board: on."
+ok "Orca: missing launch settings reported"  '[[ $OUT == *"no \"Team model:\" setting"* ]] && [[ $OUT == *"no \"Fallback model:\""* ]] && [[ $OUT == *"no \"Advisor:\""* ]]'
+drop "$T/p/CLAUDE.md" "Peer size limit: 300k." "Team model: opus. Fallback model: none. Advisor: none. Peer size limit: 300k. Board: on."
 run
 ok "Orca: current Runtime line is quiet"     '[ $RC = 0 ]'
 

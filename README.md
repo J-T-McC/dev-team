@@ -10,7 +10,9 @@ Owner attention is reserved for what matters — approving PRDs, releases, and *
 
 **Agents write plainly** — short, plain English in every doc and note, and code comments only where the *why* is not obvious ([`workflow/communication.md`](workflow/communication.md) § Plain language). No narrated code, no history comments, no commented-out code.
 
-**Agents assume mistakes** — their own and each other's. Each self-reviews its output against the source documents (not its memory of them) before handing off, and questions an assignment or upstream artifact that smells wrong instead of silently complying or silently fixing it.
+**Agents assume mistakes** — their own and each other's. Each self-reviews its output against the source documents (not its memory of them) before handing off, and questions an assignment or upstream artifact that smells wrong instead of silently complying or silently fixing it. Claims about code cite the file and line they came from, and nothing goes into scope without proof it happens in a real flow ([`workflow/handoffs.md`](workflow/handoffs.md) § Evidence).
+
+**The team learns from its friction.** Any role logs what slowed it down or sent it the wrong way — a wrong instruction, a slow step, a token burn, a repeated mistake, a course correction — in the workspace's `friction-log.md`, and every report ends with a `Friction:` line. As maintenance, the orchestrator picks the entry that stands out and changes the workflow so it stops ([`workflow/friction.md`](workflow/friction.md)).
 
 **Work is sized by the team.** The pipeline above is the longest path. For most ticket work the product-manager writes a short **brief** (what's wanted, testable acceptance criteria, the planned path) instead of a PRD, and each role decides whether its own phase is needed — design, a technical plan, an ADR, or time-boxed **discovery** when unknowns block a decision. Large features still get the full pipeline; a brief that outgrows itself becomes a PRD. Acceptance criteria and review are never skipped (review has a **light** tier for small changes). Before any of that, the product-manager checks whether agents can take the work at all, against the project's **Agent limits** list: work that needs a person or access agents don't have becomes **split** (human steps listed as Owner tasks) or **human** (logged in `triage.md`, never started).
 
@@ -42,7 +44,7 @@ Bootstrap asks for three settings, recorded in one `Workspace:` line: the **root
 
 ## Orca runtime (optional)
 
-Projects driven from Orca can opt into a second runtime ([`workflow/orca.md`](workflow/orca.md)): every role runs as a **top-level peer session** launched and supervised by Orca orchestration — never a subagent. Peers are plain sessions with full project tools (MCP servers, skills, claude-mem), each in a named home (`dt-dev-1`, `dt-reviewer`, …); the dispatch spec gives each its role. Every task starts a **fresh session** — peer startup is cheap next to a subagent's — kept only for follow-ups on the same change. `bin/peer` runs the coordinator's side: dispatch, messages that wake idle peers, and a token-free wait for reports, oversized sessions, and stalled peers. Opt in with one line in the project `CLAUDE.md` plus a settings deny for the `Agent` tool — without it, nothing changes.
+Projects driven from Orca can opt into a second runtime ([`workflow/orca.md`](workflow/orca.md)): every role runs as a **top-level peer session** launched and supervised by Orca orchestration — never a subagent. Peers are plain sessions with full project tools (MCP servers, skills, claude-mem), each in a named home (`dt-dev-1`, `dt-reviewer`, …); the dispatch spec gives each its role. Every task starts a **fresh session** — peer startup is cheap next to a subagent's — kept only for follow-ups on the same change. Every launch pins the peer's model and effort from the project's Runtime line — a team model, per-role overrides, a fallback for when a model runs out, and an advisor model for the product-manager and principal-engineer — so a `/model` in some other session never moves the team. `bin/peer` runs the coordinator's side: dispatch, model switches for live peers, sleeping idle peers, messages that wake idle peers, and a token-free wait for reports and for peers in trouble — stopped on an API error or a usage limit, oversized, or stalled. Guard hooks keep the coordinator from ending a turn with a peer's question unanswered or work in flight unwatched, and `bin/slot` makes heavy jobs take turns on the machine. Opt in with one line in the project `CLAUDE.md` plus a settings deny for the `Agent` tool — without it, nothing changes.
 
 **Check-ins** (`/dev-team:checkins`) are scheduled Orca automations defined in the workspace's `standards/checkins.md` — e.g. keep work moving every 30 minutes, catch stalled or failed work hourly, have the product-manager groom tickets assigned to you each weekday. Each starts with a free trigger check, so an idle project costs nothing; each reuses its session so it keeps its bearings (a run still re-sends that session, so check-in sessions are kept small). Optional extras: mirror `status.md` onto Orca's worktree board (with an unread flag when you're needed), and Orca's built-in browser for UI checks in place of Playwright.
 
@@ -80,7 +82,7 @@ Fill in `stack/stack.md` and customize `standards/*.md` in the workspace — age
 
 Keep the project `CLAUDE.md` lean — it is loaded every session, while skills and the workspace load on demand. The seed [`seeds/CLAUDE.project.md`](seeds/CLAUDE.project.md) is the recommended shape.
 
-**Models per role:** the plugin pins no model — every role runs on your own default (the session's model, or your default subagent model for agents). Override per project with one `CLAUDE.md` line — `Role models: designer: opus/high; senior-developer: sonnet` — applied whenever a role's agent or Orca peer is started ([`workflow/overview.md`](workflow/overview.md) § Models per role).
+**Models per role:** the plugin pins no model — every role runs on your own default (the session's model, your default subagent model for agents, or the project's Team model for Orca peers). Thinking roles default to `xhigh` effort and the senior-developer to `high`. Override per project with one `CLAUDE.md` line — `Role models: designer: opus/high; senior-developer: sonnet; reviewer: high` — applied whenever a role's agent or Orca peer is started ([`workflow/overview.md`](workflow/overview.md) § Models per role).
 
 **Design tools:** if the project designs in Figma, Penpot, or another tool with an MCP server, name it in the workspace's `standards/design.md` § Design tool — the designer builds its mockups there on your existing components, links the frames, and keeps a snapshot in the workspace for the roles that check UI against it. Otherwise mockups are self-contained HTML in `docs/design/`.
 
@@ -104,8 +106,8 @@ Every commit to this repo is a new version (no version pinning). Seeded files (w
 Plugin updates never touch project-owned files, so a project bootstrapped before a seed was added (or extended) silently lacks it — and agents have no fallback to the plugin's copies. Run sync after updating; it is safe to run any time:
 
 - **Moves** an older type-first workspace to feature folders (dry run first, then `git mv` with links rewritten)
-- **Copies** any seed file the project is missing (standards, `stack/stack.md`, `status.md`, `status-done.md`, the backlog index and archive) and creates any missing folders
-- **Reports drift** (`bin/seed-drift`): seed sections (`##` headings) absent from your standards, seed rules absent from the project's dev-team section, and Orca Runtime-line settings renamed or added since — names only, so your customizations never show up as drift
+- **Copies** any seed file the project is missing (standards, `stack/stack.md`, `status.md`, `status-done.md`, `triage.md`, `friction-log.md`, the backlog index and archive) and creates any missing folders
+- **Reports drift** (`bin/seed-drift`): seed sections (`##` headings) absent from your standards, workspace files and seed rules absent from the project, and Orca Runtime-line settings renamed or added since — names only, so your customizations never show up as drift
 - **Appends only what you approve** — never overwrites, rewrites, or deletes project content
 
 After a sync, fill placeholders in newly copied files and commit them to your project repo.
@@ -128,8 +130,8 @@ Validate with `claude plugin validate .`
 | `agents/`, `skills/` | The six roles (orchestrator is skill-only) + bootstrap skill | ✅ via plugin update |
 | `commands/` | `/dev-team:sync` — pull missing/updated seeds into a project; `/dev-team:tickets` — ticket-system setup/tuning; `/dev-team:checkins` — Orca check-ins; `/dev-team:board` — Owner board | ✅ via plugin update |
 | `templates/`, `workflow/` | Document templates, pipeline/handoff/communication rules | ✅ via plugin update |
-| `bin/` | Check-in trigger scripts, the coordinator lock and `peer` (Orca runtime); `board-drift` (Owner board); `seed-drift` (sync) | ✅ via plugin update |
-| `hooks/` | Session-start announcement + agent-memory size sentinel | ✅ via plugin update |
+| `bin/` | Check-in trigger scripts, the coordinator lock, `peer` and `slot` (Orca runtime); `board-drift` (Owner board); `seed-drift` (sync) | ✅ via plugin update |
+| `hooks/` | Session-start announcement + agent-memory size sentinel; the Orca coordinator's guard hooks | ✅ via plugin update |
 | `seeds/` | Copied into projects by bootstrap/sync | ❌ project-owned after copy |
 | `examples/workspace/` | Worked example of the full pipeline, in the workspace layout | ✅ via plugin update |
 | `examples/board/` | Owner board sample data and screenshots | ✅ via plugin update |

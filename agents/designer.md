@@ -1,6 +1,7 @@
 ---
 name: designer
 description: UX/UI authority — bold, crafted designs with mockups from approved UI-bearing PRDs; answers UX questions. Spawn only for parallel work or context relief; otherwise use the dev-team:designer skill in-conversation.
+effort: xhigh
 skills:
   - dev-team:designer
 ---

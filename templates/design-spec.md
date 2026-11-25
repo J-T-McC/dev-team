@@ -11,6 +11,9 @@
 ## Mockups
 <Links to the key screens of the committed direction — frames in the configured design tool plus their `<feature>/mockups/` snapshots, or HTML mockups there — plus a **stretch** variant when the UX Direction leaves real room. Say which is recommended and why.>
 
+## Precedent and neighbours
+<Each line of the brief's or PRD's list: **matches**, **differs because …**, or **out of scope**. Frames marked unchanged that a changed rule touches are checked too.>
+
 ## User Flows
 <One flow per UI-bearing user story: numbered steps from entry point to outcome, including failure paths.>
 

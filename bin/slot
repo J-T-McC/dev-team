@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+"""Heavy jobs take turns (workflow/orca.md § Machine resources): a few machine-wide slots, critical path first.
+
+  slot run <label> [--prio N] -- <command...>   wait for a free slot, run the command, free the slot when it ends
+  slot status                                   who holds a slot and who waits
+
+Lower --prio goes first (default 5; the critical path takes 1); the same prio is first come, first served.
+DEV_TEAM_SLOTS sets the number of slots (default 2), DEV_TEAM_SLOT_WAIT the longest wait in minutes (default 60;
+past it, exit 75). A slot frees itself when its holder exits, however it exits.
+"""
+import fcntl, os, re, subprocess, sys, time
+from pathlib import Path
+
+DIR = Path(os.environ.get("DEV_TEAM_SLOT_DIR") or Path.home() / ".cache" / "dev-team" / "slots")
+SLOTS = int(os.environ.get("DEV_TEAM_SLOTS", "2"))
+WAIT_MIN = float(os.environ.get("DEV_TEAM_SLOT_WAIT", "60"))
+POLL = float(os.environ.get("DEV_TEAM_SLOT_POLL", "2"))
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def line():
+    """Live waiters, first in line first; entries of dead waiters are removed."""
+    out = []
+    for f in (DIR / "wait").glob("*"):
+        prio, t, pid, label = f.name.split("-", 3)
+        if alive(int(pid)):
+            out.append((int(prio), int(t), f, label))
+        else:
+            f.unlink(missing_ok=True)
+    return sorted(out)
+
+
+def take(i):
+    """A held lock on slot i, or None. The OS drops the lock when the holder exits."""
+    fd = os.open(DIR / f"slot-{i}.lock", os.O_RDWR | os.O_CREAT, 0o644)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return fd
+    except BlockingIOError:
+        os.close(fd)
+        return None
+
+
+def run(argv):
+    if "--" not in argv or argv.index("--") < 1 or argv.index("--") == len(argv) - 1:
+        sys.exit(__doc__)
+    cmd, head = argv[argv.index("--") + 1:], argv[:argv.index("--")]
+    label = re.sub(r"[^A-Za-z0-9._]", "_", head[0])
+    prio = int(head[head.index("--prio") + 1]) if "--prio" in head else 5
+    (DIR / "wait").mkdir(parents=True, exist_ok=True)
+    me = DIR / "wait" / f"{prio:03d}-{time.time_ns()}-{os.getpid()}-{label}"
+    me.touch()
+    start, said, fd = time.time(), False, None
+    try:
+        while fd is None:
+            waiting = line()
+            if waiting and waiting[0][2] == me:
+                for i in range(SLOTS):
+                    fd = take(i)
+                    if fd is not None:
+                        break
+                if fd is not None:
+                    break
+            if not said:
+                place = next((n for n, w in enumerate(waiting, 1) if w[2] == me), 1)
+                print(f"slot: {label} waiting, {place} in line for {SLOTS} slot(s)", file=sys.stderr)
+                said = True
+            if time.time() - start > WAIT_MIN * 60:
+                print(f"slot: {label} gave up after {WAIT_MIN:g} min", file=sys.stderr)
+                sys.exit(75)
+            time.sleep(POLL)
+    finally:
+        me.unlink(missing_ok=True)
+    (DIR / f"slot-{i}.info").write_text(f"{label}\t{os.getpid()}\t{time.strftime('%H:%M:%S')}\n")
+    print(f"slot: {label} has slot {i + 1} of {SLOTS}", file=sys.stderr)
+    try:
+        rc = subprocess.run(cmd).returncode
+    except KeyboardInterrupt:
+        rc = 130
+    sys.exit(rc)
+
+
+def status():
+    (DIR / "wait").mkdir(parents=True, exist_ok=True)
+    for i in range(SLOTS):
+        fd = take(i)
+        if fd is not None:
+            os.close(fd)
+            print(f"slot {i + 1}: free")
+        else:
+            info = (DIR / f"slot-{i}.info")
+            label, pid, since = (info.read_text().split("\t") + ["?"] * 3)[:3] if info.exists() else ("?", "?", "?")
+            print(f"slot {i + 1}: {label} (pid {pid}, since {since.strip()})")
+    for n, (prio, _, _, label) in enumerate(line(), 1):
+        print(f"waiting {n}: {label} (prio {prio})")
+
+
+if __name__ == "__main__":
+    if sys.argv[1:2] == ["run"]:
+        run(sys.argv[2:])
+    elif sys.argv[1:2] in (["status"], []):
+        status()
+    else:
+        sys.exit(__doc__)

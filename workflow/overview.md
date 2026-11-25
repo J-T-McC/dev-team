@@ -80,18 +80,26 @@ Projects that opt into the **Orca runtime** run every role as a long-lived top-l
 
 ### Models per role
 
-The plugin pins **no model**: every role runs on the Owner's own choice — the session's model, or the configured default subagent model for agents. Default effort lives in each agent's frontmatter (`${CLAUDE_PLUGIN_ROOT}/agents/<role>.md`). A project overrides any role with one line in its `CLAUDE.md`:
+The plugin pins **no model**: roles run on the Owner's choice — the session's model, the configured default subagent model for agents, or under the Orca runtime the project's Team model (`workflow/orca.md` § Launch settings). Each role has a default effort, set in its agent's frontmatter (`${CLAUDE_PLUGIN_ROOT}/agents/<role>.md`):
+
+| Role | Effort |
+|---|---|
+| product-manager, designer, principal-engineer, reviewer | xhigh |
+| senior-developer | high |
+| orchestrator — the Owner's own session, and the coordinator under Orca | xhigh: start the session with `claude --effort xhigh` (`/effort` would change the default for every new session too) |
+
+A project overrides any role with one line in its `CLAUDE.md`:
 
 ```
-- **Role models:** designer: opus/high; senior-developer: sonnet
+- **Role models:** designer: opus/high; senior-developer: sonnet; reviewer: high
 ```
 
-`<role>: <model>[/<effort>]`; roles not listed use the Owner's default model. Use model aliases (`opus`, `sonnet`, `haiku`) — they track the latest release and are what the subagent tool accepts. Whoever starts a role's agent applies it: the orchestrator passes the model when spawning, and under the Orca runtime passes `--model`/`--effort` at launch. A role run **inline** uses the conversation's model; when the project pins a different model for a role, a full phase of that role is a reason to run it as its agent — quick questions stay inline.
+`<role>: <model>[/<effort>]` or `<role>: <effort>`; roles not listed keep the default model and effort. A model is an alias (`opus`, `sonnet`, `haiku`), which tracks the latest release, or an exact id (`claude-opus-5-5`) under the Orca runtime; the subagent tool takes aliases only. Whoever starts a role's agent applies it: the orchestrator passes the model when spawning, and under the Orca runtime `peer dispatch` passes `--model` and `--effort` at every launch. A role run **inline** uses the conversation's model; when the project pins a different model for a role, a full phase of that role is a reason to run it as its agent — quick questions stay inline.
 
 ## Rules
 
 - Phases never advance without their gate: ✋ gates need explicit Project Owner approval, ✅ gates the named delegate's — both recorded in the artifact and in `<ws>/status.md`. Gate validity rules live in `workflow/handoffs.md`.
 - The Orchestrator role routes work between phases and maintains `<ws>/status.md`, but owns no phase artifact.
 - Any phase may send a question upstream (`${CLAUDE_PLUGIN_ROOT}/workflow/communication.md`); affected work pauses until answered.
-- Rework flows backward through the same gates: a review Blocker returns work to the Senior Developer; a plan or task defect returns to the Principal Engineer and re-triggers certification; a design-spec defect returns to the Designer and re-triggers PM approval.
+- Rework flows backward through the same gates, and is done in place: fix the document that was wrong first — the brief, then the design, then the plan — then the same PRs; never stack patch PRs on top. A review Blocker returns work to the Senior Developer; a plan or task defect returns to the Principal Engineer and re-triggers certification; a design-spec defect returns to the Designer and re-triggers PM approval.
 - Whether a feature has user-facing UI is the Product Manager's call, recorded **as the PRD's UX Direction section** — presence makes the Designer phase mandatory, absence routes directly to the Principal Engineer (enforcement in `workflow/handoffs.md`).

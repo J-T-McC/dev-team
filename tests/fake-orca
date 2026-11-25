@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 """A stand-in for the orca CLI, for tests/peer.sh. State and a call log live in $FAKE_ORCA_DIR.
 
-state.json: stage (running|settled) of the current dispatch, mode (terminal|chat), inbox batches,
-            the peer's screen, and what `terminal send` prints.
+state.json: stage (running|settled) of the current dispatch, inbox batches, terminals (open, worktree, command),
+            each terminal's screen (screens, else screen), and what a plain `terminal send` prints.
 calls.log:  one JSON argv array per call.
 """
 import json, os, sys
 
 D = os.environ["FAKE_ORCA_DIR"]
 STATE = os.path.join(D, "state.json")
+JSON = "--json" in sys.argv
 argv = [a for a in sys.argv[1:] if a != "--json"]
 with open(os.path.join(D, "calls.log"), "a") as f:
     f.write(json.dumps(argv) + "\n")
 s = json.load(open(STATE)) if os.path.exists(STATE) else {}
-for k, v in {"n": 0, "stage": "running", "mode": "terminal", "batches": [], "dispatches": {}}.items():
+for k, v in {"n": 0, "nt": 0, "stage": "running", "batches": [], "dispatches": {}, "terminals": {}, "screens": {}}.items():
     s.setdefault(k, v)
 
 
@@ -21,37 +22,63 @@ def arg(name):
     return argv[argv.index(name) + 1] if name in argv else None
 
 
-def out(result=None):
+def out(result=None, ok=True):
     json.dump(s, open(STATE, "w"))
-    print(json.dumps({"ok": True, "result": result or {}}))
-    sys.exit(0)
+    print(json.dumps({"ok": ok, "result": result or {}}))
+    sys.exit(0 if ok else 1)
+
+
+def path_of(sel):
+    return sel[5:] if sel.startswith("path:") else "/wt/" + sel
+
+
+def screen(term):
+    return s["screens"].get(term, s.get("screen", "❯ "))
 
 
 cmd = argv[:2]
+term = arg("--terminal")
 if cmd == ["orchestration", "run-create"]:
     out({"run": {"id": "run_0a1b2c"}})
 if cmd == ["orchestration", "worker-start"]:
+    if s.get("start_fail"):
+        out({"failedStage": "agent_readiness"}, ok=False)
     s["n"] += 1
-    n, wt = s["n"], arg("--worktree")
-    path = wt[5:] if wt.startswith("path:") else "/wt/" + (arg("--name") or wt)
-    s["dispatches"][f"ctx_{n}"] = {"terminal": arg("--terminal") or f"term_{n}", "path": path}
+    n = s["n"]
+    s["dispatches"][f"ctx_{n}"] = {"terminal": term, "path": path_of(arg("--worktree"))}
     s["stage"] = "running"
     out({"taskId": f"task_{n}", "dispatchId": f"ctx_{n}"})
 if cmd == ["orchestration", "worker-show"]:
     d = s["dispatches"].get(arg("--dispatch"), {})
     out({"worker": {"stage": s["stage"], "agentTerminalHandle": d.get("terminal"),
-                    "worktreeId": "repo1::" + d.get("path", ""), "startOptions": {"mode": {"mode": s["mode"]}}}})
+                    "worktreeId": "repo1::" + d.get("path", "")}})
 if cmd == ["orchestration", "check"]:
     if arg("--ack"):
         s["batches"] = [b for b in s["batches"] if b["deliveryId"] != arg("--ack")]
         out()
     out(s["batches"][0] if s["batches"] else {})
+if cmd == ["worktree", "create"]:
+    out({"worktree": {"path": "/wt/" + arg("--name")}})
+if cmd == ["terminal", "create"]:
+    s["nt"] += 1
+    h = f"term_{s['nt']}"
+    s["terminals"][h] = {"open": True, "path": path_of(arg("--worktree")), "command": arg("--command")}
+    out({"terminal": {"handle": h}})
+t = s["terminals"].get(term) or {}
+if cmd == ["terminal", "show"]:
+    if not t.get("open") and not s.get("stay_open"):
+        out({"error": "terminal_not_found"}, ok=False)
+    out({"terminal": {"handle": term, "agentIdentity": "claude", "worktreePath": t.get("path")}})
+if cmd == ["terminal", "close"]:
+    if term in s["terminals"] and not s.get("stay_open"):
+        s["terminals"][term]["open"] = False
+    out()
 if cmd == ["terminal", "read"]:
-    if "--screen" in argv:
-        print(s.get("screen", ""))
+    if not JSON:
+        print(screen(term))
         sys.exit(0)
-    out({"terminal": {"latestCursor": 7}})
-if cmd == ["terminal", "send"] and "--json" not in sys.argv:
+    out({"terminal": {"tail": screen(term).split("\n")}})
+if cmd == ["terminal", "send"] and not JSON:
     print(s.get("send_reply", "sent"))
     sys.exit(0)
 out()

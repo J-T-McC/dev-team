@@ -1,7 +1,7 @@
 ---
 name: principal-engineer
 description: Technical design authority — technical plans, ADRs, and task breakdowns from approved PRDs; answers design questions. Spawn only for parallel work or context relief; otherwise use the dev-team:principal-engineer skill in-conversation.
-effort: high
+effort: xhigh
 memory: project
 skills:
   - dev-team:principal-engineer

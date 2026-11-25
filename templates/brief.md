@@ -11,6 +11,9 @@
 ## UX Direction *(UI work only — delete otherwise)*
 <Key experience decisions only. Its presence puts the Designer on the path.>
 
+## Precedent and neighbours *(UI or user-flow work — delete otherwise)*
+<Where this already exists — another platform, an older screen — flow by flow, with what each screen offers first. Then the features that share its screens or data, and how a user moves between them. The Designer marks each line.>
+
 ## Acceptance Criteria
 <Testable statements a Reviewer can verify. Required.>
 
