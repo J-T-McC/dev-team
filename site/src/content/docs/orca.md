@@ -33,7 +33,7 @@ Worktrees are chosen per dispatch. Roles that work one after another share the f
 
 ## A fresh session per task
 
-A peer is cheap to start next to a subagent (about 35k tokens, measured), and old context and old messages mislead the next task. So every task starts in a new session, in a new terminal, with the model pinned. New MCP servers, settings and plugin updates load too. Specs are self-contained and the work lives in the workspace, so nothing is lost.
+A peer is cheap to start next to a subagent (about 35k tokens in one measurement, most of it the project's own context: see [what your project costs](/dev-team/getting-started/#check-what-your-project-costs)), and old context and old messages mislead the next task. So every task starts in a new session, in a new terminal, with the model pinned. New MCP servers, settings and plugin updates load too. Specs are self-contained and the work lives in the workspace, so nothing is lost.
 
 A session is kept (`--keep`) only for a follow-up on the change it just built: fixing its review findings, or the reviewer that wrote a review checking the fixes.
 

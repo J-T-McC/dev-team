@@ -14,6 +14,23 @@ In Claude Code, inside your project:
 
 On someone else's project ([guest mode](/dev-team/workspace/#guest-mode)), install it for yourself only by adding `--scope local` to the second command.
 
+## Check what your project costs
+
+dev-team doesn't pick your stack, skills or tools. Every role runs on what your project already gives a Claude session, so a team is as lean, or as heavy, as the project it runs in.
+
+That matters most when several roles run at once. Each agent, and under the [Orca runtime](/dev-team/orca/) each peer, starts with the project's whole context:
+
+- every `CLAUDE.md` it reads, and the files those import;
+- the description of every skill and plugin you have installed;
+- each MCP server's instructions and tool list, and under Orca a separate copy of each server's process for every peer;
+- whatever SessionStart hooks add, such as a memory plugin's recap.
+
+One measured peer started at about 35k tokens, and most of that was a memory plugin's recap. Under Orca every task starts a fresh session, so that cost comes again with each task, for each peer.
+
+Run `/context` in a new session in the project to see what every session starts with. Then trim what the roles don't use: keep `CLAUDE.md` to what every session needs, remove skills and plugins the project doesn't use, and turn off MCP servers no role needs (`/mcp`).
+
+The plugin keeps its own share small. Roles run in your conversation unless there's a reason to start an agent, the descriptions it adds to every session are short, the coordinator reads summaries and document headers rather than transcripts, specs point to files instead of pasting them, and waiting on peers or CI spends nothing while it waits.
+
 ## Set up the project
 
 Ask Claude:

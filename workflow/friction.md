@@ -7,7 +7,7 @@ Problems with how the team works, logged as they happen and fixed as maintenance
 - **Instructions** — `CLAUDE.md`, skills, the plugin and its templates, memories, specs: wrong, stale, contradictory, or missing.
 - **How the team runs** — handoffs, reviews, dispatch, CI, test runs, previews, helpers that do not do what they should.
 - **Slowdowns** — waits, reruns, stalled jobs, steps that take longer than they should.
-- **Token burns** — long reads, repeated work, costly loops, output nobody needed.
+- **Token burns** — long reads, repeated work, costly loops, output nobody needed, a session start made heavy by project context no role uses (`CLAUDE.md`, skills, MCP servers, hook output).
 - **Repeated problems in the product work** — the same kind of UX miss, bug, wrong assumption, or review finding again.
 - **Course corrections** — any time the Owner stops work to correct it.
 
