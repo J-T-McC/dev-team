@@ -1,0 +1,54 @@
+---
+title: dev-team
+description: A Claude Code plugin that runs feature work like a small software team, through documents in your repo.
+template: splash
+hero:
+  tagline: Six roles take a feature from request to reviewed code, writing everything down in your repo as they go. You sign off where it matters and nowhere else.
+  actions:
+    - text: Get started
+      link: /dev-team/getting-started/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/J-T-McC/dev-team
+      icon: external
+      variant: minimal
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets';
+import boardLight from '../../../../examples/board/board-light.png';
+import boardDark from '../../../../examples/board/board-dark.png';
+
+## How a feature moves
+
+You bring a request: a feature, a ticket, a bug. The orchestrator routes it, and each role hands the next one a document.
+
+| Role | Writes | Who signs it off |
+|---|---|---|
+| product-manager | a brief, or a PRD for bigger work | you, for a PRD or a change of scope |
+| designer (UI work only) | a design spec and mockups | the product-manager |
+| principal-engineer | a plan, ADRs, and a task list | itself, unless it contains a major decision |
+| senior-developer | code and tests, one task at a time | (every task done) |
+| reviewer | a review against the acceptance criteria | you approve the release |
+
+Bugs and chores skip all of that. The senior-developer fixes them with tests and writes a short record. [Paths and gates](/dev-team/pipeline/) explains how the team decides how much process a piece of work needs.
+
+## Why it works this way
+
+Nothing lives only in a chat. A role's decisions go into the workspace, so the next role, or a fresh session next week, starts from the file and not from memory. Roles run inside your own conversation by default, which costs far less than starting an agent for each one; a separate agent is used only for parallel work, an independent review, or a phase too big for the current conversation. And every role assumes mistakes, its own included: it checks its output against the source documents before handing off, and questions an input that looks wrong instead of quietly working around it.
+
+How much you're asked is your call. At one end you sign every gate. At the other the roles sign everything except the floor: irreversible changes, security, spending, and anything that leaves the repository. [Autonomy](/dev-team/autonomy/) has the levels.
+
+## Optional extras
+
+<CardGrid>
+  <LinkCard title="Orca runtime" href="/dev-team/orca/" description="Run every role as its own Claude session with full project tools, supervised from yours." />
+  <LinkCard title="Owner board" href="/dev-team/board/" description="A live page of what needs you, who is on what, and every piece of work in flight." />
+  <LinkCard title="Ticket systems" href="/dev-team/tickets/" description="Take work from Linear, Jira or GitHub, and write outcomes back where you allow it." />
+  <LinkCard title="Check-ins" href="/dev-team/checkins/" description="Scheduled runs that keep work moving while you're away, and cost nothing when there's nothing to do." />
+</CardGrid>
+
+<div class="screenshot">
+  <Image class="only-light" src={boardLight} alt="Owner board with sample data: two questions waiting on the Owner, seven roles and their current tasks, and work grouped as Reporting, Mobile and Platform with ticket, PR, state and next step." />
+  <Image class="only-dark" src={boardDark} alt="The same Owner board in dark mode." />
+</div>

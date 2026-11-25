@@ -1,0 +1,14 @@
+/* Show the board screenshot that matches the reader's theme. */
+:root[data-theme='light'] .only-dark,
+:root[data-theme='dark'] .only-light {
+  display: none;
+}
+
+.screenshot img {
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+}
+
+.pipeline {
+  font-size: var(--sl-text-sm);
+}
