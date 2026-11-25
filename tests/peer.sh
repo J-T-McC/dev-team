@@ -293,7 +293,20 @@ C=$(bg "$TT" "$T/standin/claude")
 sleep 1
 run dispatch dt-dev-1 senior-developer "T08"
 ok "a live Claude mid-turn is busy"        '[ $RC = 2 ] && [[ $OUT == *"is busy"* ]]'
-kill $C; shows "$TT" "❯ "
+kill $C
+shows "$TT" "✻ Pondering… (1m 12s · ↑ 1.2k tokens)"
+run dispatch dt-dev-1 senior-developer "T08"
+ok "the working line is busy"              '[ $RC = 2 ] && [[ $OUT == *"Pondering… (1m 12s"* ]]'
+shows "$TT" "❯ 
+  ⏵⏵ accept edits on · ← 1 agent · 1 monitor"
+run sleep dt-dev-1
+ok "a monitor beside '← 1 agent' is busy"   '[[ $OUT == *"is busy ('"'"'1 monitor'"'"'"* ]] && [ "$(home dt-dev-1 terminal)" = "$TT" ]'
+shows "$TT" "❯ 
+  ⏵⏵ accept edits on · ← 1 agent"
+run sleep dt-dev-1
+ok "an idle prompt's '← 1 agent' is not busy" '[[ $OUT == "dt-dev-1: asleep" ]]'
+run dispatch dt-dev-1 senior-developer "T08"
+state stage '"settled"'; shows "$(home dt-dev-1 terminal)" "❯ "
 runtime "Team model: opus. Fallback model: sonnet. Advisor: none. Session caches: \`.cache/mcp-*\`, \`../outside\`."
 mkdir -p "$T/wt2/.cache/mcp-browser" "$T/outside"
 run dispatch dt-dev-2 senior-developer "T09" --worktree "path:$T/wt2"

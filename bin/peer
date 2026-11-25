@@ -39,8 +39,13 @@ ROLE_LINE = ("You are the dev-team {role} peer [dev-team home {home}]. If the de
 ADVISOR_LINE = (" You have an advisor model: use it for hard questions other roles bring you and hard calls in your "
                 "own plans, not for routine work.")
 # A peer's screen while it still runs something: a turn, or a background shell, monitor, or agent.
+# Busy: the working line (a spinner, a verb, an elapsed time: "✻ Pondering… (1m 12s · …)"), or a background shell,
+# monitor or other job that closing the session would kill. The status bar's "← 1 agent" is shown at an idle
+# prompt too, so it is not a job.
 BUSY = re.compile(r"\d+ (?:background )?(?:shells?|monitors?|agents?)\b|(?:shells?|monitors?|agents?),?[^\n]{0,30}"
-                  r"still running|still running in (?:the )?background|esc to interrupt", re.I)
+                  r"still running|still running in (?:the )?background|esc to interrupt"
+                  r"|^\s*[^\w\s]\s*\w[\w-]*(?:…|\.\.\.)\s*\((?:\d+[hms]\s*)+", re.I | re.M)
+AGENTS_BAR = re.compile(r"←\s*\d+\s+agents?\b")
 LIMIT = re.compile(r"hit your ([\w .-]{0,30}?) ?limit[^\n]*|usage limit reached[^\n]*|limit reached\s*[·∙•][^\n]*", re.I)
 STUCK = re.compile(r"API Error[^\n]*|\S*overloaded_error[^\n]*", re.I)
 RESUME = "Resume this session with"  # Claude prints it on exit: what is above it on the screen is a dead session
@@ -322,7 +327,7 @@ def session_alive(h):
 def busy(h):
     if session_alive(h) is False:
         return None
-    m = BUSY.search("\n".join(live_screen(h)[-12:]))
+    m = BUSY.search(AGENTS_BAR.sub("", "\n".join(live_screen(h)[-12:])))
     return m.group(0) if m else None
 
 
