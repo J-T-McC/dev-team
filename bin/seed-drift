@@ -1,7 +1,7 @@
 #!/bin/bash
 # seed-drift [project-dir] — what the plugin's seeds have that this project's copies lack (commands/sync.md step 4).
-# Reports seed sections missing from <ws>/standards/*.md, seed rules missing from the dev-team section, and
-# outdated Orca Runtime-line settings. Prints one line per finding (exit 1), or "up to date" (exit 0).
+# Reports seed sections missing from <ws>/standards/*.md, workspace seed files and seed rules missing from the
+# dev-team section, and outdated Orca Runtime-line settings. Prints one line per finding (exit 1), or "up to date" (exit 0).
 P=${1:-.}
 PLUGIN=$(cd "$(dirname "$0")/.." && pwd)
 source "$PLUGIN/bin/_workspace.sh" "$P"
@@ -24,8 +24,13 @@ done
 section="$P/CLAUDE.md"
 grep -qs '\*\*Workspace:\*\*' "$P/CLAUDE.local.md" && section="$P/CLAUDE.local.md"
 if grep -qs -e '^# Development Organization' -e '\*\*Workspace:\*\*' "$section"; then
+  # Workspace files sync copies (commands/sync.md step 3), e.g. one added to the plugin since bootstrap.
+  for pair in stack.md:stack/stack.md status.md:status.md status-done.md:status-done.md triage.md:triage.md \
+              backlog-index.md:backlog/index.md backlog-archive.md:backlog/archive.md friction-log.md:friction-log.md; do
+    [ -e "$P/$WS/${pair#*:}" ] || say "$WS/${pair#*:}: missing file (seed ${pair%%:*})"
+  done
   orca=$(grep -s 'Runtime: Orca' "$section")
-  label() { sed -n 's/^- \*\*\([^*:.]*\)[:.].*/\1/p'; }
+  label() { sed -n 's/^- \*\*\([^*:.]*\)[:.].*/\1/p' | sed 's/ *(.*) *$//'; }  # a note in brackets is not drift
   have=$(label < "$section")
   while IFS= read -r l; do
     # Under the Orca runtime the Runtime line replaces the in-conversation rule.
@@ -41,6 +46,9 @@ if grep -qs -e '^# Development Organization' -e '\*\*Workspace:\*\*' "$section";
     *) say "Runtime line: no \"Peer size limit\" (400k applies)" ;;
     esac
     case "$orca" in *"Board:"*) ;; *) say "Runtime line: no \"Board:\" setting (off applies)" ;; esac
+    case "$orca" in *"Team model:"*) ;; *) say "Runtime line: no \"Team model:\" setting — peers will not launch until it names one (workflow/orca.md § Launch settings)" ;; esac
+    case "$orca" in *"Fallback model:"*) ;; *) say "Runtime line: no \"Fallback model:\" setting (none applies)" ;; esac
+    case "$orca" in *"Advisor:"*) ;; *) say "Runtime line: no \"Advisor:\" setting (none applies)" ;; esac
   fi
 fi
 [ $found = 0 ] && echo "up to date"

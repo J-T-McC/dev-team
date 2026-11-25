@@ -7,10 +7,18 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/coordinator.sh\" prompt" }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/commit-workspace.sh\"" }
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/commit-workspace.sh\"" },
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/coordinator.sh\" stop" }
         ]
       }
     ]

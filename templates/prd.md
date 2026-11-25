@@ -23,6 +23,9 @@
 ## UX Direction *(UI features only — delete otherwise)*
 <The key experience decisions: primary flow, what the user sees and does, what the experience must optimize for. Direction only — screens, states, and components belong to the Designer. This section's presence makes the Designer phase mandatory.>
 
+## Precedent and neighbours *(UI or user-flow work — delete otherwise)*
+<Where this already exists — another platform, an older screen — flow by flow, with what each screen offers first. Then the features that share its screens or data, and how a user moves between them. The Designer marks each line.>
+
 ## Acceptance Criteria
 <Testable statements a Reviewer can verify. No implementation detail.>
 

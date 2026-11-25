@@ -22,6 +22,7 @@ cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/stack.md"           "$WS/stack/stack.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/status.md"          "$WS/status.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/status-done.md"     "$WS/status-done.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/triage.md"          "$WS/triage.md"
+cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/friction-log.md"    "$WS/friction-log.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/backlog-index.md"   "$WS/backlog/index.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/backlog-archive.md" "$WS/backlog/archive.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/standards/"*.md     "$WS/standards/"
@@ -29,7 +30,7 @@ cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/standards/"*.md     "$WS/standards/"
 
 **Guest mode** (the dev-team section is in `CLAUDE.local.md`): copy only the process standards — `planning.md`, `documentation.md`, `review.md`. Code conventions (`coding.md`, `testing.md`, `architecture.md`, `design.md`) come from the repo itself; copy one only if the repo documents nothing on that subject and the Owner wants it. `tickets.md` and `checkins.md` are never copied here — `/dev-team:tickets` and `/dev-team:checkins` add them when enabled.
 
-4. **Drift check** on what already existed: `"${CLAUDE_PLUGIN_ROOT}/bin/seed-drift" .` lists what the plugin added since the project's copies were made — seed sections missing from `$WS/standards/*.md`, seed rules missing from the dev-team section (`CLAUDE.md`, or `CLAUDE.local.md` in guest mode), and Orca Runtime-line settings renamed or added (`${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` § Opt in). It compares names only; every other difference is a project customization and always wins.
+4. **Drift check** on what already existed: `"${CLAUDE_PLUGIN_ROOT}/bin/seed-drift" .` lists what the plugin added since the project's copies were made — seed sections missing from `$WS/standards/*.md`, workspace files missing, seed rules missing from the dev-team section (`CLAUDE.md`, or `CLAUDE.local.md` in guest mode), and Orca Runtime-line settings renamed or added (`${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` § Opt in). It compares names only; every other difference is a project customization and always wins.
 
 5. **Report** four lists: **moved** (step 2), **copied** (was missing), **up to date**, **behind** (each `seed-drift` line). For each behind item, offer the fix: append a missing section verbatim from its seed, append a missing rule bullet verbatim from `${CLAUDE_PLUGIN_ROOT}/seeds/CLAUDE.project.md`, or update the Runtime line to the setting it names. Apply only what the user approves. Never delete or rewrite existing content beyond that.
 

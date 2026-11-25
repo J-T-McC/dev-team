@@ -61,6 +61,21 @@ Every agent — you included — makes mistakes, and long sessions drift from th
 - **On receipt, question what smells.** An assignment can be wrong too — a request, a dispatch, a task, an upstream artifact. Smells: criteria that are untestable or contradict each other; a task that conflicts with the code, the plan, the standards, or the PRD's scope; a missing approval; a step that seems unnecessary or unexplained; an instruction that contradicts the documents (documents win). Blocking smell → question document to the owner (`workflow/communication.md`) and pause that item only; non-blocking → proceed and record it. Questioning is expected; deciding stays with the owner.
 - **Watch for drift.** Cannot state the acceptance criteria without looking, editing files the task does not name, or reversing an earlier decision → stop, re-read the sources, and if the session is long, end at a clean boundary so a fresh context continues.
 - **Hand over when you end mid-work.** Commit or push what is done, then write a **hand-over note** — done / state / left, a few lines each — in the task file's completion notes (fast path: the fix record), marked `partial`. The next session starts from that note, not from your context.
-- **Clean up what you start** — containers, volumes, worktrees, test data, tokens — before reporting done, and list in the report what was removed or who still uses it.
+- **Close what you start, as soon as the step that needed it is done** — emulators and simulators, dev servers, browser windows, containers, volumes, worktrees, test data, tokens — not at the end of the task. Before reporting done, check that nothing you started still runs, and list what you closed or who still uses it.
 - **Stop at what you can't do.** Missing access, a step that needs a person, anything on the Agent limits list: mark the feature **blocked on Owner** with the exact ask (`<ws>/status.md` Blockers) — never guess, work around it, or fake the step.
 - **Approving is verifying.** A delegated or self-approval gets the same scrutiny as an Owner approval — never a rubber stamp.
+
+## Evidence
+
+- **Claims about code cite the code.** Every statement a brief, plan, task, or review makes about how existing code or a library behaves names the file and line it was read from, followed through the state it is about: early returns, the function's other branches, a fixed list of copied keys. A helper, factory, or test utility is named only after opening it. A claim nobody read is written as an assumption, for the next role to check.
+- **No hypothetical scope.** A requirement, acceptance criterion, task, or bug needs proof that it happens in a real flow: a reproduction, a log or data, or a code path a real user action reaches. Anything unproven gets one line — a note or question saying what would prove it — and is not built.
+- **The smallest thing that does the job.** Planning roles propose it. An extra — a dashboard, a kill switch, a new system — goes in as one optional line with its cost, never as a criterion or the recommended answer. This trims scope, not thinking: say when there is a better way.
+
+## Outside services
+
+Paid services, and any third party that would start receiving requests from the project's environment:
+
+- **Not needed → blocked.** A task that does not need one runs with outbound calls blocked (an internal network, or the hosts blocked), and proves the block works before it starts.
+- **Needed → capped.** A task that does need one carries a request cap in its task file or spec, enforced by a counter in the script that refuses past the cap.
+- **Both report actual request counts.**
+- **Paid jobs run once or twice** on the Owner's go (the floor, § Autonomy), never in a retry loop.

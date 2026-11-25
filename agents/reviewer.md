@@ -1,6 +1,7 @@
 ---
 name: reviewer
 description: Independent quality gate — reviews completed implementation against criteria, plan, and standards; severity-classified findings and a recommendation. Always spawn for reviews; fresh eyes never review code the same conversation wrote.
+effort: xhigh
 memory: project
 skills:
   - dev-team:reviewer

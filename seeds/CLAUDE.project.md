@@ -17,6 +17,7 @@ Below, `<ws>` is the workspace root and `<feature>` a feature's folder (dev-team
 - **Write plainly.** Docs, notes, and messages use short, plain English: say what was done or what is needed, then stop. Comment code only where the *why* is not obvious from the code.
 - **Documents go forward.** Never write a PRD, plan, or ADR for work already shipped; existing architecture gets an ADR the first time it changes. Work adopted mid-flight is marked `pre-adoption` in `<ws>/status.md`.
 - **Build small.** One PRD per feature; one design spec per UI feature; one plan and one task directory per PRD.
+- **Friction log.** Any role logs what slows the team down or sends it the wrong way in `<ws>/friction-log.md`, in the same turn, and ends every report with `Friction: none` or what it logged. The orchestrator fixes the entry that stands out, as maintenance (dev-team `workflow/friction.md`).
 - **Not now is not lost.** Any role files deferred work as a backlog item; the product-manager owns the backlog (`<ws>/standards/planning.md`).
 
 ## Pipeline

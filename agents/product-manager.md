@@ -1,7 +1,7 @@
 ---
 name: product-manager
 description: Requirements authority — PRDs, UX Direction, requirement answers as Owner proxy, design-spec approval. Spawn only for parallel work or context relief; otherwise use the dev-team:product-manager skill in-conversation.
-effort: high
+effort: xhigh
 skills:
   - dev-team:product-manager
 ---
