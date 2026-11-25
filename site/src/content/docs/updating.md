@@ -32,7 +32,7 @@ Then it reports drift:
 
 It compares names only, so your own edits never count as drift. It adds only what you approve. Commit the result.
 
-A project on the Orca runtime without the recommended setup gets one line at the end saying `/dev-team:orca` can add it.
+A project on the Orca runtime without the recommended setup gets one line at the end saying `/dev-team:orca recommended` can add it.
 
 ## What changed
 

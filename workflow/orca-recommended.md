@@ -1,6 +1,6 @@
 # Recommended Orca setup (optional)
 
-A preset for the Orca runtime (`workflow/orca.md`) that held up through weeks of daily use, so a new project's team runs well from the first day. A project opts in with `/dev-team:orca`, which bootstrap runs when the Owner uses Orca. It writes the Runtime line and a **Team setup** section from `${CLAUDE_PLUGIN_ROOT}/seeds/orca-recommended.md` into the dev-team section. Every value stays the project's to change afterwards; `/dev-team:sync` reports Team setup rules added to the plugin later. This file says why each value is there. Where the plugin already does something, it points there instead of repeating it.
+A preset for the Orca runtime (`workflow/orca.md`) that held up through weeks of daily use, so a new project's team runs well from the first day. A project opts in with `/dev-team:orca recommended`, or at bootstrap, which offers it when the Owner uses Orca. It writes the Runtime line and a **Team setup** section from `${CLAUDE_PLUGIN_ROOT}/seeds/orca-recommended.md` into the dev-team section. Every value stays the project's to change afterwards; `/dev-team:sync` reports Team setup rules added to the plugin later. This file says why each value is there. Where the plugin already does something, it points there instead of repeating it.
 
 ## Models, effort, advisor
 

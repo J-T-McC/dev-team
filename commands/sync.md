@@ -34,6 +34,6 @@ cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/standards/"*.md     "$WS/standards/"
 
 5. **Report** four lists: **moved** (step 2), **copied** (was missing), **up to date**, **behind** (each `seed-drift` line). For each behind item, offer the fix: append a missing section verbatim from its seed, append a missing rule bullet verbatim from `${CLAUDE_PLUGIN_ROOT}/seeds/CLAUDE.project.md` (a Team setup rule from `${CLAUDE_PLUGIN_ROOT}/seeds/orca-recommended.md`), or update the Runtime line to the setting it names. Apply only what the user approves. Never delete or rewrite existing content beyond that.
 
-6. **Under the Orca runtime** with no `## Team setup` section in the dev-team section, end the report with one line: the recommended setup is available with `/dev-team:orca` (`${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md`). An offer, not drift. With the section, `seed-drift` reports any rule it lacks.
+6. **Under the Orca runtime** with no `## Team setup` section in the dev-team section, end the report with one line: the recommended setup is available with `/dev-team:orca recommended` (`${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md`). An offer, not drift. With the section, `seed-drift` reports any rule it lacks.
 
 7. Remind the user to fill placeholders in newly copied files and to commit — to the project repo, or, for an uncommitted workspace, nothing to do: the Stop hook commits the workspace's own repository, and pushes it once it has an upstream.

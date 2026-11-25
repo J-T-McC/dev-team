@@ -1,6 +1,6 @@
 ---
 description: Set up or tune the Orca runtime: the Runtime line, the subagent deny, and optionally the recommended team setup. Shows every change; writes on approval.
-argument-hint: "[change, e.g. 'use the recommended setup' or 'advisor off']"
+argument-hint: "[recommended | a change, e.g. 'advisor off']"
 ---
 
 Set up or change how this project runs under Orca. Rules: `${CLAUDE_PLUGIN_ROOT}/workflow/orca.md`. The recommended setup, and why each value: `${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md`. The dev-team section is in `CLAUDE.md`, or `CLAUDE.local.md` in guest mode. Show every change as a diff; write only what the Owner approves.
@@ -9,7 +9,7 @@ Request: $ARGUMENTS
 
 1. **Preconditions.** `orca status --json` works; otherwise stop and say Orca is not reachable. `<ws>` is the workspace root: `source "${CLAUDE_PLUGIN_ROOT}/bin/_workspace.sh" . && echo $WS`.
 
-2. **Which setup.** No Runtime line yet → offer two choices: the **recommended setup** (one choice that sets everything below) or **just the runtime** (ask Team model, Fallback model, and Advisor, `workflow/orca.md` § Launch settings). A Runtime line already there → change only what the request asks; a request for the recommended setup goes to step 4.
+2. **Which setup.** No Runtime line yet → offer two choices: the **recommended setup** (one choice that sets everything below) or **just the runtime** (ask Team model, Fallback model, and Advisor, `workflow/orca.md` § Launch settings). `recommended` as the request → step 4, whether or not a Runtime line exists. A Runtime line already there and any other request → change only what it asks.
 
 3. **Runtime line and subagent deny.** Write the Runtime line under the dev-team section's Rules (`workflow/orca.md` § Opt in). Make sure the subagent tool is denied: `"permissions": { "deny": ["Agent"] }` in `.claude/settings.json`, or in guest mode `.claude/settings.local.json`, never their settings.
 

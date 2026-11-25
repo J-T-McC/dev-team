@@ -10,8 +10,10 @@ The [Orca runtime](/dev-team/orca/) has plenty of settings, and much of what mak
 Bootstrap offers it when you say you run Claude from Orca. In a project that's already set up, run:
 
 ```
-/dev-team:orca use the recommended setup
+/dev-team:orca recommended
 ```
+
+Plain `/dev-team:orca` in a project without the Orca runtime asks whether you want this setup or just the runtime.
 
 It shows every change as a diff and writes only what you approve:
 
