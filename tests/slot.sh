@@ -30,6 +30,14 @@ sleep 0.3
 ok "two slots run two jobs at once"   '[[ $(DEV_TEAM_SLOTS=2 "$SLOT" status) == *"slot 1: "[ab]*"slot 2: "[ab]* ]]'
 wait
 
+"$SLOT" run db --pool containers -- sleep 1 2>/dev/null &
+sleep 0.3
+"$SLOT" run tests -- sh -c 'echo ran > pooled' 2>/dev/null
+ok "a container pool never blocks test runs" '[ -f pooled ] && [[ $("$SLOT" status) == *"pool containers:"*"slot 1: db"* ]]'
+DEV_TEAM_SLOTS_CONTAINERS=1 DEV_TEAM_SLOT_WAIT=0.005 "$SLOT" run db2 --pool containers -- true 2>/dev/null
+ok "a pool has slots of its own"        '[ $? = 75 ]'
+wait
+
 "$SLOT" run hold -- sleep 1 2>/dev/null &
 sleep 0.3
 DEV_TEAM_SLOT_WAIT=0.005 "$SLOT" run late -- true 2>/dev/null

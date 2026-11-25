@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
 """Coordinator helpers for the Orca runtime (workflow/orca.md): named peer homes, a fresh session per task.
 
-  peer dispatch [--keep] <home> <role> <spec text or file>
-                [--worktree <selector> [--name <name>] [--base-branch <ref>]] [--title <text>]
+  peer dispatch [--keep] <home> <role> <spec text or file> [--model <model>] [--effort <effort>]
+                [--worktree <selector> [--name <name>] [--base-branch <ref>]] [--on <environment> [--repo <selector>]]
+                [--title <text>]
   peer tell <home> <subject> <body> [--reply <message-id>]
   peer switch [<home>...]          give live peers the project's current model and effort now (default: all)
   peer sleep <home>... | --idle    close idle peers' sessions to free the machine; the next dispatch wakes them
-  peer watch [minutes]   wait, at no token cost, for a peer message, STUCK, LIMIT, SIZE, STALL, or the time limit (default 15)
+  peer adopt <home> <role> <terminal> [--on <environment>]   make a terminal started outside peer a home
+  peer watch [minutes]   wait, at no token cost, for a peer message, STUCK, LIMIT, SIZE, STALL, a PR change, or the
+                         time limit (default 15); then report Owner-board drift
   peer pending           the unacknowledged batch: peer reports not handled yet (exit 1 if any)
+  peer pr <home> <PR number or URL>... [--repo <owner/name>] | peer pr --drop <PR>...   who owns which PR
+  peer prs [--sweep]     the team's PRs and owners; --sweep: open PRs with a failing check or a conflict (exit 1 if any)
   peer sizes             each peer's context size against the project's Peer size limit
   peer limits [--clear [<model>]]  models out of usage, as the watcher saw them
-  peer list              homes, roles, models, worktrees, current task
+  peer list [--board-json <dir>]   homes, roles, models, worktrees, current task; or Owner-board peers rows as files
+  peer board-stamp [--rows <dir>]  record that the Owner board matches <ws>/status.md now (workflow/board.md)
   peer hook prompt|stop  the coordinator's guard hooks (hooks/coordinator.sh)
 
-Homes and the team's Run are machine-local state: <git common dir>/dev-team/peers.json.
+Homes, the team's Run, and its PRs are machine-local state: <git common dir>/dev-team/peers.json.
 """
-import json, os, re, shlex, subprocess, sys, time
+import hashlib, json, os, re, shlex, shutil, signal, subprocess, sys, time
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -23,6 +29,8 @@ STALL_MIN = float(os.environ.get("DEV_TEAM_STALL_MIN", "20"))
 STUCK_MIN = float(os.environ.get("DEV_TEAM_STUCK_MIN", "2"))
 POLL_SEC = float(os.environ.get("DEV_TEAM_WATCH_POLL", "30"))
 STEP_SEC = float(os.environ.get("DEV_TEAM_STEP_SEC", "2"))
+RECHECK_SEC = float(os.environ.get("DEV_TEAM_RECHECK_SEC", "5"))
+PR_POLL_MIN = float(os.environ.get("DEV_TEAM_PR_POLL", "5"))
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
 ADVISOR_ROLES = ("product-manager", "principal-engineer")
 ROLE_LINE = ("You are the dev-team {role} peer [dev-team home {home}]. If the dev-team:{role} skill is not loaded "
@@ -35,7 +43,11 @@ BUSY = re.compile(r"\d+ (?:background )?(?:shells?|monitors?|agents?)\b|(?:shell
                   r"still running|still running in (?:the )?background|esc to interrupt", re.I)
 LIMIT = re.compile(r"hit your ([\w .-]{0,30}?) ?limit[^\n]*|usage limit reached[^\n]*|limit reached\s*[·∙•][^\n]*", re.I)
 STUCK = re.compile(r"API Error[^\n]*|\S*overloaded_error[^\n]*", re.I)
+RESUME = "Resume this session with"  # Claude prints it on exit: what is above it on the screen is a dead session
 MONTHS = "jan feb mar apr may jun jul aug sep oct nov dec".split()
+ROLE_RANK = {"product-manager": 1, "designer": 2, "principal-engineer": 3, "senior-developer": 4, "reviewer": 5}
+FAIL = ("FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ERROR", "ACTION_REQUIRED")
+PR_URL = re.compile(r"github\.com/([\w.-]+/[\w.-]+)/pull/(\d+)")
 
 
 def die(msg, code=2):
@@ -53,6 +65,7 @@ STATE = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir") or "
 REG = STATE / "peers.json"
 LIMITS = STATE / "limits.json"
 WATCH_PID = STATE / "watch.pid"
+BOARD = STATE / "board.json"
 CLAUDE_DIR = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
 PLUGIN = Path(__file__).resolve().parent.parent
 
@@ -168,10 +181,12 @@ def limited(model, lim):
     return next((f for f in lim if f in model.lower()), None)
 
 
-def launch_plan(role):
-    """(model, effort, claude flags, notes) for a new session of this role. Never the global default."""
+def launch_plan(role, model_once="", effort_once=""):
+    """(model, effort, claude flags, notes) for a new session of this role. Never the global default.
+    model_once / effort_once: a dispatch's own choice for this one task."""
     team_model, team_effort = model_effort(setting("Team model"))
     model, effort = role_override(role)
+    model, effort = model_once or model, effort_once or effort
     model = model or team_model or die('no Team model: add "Team model: <model>" to the project\'s Runtime line '
                                        "(workflow/orca.md § Launch settings)")
     effort = effort or team_effort or agent_effort(role) or die(f'no effort for {role}: name one on the Role models line')
@@ -231,39 +246,208 @@ def working(h):
     return bool(w) and not settled(w)
 
 
-def term_info(term):
-    """The terminal's metadata (agentIdentity, worktreePath, …), or {} when it is gone."""
-    d, _ = orca("terminal", "show", "--terminal", term) if term else ({}, "")
-    return (find(d, "terminal") or {}) if d.get("ok") else {}
+def on(h):
+    """The --environment flag for a home on a remote Orca server; terminal handles belong to the server that issued them."""
+    return ["--environment", h["env"]] if h and h.get("env") else []
 
 
-def screen(term):
-    tail = find(orca("terminal", "read", "--terminal", term, "--screen")[0], "tail")
+def term_info(h):
+    """The home's terminal metadata (agentIdentity, worktreePath, …), or {} when it is gone — closed, or orphaned."""
+    term = (h or {}).get("terminal")
+    d, _ = orca("terminal", "show", "--terminal", term, *on(h)) if term else ({}, "")
+    t = (find(d, "terminal") or {}) if d.get("ok") else {}
+    return {} if t.get("orphaned") else t
+
+
+def screen(h):
+    tail = find(orca("terminal", "read", "--terminal", h["terminal"], "--screen", *on(h))[0], "tail")
     return tail if isinstance(tail, list) else []
 
 
-def busy(term):
-    m = BUSY.search("\n".join(screen(term)[-12:]))
+def live_screen(h):
+    """The screen below the last session exit: a dead session's old status line is not work."""
+    lines = screen(h)
+    cut = max((i for i, line in enumerate(lines) if RESUME in line), default=-1)
+    return lines[cut + 1:]
+
+
+_SCAN = [0.0, {}]
+
+
+def local_procs(term, fresh=False):
+    """[(pid, args)] of this machine's processes started in that terminal: they inherit its ORCA_TERMINAL_HANDLE.
+    One scan serves a second's worth of calls, unless fresh."""
+    if fresh or time.time() - _SCAN[0] > 1:
+        by = {}
+        try:
+            if Path("/proc/self/environ").exists():
+                for d in Path("/proc").glob("[0-9]*"):
+                    try:
+                        env = (d / "environ").read_bytes().split(b"\0")
+                        handle = next((e[21:].decode() for e in env if e.startswith(b"ORCA_TERMINAL_HANDLE=")), None)
+                        if handle:
+                            args = (d / "cmdline").read_bytes().replace(b"\0", b" ").decode(errors="ignore")
+                            by.setdefault(handle, []).append((int(d.name), args.strip()))
+                    except (OSError, ValueError):
+                        continue
+            else:
+                ps = lambda *a: subprocess.run(["ps", "-A", "-ww", *a, "-o", "pid=,args="], capture_output=True,
+                                               text=True, timeout=30).stdout.splitlines()
+                args = dict((int(p), a) for p, a in (line.split(None, 1) for line in ps() if len(line.split(None, 1)) == 2))
+                for line in ps("-E"):
+                    pid, _, rest = line.strip().partition(" ")
+                    m = re.search(r"(?:^|\s)ORCA_TERMINAL_HANDLE=(\S+)", rest)
+                    if m and pid.isdigit():
+                        by.setdefault(m.group(1), []).append((int(pid), args.get(int(pid), "").strip()))
+        except (OSError, subprocess.TimeoutExpired, ValueError):
+            by = {}
+        _SCAN[:] = [time.time(), by]
+    return [(p, a) for p, a in _SCAN[1].get(term, []) if p != os.getpid()]
+
+
+def is_claude(args):
+    """A Claude Code process: run as claude, or by an interpreter (node …/claude)."""
+    names = {"claude", os.path.basename((shlex.split(os.environ.get("DEV_TEAM_CLAUDE", "claude")) or ["claude"])[0])}
+    return any(os.path.basename(w) in names for w in args.split()[:2]) or "@anthropic-ai/claude-code" in args
+
+
+def session_alive(h):
+    """Whether the home's Claude session still runs, when this machine can tell (a local terminal); else None."""
+    if h.get("env") or not h.get("terminal"):
+        return None
+    procs = local_procs(h["terminal"])
+    return any(is_claude(a) for _, a in procs) if procs else None
+
+
+def busy(h):
+    if session_alive(h) is False:
+        return None
+    m = BUSY.search("\n".join(live_screen(h)[-12:]))
     return m.group(0) if m else None
 
 
-def send(term, text):
-    orca("terminal", "send", "--terminal", term, "--text", text, "--enter")
+def send(h, text):
+    orca("terminal", "send", "--terminal", h["terminal"], "--text", text, "--enter", *on(h))
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def mcp_names():
+    """What an MCP server process looks like: "mcp" in its command, or a server named in the project's .mcp.json."""
+    names = ["mcp"]
+    try:
+        servers = json.loads((ROOT / ".mcp.json").read_text()).get("mcpServers") or {}
+    except (OSError, ValueError):
+        servers = {}
+    launchers = {"npx", "node", "uvx", "uv", "python", "python3", "bash", "sh", "docker", "deno", "bun", "bunx", "pnpm"}
+    for v in servers.values():
+        words = [os.path.basename(v.get("command") or "")] + [a for a in v.get("args") or [] if not a.startswith("-")]
+        name = next((w for w in words if w and w not in launchers and w != "run"), "")
+        if name:
+            names.append(name)
+    return names
+
+
+def session_caches(h):
+    """The paths in the peer's worktree that the Runtime line's Session caches setting names."""
+    wt = Path(h.get("worktree") or "")
+    if h.get("env") or not wt.is_dir():
+        return []
+    root, found = wt.resolve(), []
+    for pat in (p.strip(" `") for p in setting("Session caches").split(",")):
+        if not pat or pat.startswith(("/", "~")):
+            continue
+        for m in wt.glob(pat):
+            r = m.resolve()
+            if root in r.parents and ".git" not in r.relative_to(root).parts:
+                found.append(m)
+    return found
+
+
+def short(args):
+    """A process's command in a few words, without long paths."""
+    return " ".join(os.path.basename(w) if "/" in w else w for w in args.split()[:6])[:90]
+
+
+def cleanup(home, h, term):
+    """Stop the MCP servers a closed session left running, name anything else it left, and clear its session caches."""
+    if h.get("env"):
+        return
+    time.sleep(STEP_SEC)
+    left = local_procs(term, fresh=True)
+    names = mcp_names()
+    mcp = [(p, a) for p, a in left if any(n.lower() in a.lower() for n in names)]
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        for p, _ in mcp:
+            try:
+                os.kill(p, sig)
+            except OSError:
+                pass
+        if mcp and sig == signal.SIGTERM:
+            time.sleep(1)
+        mcp_left = [x for x in mcp if alive(x[0])]
+        if not mcp_left:
+            break
+    if mcp:
+        print(f"{home}: stopped {len(mcp)} MCP server process(es) its session left running: "
+              + ", ".join(f"{p} {short(a)}" for p, a in mcp))
+    others = [(p, a) for p, a in left if (p, a) not in mcp and alive(p)]
+    if others:
+        print(f"{home}: still running from its closed session — close each unless something needs it: "
+              + "; ".join(f"{p} {short(a)}" for p, a in others))
+    for path in session_caches(h):
+        shutil.rmtree(path, ignore_errors=True) if path.is_dir() and not path.is_symlink() else path.unlink(missing_ok=True)
+        print(f"{home}: cleared {path}")
 
 
 def close_session(home, h):
-    """End the peer's session and close its terminal; the worktree stays. None when done, else why not."""
+    """End the peer's session, close its terminal, and clean up after it; the worktree stays.
+    None when done, else why not. The home's terminal is cleared once it is gone."""
     term = h.get("terminal")
-    if not term or not term_info(term):
+    if not term:
         return None
-    b = busy(term)
+    if not term_info(h):  # closed or orphaned already, maybe with its MCP servers still running
+        h["terminal"] = None
+        cleanup(home, h, term)
+        return None
+    b = busy(h)
     if b:
         return f"{home} is busy ('{b}' on its screen): wait for it to finish, or ask it to stop that first"
     if h.get("dispatch"):
         orca("orchestration", "worker-release", "--dispatch", h["dispatch"])
-    if term_info(term):
-        orca("terminal", "close", "--terminal", term)
-    return f"{home}'s terminal did not close: look at it" if term_info(term) else None
+    if term_info(h):
+        orca("terminal", "close", "--terminal", term, *on(h))
+    if term_info(h):
+        return f"{home}'s terminal did not close: look at it"
+    h["terminal"] = None
+    cleanup(home, h, term)
+    return None
+
+
+def orca_version(env=None):
+    """The running Orca's version (a shell keeps the hook port of the Orca it started under)."""
+    return find(orca("status", *(["--environment", env] if env else []))[0], "appVersion") or ""
+
+
+def failure(w):
+    d = w.get("dispatch") or {}
+    lf = d.get("lastFailure")
+    try:
+        lf = json.loads(lf) if isinstance(lf, str) else lf
+    except ValueError:
+        pass
+    if isinstance(lf, dict):
+        text = lf.get("subject") or lf.get("message") or lf.get("code") or ""
+        return text + (f": {lf['body'][:300]}" if lf.get("body") else "") or "no reason given"
+    return str(lf or d.get("terminationReason") or "no reason given")
 
 
 def new_worktree(sel, name, base):
@@ -282,7 +466,7 @@ def home_or_die(reg, home):
     h = reg["homes"].get(home)
     if h and h.get("asleep"):
         die(f"{home} is asleep: nothing would read the message. Put it in the home's next dispatch spec.")
-    if not h or not h.get("terminal"):
+    if not h or not (h.get("terminal") or (h.get("env") and h.get("dispatch"))):
         die(f"no live peer in home {home}; see `peer list`")
     return h
 
@@ -304,64 +488,126 @@ def opts(argv, flags, switches=()):
 # --- dispatch -------------------------------------------------------------------------------------------------------
 
 def cmd_dispatch(argv):
-    pos, val, on = opts(argv, ("--worktree", "--name", "--base-branch", "--title"), ("--keep", "--restart"))
-    if len(pos) != 3 or on == {"--keep", "--restart"}:
+    pos, val, on_ = opts(argv, ("--worktree", "--name", "--base-branch", "--title", "--on", "--repo", "--model",
+                                "--effort"), ("--keep", "--restart"))
+    if len(pos) != 3 or on_ == {"--keep", "--restart"}:
         die(__doc__)
     home, role, spec = pos
     if os.path.isfile(spec):
         spec = Path(spec).read_text()
+    once = val.get("--model", ""), (val.get("--effort") or "").lower()
+    if once[1] and once[1] not in EFFORTS:
+        die(f"--effort is one of {', '.join(EFFORTS)}")
     reg = load()
     run = bind(reg)
     h = reg["homes"].get(home)
     if h and h["role"] != role:
         die(f"{home} is a {h['role']} home, not {role}")
+    env = val.get("--on") or (h or {}).get("env")
+    if h and val.get("--on") and val["--on"] != h.get("env"):
+        die(f"{home} runs on {h.get('env') or 'this machine'}: use another home for {val['--on']}")
     title = val.get("--title") or spec.strip().splitlines()[0][:80]
     if h and working(h):
         die(f"{home} is still working on '{h['title']}' ({h['dispatch']}). Wait for its report; to cancel, follow "
             "Orca's recovery guide (worker-stop, then worker-abandon if it reports stop_unknown).")
     wt = val.get("--worktree")
-    model, effort = (h or {}).get("model"), (h or {}).get("effort")
-    if "--keep" in on:
-        if not h or h.get("asleep") or not term_info(h.get("terminal")) or wt:
+    model, effort, flags = (h or {}).get("model"), (h or {}).get("effort"), []
+    version, sel = (h or {}).get("orca"), (h or {}).get("worktree_sel")
+    if "--keep" in on_:
+        if any(once):
+            die("a model or effort for one task needs a fresh session: drop --keep")
+        if env:
+            die(f"{home} runs on {env}: a remote peer takes each task fresh, so drop --keep")
+        if not h or h.get("asleep") or not term_info(h) or wt:
             die(f"--keep continues {home}'s live session in its own worktree, and it has none: dispatch it fresh")
+        now = orca_version()
+        if version and now and version != now:
+            die(f"{home}'s shell started under Orca {version}, and Orca is now {now}: its hook port is stale, so the "
+                "dispatch would time out at agent readiness. Dispatch it fresh, without --keep.")
         mode, term, path = "keep", h["terminal"], h["worktree"]
+        place = ["--terminal", term, "--worktree", "path:" + path]
     else:
-        # A fresh session per task, launched with the pinned settings: a new terminal, so new MCP servers,
-        # settings, and plugin updates load too, and a shell from before an Orca update is never reused.
-        target = wt or (h and "path:" + h["worktree"]) or die(f"{home} is a new home: pass --worktree")
-        model, effort, flags, notes = launch_plan(role)
-        cmd = shlex.join(shlex.split(os.environ.get("DEV_TEAM_CLAUDE", "claude")) + flags)
+        model, effort, flags, notes = launch_plan(role, *once)
         mode = "new" if not h else "wake" if h.get("asleep") or not h.get("terminal") else "fresh"
+        if env:
+            # Orca starts a remote peer itself (worker-start --on): it takes the model and effort, nothing more.
+            target = wt or sel or die(f"{home} is a new home on {env}: pass --worktree — an exact remote selector "
+                                      "(id:<repo-id>::<path>), or new-top-level with --repo and --name")
+            if target in ("current", "new-child"):
+                die("on a remote server, current and new-child are ambiguous: pass an exact selector "
+                    "(id:<repo-id>::<path>), or new-top-level with --repo and --name")
+            if target == "new-top-level" and not (val.get("--repo") and val.get("--name")):
+                die("new-top-level on a remote server needs --repo and --name")
+            if len(flags) > 4:
+                notes.append(f"on {env} a launch takes only the model and effort: no fallback model, advisor, or "
+                             "DEV_TEAM_CLAUDE flags")
+        else:
+            target = wt or (h and "path:" + h["worktree"]) or die(f"{home} is a new home: pass --worktree")
         why = close_session(home, h) if h else None
         if why:
+            save(reg)
             die(why)
-        d, raw = orca("terminal", "create", "--worktree", new_worktree(target, val.get("--name"), val.get("--base-branch")),
-                      "--title", home, "--command", cmd)
-        term = find(d, "handle") or die("terminal create failed:\n" + raw[:800], 1)
         for n in notes:
             print(n)
-        orca("terminal", "wait", "--terminal", term, "--for", "tui-idle", "--timeout-ms", "90000")
-        path = term_info(term).get("worktreePath") or die(f"cannot tell the worktree of the new terminal {term}", 1)
+        if env:
+            term, path, version = None, None, orca_version(env)
+            place = ["--on", env, "--agent", "claude", "--model", model, "--effort", effort, "--worktree", target]
+            if target == "new-top-level":
+                place += ["--repo", val["--repo"], "--name", val["--name"]] + \
+                         (["--base-branch", val["--base-branch"]] if val.get("--base-branch") else [])
+        else:
+            # A fresh session per task, launched with the pinned settings: a new terminal, so new MCP servers,
+            # settings, and plugin updates load too, and a shell from before an Orca update is never reused.
+            cmd = shlex.join(shlex.split(os.environ.get("DEV_TEAM_CLAUDE", "claude")) + flags)
+            d, raw = orca("terminal", "create", "--worktree",
+                          new_worktree(target, val.get("--name"), val.get("--base-branch")),
+                          "--title", home, "--command", cmd)
+            term = find(d, "handle") or die("terminal create failed:\n" + raw[:800], 1)
+            orca("terminal", "wait", "--terminal", term, "--for", "tui-idle", "--timeout-ms", "90000")
+            path = term_info({"terminal": term}).get("worktreePath") or \
+                die(f"cannot tell the worktree of the new terminal {term}", 1)
+            version = orca_version()
+            place = ["--terminal", term, "--worktree", "path:" + path]
         # Recorded before worker-start, so a failed start still leaves the new session closable.
-        reg["homes"][home] = dict(h or {}, role=role, terminal=term, worktree=path, dispatch=None, title=title,
-                                  since=time.strftime("%Y-%m-%d %H:%M"), model=model, effort=effort, asleep=False)
+        reg["homes"][home] = dict(h or {}, role=role, terminal=term, worktree=path or (h or {}).get("worktree"),
+                                  dispatch=None, title=title, since=time.strftime("%Y-%m-%d %H:%M"), model=model,
+                                  effort=effort, asleep=False, env=env, orca=version, once=any(once))
         save(reg)
 
     body = ROLE_LINE.format(role=role, home=home)
-    if mode != "keep" and "--settings" in flags:
+    if "--settings" in flags and not env:
         body += ADVISOR_LINE
     d, raw = orca("orchestration", "worker-start", "--run", run, "--task-title", title, "--spec", body + "\n\n" + spec,
-                  "--terminal", term, "--worktree", "path:" + path, timeout=900)
+                  *place, timeout=900)
     dispatch, task = find(d, "dispatchId"), find(d, "taskId")
     # worker-start can exit non-zero after the dispatch went through, so judge by the receipt, never relaunch blindly.
     if not d.get("ok") or not dispatch:
-        die("worker-start did not report ready. Check `orca orchestration task-list` before retrying.\n" + raw[:800], 1)
+        hint = ""
+        if mode == "keep" and find(d, "failedStage") == "agent_readiness":
+            hint = f"\n{home}'s shell may predate the running Orca (a stale hook port): dispatch it fresh, without --keep."
+        die("worker-start did not report ready. Check `orca orchestration task-list` before retrying." + hint +
+            "\n" + raw[:800], 1)
+    # Ready can still turn into failed a moment later — for one, when the terminal already holds a dispatch.
+    time.sleep(RECHECK_SEC)
+    w = worker(dispatch)
+    if env:
+        term = find(w, "agentTerminalHandle") or find(d, "agentTerminalHandle")
+        wid = find(w, "worktreeId") or find(d, "worktreeId") or ""
+        path = wid.split("::", 1)[-1] if "::" in wid else path or target
+        sel = "id:" + wid if "::" in wid else (target if target != "new-top-level" else sel)
     reg["homes"][home] = {
         "role": role, "terminal": term, "worktree": path, "dispatch": dispatch, "task": task, "title": title,
         "since": time.strftime("%Y-%m-%d %H:%M"), "model": model, "effort": effort, "asleep": False,
+        "env": env, "worktree_sel": sel if env else None, "orca": version,
+        "once": any(once) if mode != "keep" else (h or {}).get("once", False),
     }
     save(reg)
-    print(f"dispatched {home} ({mode}, {model}/{effort}): {title} — {task} {dispatch}")
+    if (w.get("dispatch") or {}).get("status") == "failed" or (w.get("worker") or {}).get("state") == "failed":
+        die(f"{home}: worker-start reported ready, but the dispatch failed {RECHECK_SEC:g}s later: {failure(w)}. "
+            "A terminal that already holds a dispatch fails this way: dispatch it fresh"
+            + (", without --keep." if mode == "keep" else "."), 1)
+    where = f" on {env}" if env else ""
+    print(f"dispatched {home} ({mode}{where}, {model}/{effort}): {title} — {task} {dispatch}")
 
 
 # --- switch and sleep -----------------------------------------------------------------------------------------------
@@ -370,8 +616,11 @@ def cmd_switch(argv):
     reg = load()
     for home in argv or sorted(reg["homes"]):
         h = reg["homes"].get(home)
-        if not h or not h.get("terminal") or h.get("asleep"):
+        if not h or not h.get("terminal") or h.get("asleep") or session_alive(h) is False:
             print(f"{home}: no live session; its next dispatch launches with the current settings")
+            continue
+        if h.get("once") and not argv:
+            print(f"{home}: on a model chosen for this one task; its next dispatch returns to the team settings")
             continue
         model, effort, _, notes = launch_plan(h["role"])
         if (h.get("model"), h.get("effort")) == (model, effort):
@@ -379,12 +628,12 @@ def cmd_switch(argv):
             continue
         for n in notes:
             print(f"{home}: {n}")
-        send(h["terminal"], f"/model {model}")
-        send(h["terminal"], f"/effort {effort}")
+        send(h, f"/model {model}")
+        send(h, f"/effort {effort}")
         time.sleep(STEP_SEC)
-        shown = "\n".join(screen(h["terminal"])[-20:])
+        shown = "\n".join(live_screen(h)[-20:])
         if re.search(r"set model to", shown, re.I) and re.search(r"effort", shown, re.I):
-            h["model"], h["effort"] = model, effort
+            h["model"], h["effort"], h["once"] = model, effort, False
             print(f"{home}: switched to {model}/{effort}")
         else:
             print(f"{home}: sent /model {model} and /effort {effort}, not confirmed on its screen "
@@ -416,12 +665,35 @@ def cmd_sleep(argv):
     save(reg)
 
 
+def cmd_adopt(argv):
+    """A terminal started outside peer — a peer launched by hand, or a bare shell left after its session ended —
+    becomes a home, so the next dispatch closes it and launches fresh."""
+    pos, val, _ = opts(argv, ("--on",))
+    if len(pos) != 3:
+        die(__doc__)
+    home, role, term = pos
+    reg = load()
+    h = reg["homes"].get(home) or {}
+    if h.get("role", role) != role:
+        die(f"{home} is a {h['role']} home, not {role}")
+    if h.get("terminal") and h["terminal"] != term and term_info(h):
+        die(f"{home} already has a live terminal, {h['terminal']}: sleep it first")
+    new = {"terminal": term, "env": val.get("--on")}
+    info = term_info(new) or die(f"no open terminal {term}" + (f" on {new['env']}" if new["env"] else ""))
+    reg["homes"][home] = dict(h, role=role, terminal=term, env=new["env"], dispatch=None, asleep=False,
+                              worktree=info.get("worktreePath") or h.get("worktree"), title=h.get("title") or "(adopted)",
+                              since=h.get("since") or time.strftime("%Y-%m-%d %H:%M"))
+    save(reg)
+    print(f"{home}: adopted {term}; its next dispatch closes that terminal and launches a fresh session")
+
+
 # --- tell -----------------------------------------------------------------------------------------------------------
 
-def nudge(term, subject):
+def nudge(h, subject):
     """Type a one-line nudge into the peer's terminal: an idle peer never reads its mailbox on its own."""
+    term = h["terminal"]
     text = f"From coordinator: {subject} — check your orchestration messages."
-    send_ = ["orca", "terminal", "send", "--terminal", term, "--text", text, "--enter"]
+    send_ = ["orca", "terminal", "send", "--terminal", term, "--text", text, "--enter", *on(h)]
     out = subprocess.run(send_, capture_output=True, text=True, timeout=120)
     req = re.search(r"--retry-request\s+([0-9a-f-]+)", out.stdout + out.stderr)
     for _ in range(3):
@@ -432,7 +704,7 @@ def nudge(term, subject):
         if "no turn start was observed" not in out.stdout + out.stderr:
             return print("nudge delivered")
     # A peer mid-turn queues the input: trust its screen, not the warning.
-    shown = subprocess.run(["orca", "terminal", "read", "--terminal", term, "--screen"],
+    shown = subprocess.run(["orca", "terminal", "read", "--terminal", term, "--screen", *on(h)],
                            capture_output=True, text=True, timeout=120).stdout
     if subject in shown:
         return print("nudge queued: the peer is mid-turn and reads it next")
@@ -457,7 +729,9 @@ def cmd_tell(argv):
                       "--subject", subject, "--body", body)
     if not d.get("ok"):
         die("message not sent:\n" + raw[:800], 1)
-    nudge(h["terminal"], subject)
+    if not h.get("terminal"):
+        return print(f"sent; {home} on {h.get('env')} has no terminal to nudge, so it reads the message at its next turn")
+    nudge(h, subject)
 
 
 # --- pending and watch ----------------------------------------------------------------------------------------------
@@ -490,6 +764,211 @@ def show_batch(reg, run, delivery, msgs):
         if m.get("type") != "heartbeat":
             print(describe(who, m))
     print(f"Handle every message, then acknowledge: orca orchestration check --run {run} --ack {delivery}")
+    # A PR link in a peer's report records that home as the PR's owner, for CI and conflict alerts.
+    found = [(who[m["from_handle"]], repo, n) for m in msgs if who.get(m.get("from_handle"))
+             for repo, n in PR_URL.findall(f"{m.get('subject')} {m.get('body')}")]
+    if found:
+        r = load()
+        default_repo(r)
+        for home, repo, n in found:
+            r.setdefault("prs", {}).setdefault(f"{repo}#{n}", {})["home"] = home
+        save(r)
+
+
+# --- PRs: who owns which, and what changed on them ------------------------------------------------------------------
+
+def gh(*a):
+    try:
+        p = subprocess.run(["gh", *a], capture_output=True, text=True, timeout=60)
+        return p.stdout if p.returncode == 0 else ""
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+def default_repo(reg):
+    if not reg.get("repo"):
+        reg["repo"] = gh("repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner").strip()
+    return reg["repo"]
+
+
+def pr_key(ref, repo):
+    m = PR_URL.search(ref)
+    if m:
+        return f"{m.group(1)}#{m.group(2)}"
+    n = ref.lstrip("#")
+    return f"{repo}#{n}" if n.isdigit() and repo else die(f"not a PR number or URL: {ref}")
+
+
+def pr_label(key, reg):
+    repo, n = key.rsplit("#", 1)
+    return f"#{n}" if repo == reg.get("repo") else f"{repo.split('/')[-1]}#{n}"
+
+
+def pr_status(key):
+    repo, n = key.rsplit("#", 1)
+    try:
+        p = json.loads(gh("pr", "view", n, "-R", repo, "--json", "state,isDraft,mergeable,statusCheckRollup") or "{}")
+    except ValueError:
+        p = {}
+    if not p.get("state"):
+        return None
+    failed = sorted({c.get("name") or c.get("context") or "a check" for c in p.get("statusCheckRollup") or []
+                     if (c.get("conclusion") or c.get("state") or "").upper() in FAIL})
+    return {"state": p["state"], "draft": bool(p.get("isDraft")), "failed": failed,
+            "conflict": p.get("mergeable") == "CONFLICTING"}
+
+
+def route(home, h):
+    if not h:
+        return "route it to whoever owns it"
+    return f"route it to {home}" + (" (`peer dispatch --keep`)" if h.get("terminal") and not h.get("asleep") else "")
+
+
+def pr_events(board):
+    """Changes on the team's PRs since the last look: merged, closed, draft or ready (with the Owner board on), and,
+    while the owner is not working, a newly failing check or a merge conflict."""
+    reg, events = load(), []
+    for key, rec in reg.get("prs", {}).items():
+        if rec.get("state") in ("MERGED", "CLOSED"):
+            continue
+        st = pr_status(key)
+        if not st:
+            continue
+        home = rec.get("home") or "?"
+        h, label = reg["homes"].get(home), pr_label(key, reg)
+        seen = "state" in rec
+        if board and seen and st["state"] != "OPEN":
+            events.append(f"PR | {label} | {home} | {st['state'].lower()}: update its status row and the board")
+        elif board and seen and st["draft"] != rec.get("draft"):
+            events.append(f"PR | {label} | {home} | {'back to draft' if st['draft'] else 'marked ready'}: "
+                          "update the board")
+        rec.update(state=st["state"], draft=st["draft"])
+        free = not (h and working(h))
+        new = [c for c in st["failed"] if c not in rec.get("failed", [])]
+        if st["state"] == "OPEN" and new and free:
+            events.append(f"CI | {label} | {home} | failed: {', '.join(new)[:160]}: {route(home, h)}")
+        if free or not st["failed"]:
+            rec["failed"] = st["failed"]
+        if st["state"] == "OPEN" and st["conflict"] and not rec.get("conflict") and free:
+            events.append(f"CONFLICT | {label} | {home} | merge conflict with its base: {route(home, h)}")
+        if free or not st["conflict"]:
+            rec["conflict"] = st["conflict"]
+    if reg.get("prs"):
+        r = load()
+        r["prs"] = {k: dict(r.get("prs", {}).get(k, {}), **v) for k, v in reg["prs"].items()}
+        save(r)
+    return events
+
+
+def cmd_pr(argv):
+    pos, val, on_ = opts(argv, ("--repo",), ("--drop",))
+    reg = load()
+    repo = val.get("--repo") or default_repo(reg)
+    prs = reg.setdefault("prs", {})
+    if "--drop" in on_:
+        for ref in pos:
+            prs.pop(pr_key(ref, repo), None)
+        save(reg)
+        return print(f"dropped {len(pos)} PR(s)")
+    if len(pos) < 2 or pos[0] not in reg["homes"]:
+        die(__doc__ if len(pos) < 2 else f"no home {pos[0]}; see `peer list`")
+    for ref in pos[1:]:
+        prs.setdefault(pr_key(ref, repo), {})["home"] = pos[0]
+    save(reg)
+    print(f"{pos[0]} owns " + ", ".join(pr_label(pr_key(ref, repo), reg) for ref in pos[1:]))
+
+
+def cmd_prs(argv):
+    reg = load()
+    repo, prs = default_repo(reg), reg.get("prs", {})
+    if "--sweep" not in argv:
+        for key, rec in sorted(prs.items()):
+            print(f"{pr_label(key, reg):14} {rec.get('home', '?'):14} {(rec.get('state') or 'not checked yet').lower()}"
+                  + (" draft" if rec.get("draft") else ""))
+        return print("no PRs recorded") if not prs else None
+    keys = {k for k, r in prs.items() if r.get("state") not in ("MERGED", "CLOSED")}
+    for n in gh("pr", "list", "-R", repo, "--author", "@me", "--state", "open", "--json", "number",
+                "-q", ".[].number").split() if repo else []:
+        keys.add(f"{repo}#{n}")
+    bad = []
+    for key in sorted(keys):
+        st = pr_status(key)
+        if st and st["state"] == "OPEN" and (st["failed"] or st["conflict"]):
+            home = prs.get(key, {}).get("home") or "?"
+            what = ([f"failing: {', '.join(st['failed'])[:160]}"] if st["failed"] else []) + \
+                   (["merge conflict"] if st["conflict"] else [])
+            bad.append(f"{pr_label(key, reg):14} {home:14} {'; '.join(what)}: {route(home, reg['homes'].get(home))}")
+    save(reg)
+    print("\n".join(bad) if bad else f"no failing checks or conflicts on {len(keys)} open PR(s)")
+    sys.exit(1 if bad else 0)
+
+
+# --- the Owner board: stamp, guard, drift (workflow/board.md) -------------------------------------------------------
+
+def ws_root():
+    m = re.search(r"\*\*Workspace:\*\*\s*`([^`]*)`", project_text())
+    return ROOT / ((m.group(1) if m else "") or "docs").rstrip("/")
+
+
+def board_on():
+    return "**Owner board:**" in project_text()
+
+
+def status_hash():
+    h = hashlib.sha256()
+    for name in ("status.md", "status-done.md"):
+        f = ws_root() / name
+        h.update((f.read_bytes() if f.exists() else b"") + b"\0")
+    return h.hexdigest()
+
+
+def stamp():
+    try:
+        return json.loads(BOARD.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def board_guard():
+    """The line the coordinator sees while <ws>/status.md has changed since the last board write; else None."""
+    if not board_on():
+        return None
+    st = stamp()
+    if st.get("root") and st["root"] != str(ROOT):
+        return None  # the board is kept from another checkout
+    if st.get("hash") == status_hash():
+        return None
+    why = "status changed since the last board write" if st else "no board write recorded yet"
+    return f"{why}: update the board, then `{PLUGIN}/bin/peer board-stamp`"
+
+
+def cmd_board_stamp(argv):
+    _, val, _ = opts(argv, ("--rows",))
+    st = stamp()
+    st.update(hash=status_hash(), time=time.strftime("%Y-%m-%dT%H:%M:%S%z"), root=str(ROOT))
+    if val.get("--rows"):
+        st["rows"] = str(Path(val["--rows"]).resolve())
+    STATE.mkdir(parents=True, exist_ok=True)
+    BOARD.write_text(json.dumps(st, indent=2) + "\n")
+    print(f"board stamped {st['time']}" + (f"; rows in {st['rows']}" if st.get("rows") else ""))
+
+
+def board_report():
+    """After a watch: the board guard line, and board-drift on the rows the coordinator last listed."""
+    if not board_on():
+        return
+    lines, g, rows = [], board_guard(), stamp().get("rows")
+    if g:
+        lines.append(f"BOARD | {g}")
+    if rows and Path(rows).is_dir():
+        try:
+            p = subprocess.run([str(PLUGIN / "bin" / "board-drift"), rows], capture_output=True, text=True, timeout=600)
+            if p.returncode == 1:
+                lines += [f"BOARD | {line}" for line in p.stdout.splitlines() if line.strip()]
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    if lines:
+        print("\n".join(lines))
 
 
 def cmd_pending(argv):
@@ -531,6 +1010,9 @@ def context_k(f):
 def cmd_sizes(argv):
     reg, limit = load(), size_limit()
     for home, h in sorted(reg["homes"].items()):
+        if h.get("env"):
+            print(f"{home:14} {h['role']:19} on {h['env']}: no local transcript")
+            continue
         f = transcript(reg, home, h)
         k = context_k(f) if f else 0
         flag = "  OVER" if k > limit else ""
@@ -551,7 +1033,7 @@ def record_limit(text):
 def watch_screens(active, last, since, now):
     """STUCK or LIMIT for a peer stopped on an error screen, STALL for one whose screen has not changed; else None."""
     for home, h in active.items():
-        lines = screen(h["terminal"])
+        lines = live_screen(h) if h.get("terminal") else []
         if not lines:
             continue
         sig = "\n".join(lines)
@@ -575,41 +1057,51 @@ def watch_screens(active, last, since, now):
 
 
 def cmd_watch(argv):
-    minutes = float(argv[0]) if argv else 15
-    reg = load()
-    run = bind(reg)
-    end, limit = time.time() + minutes * 60, size_limit()
-    flagged_file = STATE / "size-flagged.txt"
-    last, since, active = {}, {}, {}
-    next_active = next_size = 0
+    STATE.mkdir(parents=True, exist_ok=True)
     WATCH_PID.write_text(str(os.getpid()))
     try:
-        while time.time() < end:
-            delivery, msgs = pending_batch(run)
-            if delivery:
-                return show_batch(reg, run, delivery, msgs)
-            now = time.time()
-            if now >= next_active:
-                reg = load()
-                active = {home: h for home, h in reg["homes"].items() if h.get("terminal") and working(h)}
-                next_active = now + 120
-            if now >= next_size:
-                next_size = now + 15 * 60
-                flagged = set(flagged_file.read_text().split()) if flagged_file.exists() else set()
-                for home, h in active.items():
-                    f = transcript(reg, home, h)
-                    if f and f.name not in flagged and context_k(f) > limit:
-                        with flagged_file.open("a") as out:
-                            out.write(f.name + "\n")
-                        return print(f"SIZE | {home} | ~{context_k(f)}k, over the {limit}k limit: tell it to finish "
-                                     "at its next clean point with a hand-over note")
-            found = watch_screens(active, last, since, now)
-            if found:
-                return print(found)
-            time.sleep(POLL_SEC)
-        print(f"nothing after {minutes:g} min")
+        watch(float(argv[0]) if argv else 15)
     finally:
         WATCH_PID.unlink(missing_ok=True)
+    board_report()
+
+
+def watch(minutes):
+    reg = load()
+    run = bind(reg)
+    end, limit, board = time.time() + minutes * 60, size_limit(), board_on()
+    flagged_file = STATE / "size-flagged.txt"
+    last, since, active = {}, {}, {}
+    next_active = next_size = next_pr = 0
+    while time.time() < end:
+        delivery, msgs = pending_batch(run)
+        if delivery:
+            return show_batch(reg, run, delivery, msgs)
+        now = time.time()
+        if now >= next_active:
+            reg = load()
+            active = {home: h for home, h in reg["homes"].items() if h.get("dispatch") and not h.get("asleep") and working(h)}
+            next_active = now + 120
+        if now >= next_size:
+            next_size = now + 15 * 60
+            flagged = set(flagged_file.read_text().split()) if flagged_file.exists() else set()
+            for home, h in active.items():
+                f = None if h.get("env") else transcript(reg, home, h)
+                if f and f.name not in flagged and context_k(f) > limit:
+                    with flagged_file.open("a") as out:
+                        out.write(f.name + "\n")
+                    return print(f"SIZE | {home} | ~{context_k(f)}k, over the {limit}k limit: tell it to finish "
+                                 "at its next clean point with a hand-over note")
+        found = watch_screens(active, last, since, now)
+        if found:
+            return print(found)
+        if now >= next_pr:
+            next_pr = now + PR_POLL_MIN * 60
+            events = pr_events(board)
+            if events:
+                return print("\n".join(events))
+        time.sleep(POLL_SEC)
+    print(f"nothing after {minutes:g} min")
 
 
 def cmd_limits(argv):
@@ -643,14 +1135,27 @@ def cmd_hook(argv):
         hook = json.load(sys.stdin)
     except ValueError:
         hook = {}
-    if not REG.exists() or "Runtime: Orca" not in project_text():
+    if mode == "stop" and hook.get("stop_hook_active"):
         return
-    reg = load()
+    peers = REG.exists() and "Runtime: Orca" in project_text()
+    reg = load() if peers else {"homes": {}}
     me, term = reg.get("coordinator") or {}, os.environ.get("ORCA_TERMINAL_HANDLE")
-    if not ((term and term == me.get("terminal")) or (hook.get("session_id") and hook["session_id"] == me.get("session"))):
+    coordinator = (term and term == me.get("terminal")) or (hook.get("session_id") and hook["session_id"] == me.get("session"))
+    if peers and not coordinator and (me or term in names(reg)):
+        return  # a peer's session, or another session beside the coordinator
+    lines = [g for g in [board_guard()] if g]
+    if peers and coordinator and reg.get("run"):
+        lines += peer_lines(reg)
+    if not lines:
         return
-    if (mode == "stop" and hook.get("stop_hook_active")) or not reg.get("run"):
-        return
+    text = "\n".join(lines)
+    if mode == "stop":
+        print(json.dumps({"decision": "block", "reason": text}))
+    else:
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": text}}))
+
+
+def peer_lines(reg):
     run = reg["run"]
     orca("orchestration", "run-use", "--id", run)
     delivery, msgs = pending_batch(run)
@@ -666,36 +1171,58 @@ def cmd_hook(argv):
     if msgs:
         lines.append(f"Handle each (a question relayed to the Owner counts once it is on your Waiting on you list), then "
                      f"acknowledge: orca orchestration check --run {run} --ack {delivery}")
-    busy_homes = [home for home, h in sorted(reg["homes"].items()) if h.get("terminal") and working(h)]
+    busy_homes = [home for home, h in sorted(reg["homes"].items()) if h.get("dispatch") and not h.get("asleep") and working(h)]
     if busy_homes and not watcher_running():
         lines.append(f"{len(busy_homes)} peer task(s) in flight ({', '.join(busy_homes)}) and no watcher: start "
                      f"`{PLUGIN}/bin/peer watch 240` in the background so their reports wake you.")
-    if not lines:
-        return
-    text = "\n".join(lines)
-    if mode == "stop":
-        print(json.dumps({"decision": "block", "reason": text}))
-    else:
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": text}}))
+    return lines
 
 
 # --- list -----------------------------------------------------------------------------------------------------------
 
+def home_state(h):
+    """asleep, working, idle, or exited (its Claude session ended; the bare shell is left). Clears a gone terminal."""
+    if h.get("asleep"):
+        return "asleep"
+    if h.get("dispatch") and working(h):
+        return "working"
+    if h.get("terminal") and not term_info(h):
+        h["terminal"] = None
+    if not h.get("terminal"):
+        return "idle" if h.get("env") and h.get("dispatch") else "asleep"
+    return "exited" if session_alive(h) is False else "idle"
+
+
 def cmd_list(argv):
+    _, val, _ = opts(argv, ("--board-json",))
     reg = load()
+    states = {home: home_state(h) for home, h in reg["homes"].items()}
+    save(reg)
+    if val.get("--board-json"):
+        # One Owner-board peers row per home, for ArtifactData file_path (workflow/board.md § Data).
+        out = Path(val["--board-json"]) / "peers"
+        out.mkdir(parents=True, exist_ok=True)
+        ranked = sorted(reg["homes"].items(), key=lambda x: (ROLE_RANK.get(x[1]["role"], 9), x[0]))
+        for n, (home, h) in enumerate(ranked, 1):
+            st, task = states[home], h.get("title") or ""
+            doing = task if st == "working" else f"{'Asleep' if st in ('asleep', 'exited') else 'Idle'}" + \
+                (f" · last: {task}" if task and task != "(adopted)" else "")
+            (out / f"{home}.json").write_text(json.dumps({"name": home, "role": h["role"], "doing": doing,
+                                                          "order": n}, indent=2, ensure_ascii=False) + "\n")
+        return print(f"wrote {len(ranked)} peers row(s) to {out}")
     print(f"run: {reg.get('run') or 'none yet'}")
     for home, h in sorted(reg["homes"].items()):
-        state = "asleep" if h.get("asleep") or not h.get("terminal") else "working" if working(h) else "idle"
-        model = f"{h.get('model') or '?'}/{h.get('effort') or '?'}"
-        print(f"{home:14} {h['role']:19} {state:8} {model:24} {Path(h.get('worktree') or '?').name:24} "
-              f"{h['title']} ({h['since']})")
+        model = f"{h.get('model') or '?'}/{h.get('effort') or '?'}" + (" (this task)" if h.get("once") else "")
+        where = f"@{h['env']}" if h.get("env") else Path(h.get("worktree") or "?").name
+        print(f"{home:14} {h['role']:19} {states[home]:8} {model:24} {where:24} {h.get('title', '')} "
+              f"({h.get('since', '?')})")
     for f, v in sorted(limits().items()):
         print(f"out of usage: {f} — {v['text']}")
 
 
 CMDS = {"dispatch": cmd_dispatch, "tell": cmd_tell, "switch": cmd_switch, "sleep": cmd_sleep, "release": cmd_sleep,
-        "watch": cmd_watch, "pending": cmd_pending, "sizes": cmd_sizes, "limits": cmd_limits, "list": cmd_list,
-        "hook": cmd_hook}
+        "adopt": cmd_adopt, "watch": cmd_watch, "pending": cmd_pending, "pr": cmd_pr, "prs": cmd_prs,
+        "sizes": cmd_sizes, "limits": cmd_limits, "list": cmd_list, "board-stamp": cmd_board_stamp, "hook": cmd_hook}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in CMDS:

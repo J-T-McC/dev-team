@@ -49,11 +49,21 @@ ok "Orca: in-conversation rule not required" '[[ $OUT != *"Run roles in this con
 ok "Orca: clear threshold rename reported"   '[[ $OUT == *"\"Peer clear threshold\" is now \"Peer size limit: 400k\""* ]]'
 drop "$T/p/CLAUDE.md" "Peer clear threshold: 25% of the peer's context window. Board: off." "Peer size limit: 300k."
 run
-ok "Orca: missing Board setting reported"    '[[ $OUT == *"no \"Board:\" setting"* ]] && [[ $OUT != *"Peer size limit"* ]]'
+ok "Orca: missing worktree-cards setting"    '[[ $OUT == *"no \"Worktree cards:\" setting"* ]] && [[ $OUT != *"Peer size limit"* ]]'
 ok "Orca: missing launch settings reported"  '[[ $OUT == *"no \"Team model:\" setting"* ]] && [[ $OUT == *"no \"Fallback model:\""* ]] && [[ $OUT == *"no \"Advisor:\""* ]]'
 drop "$T/p/CLAUDE.md" "Peer size limit: 300k." "Team model: opus. Fallback model: none. Advisor: none. Peer size limit: 300k. Board: on."
 run
+ok "Orca: Board renamed to Worktree cards"   '[[ $OUT == *"\"Board:\" is now \"Worktree cards:\""* ]]'
+drop "$T/p/CLAUDE.md" "Board: on." "Worktree cards: on."
+run
 ok "Orca: current Runtime line is quiet"     '[ $RC = 0 ]'
+
+fresh CLAUDE.md
+mkdir -p "$T/p/docs/features/a"; ln -s .. "$T/p/docs/features/a/up"; ln -s ../../docs "$T/p/docs/features/self"
+ln -s "$T/p" "$T/p/docs/root"; ln -s ../stack "$T/p/docs/features/stack"; ln -s status.md "$T/p/docs/status-link.md"
+run
+ok "links back into the workspace reported"  '[[ $OUT == *"docs/features/self: links to a folder that contains it (../../docs)"* ]] && [[ $OUT == *"docs/root: links to a folder"* ]] && [[ $OUT == *"docs/features/a/up: links to a folder"* ]]'
+ok "links elsewhere are fine"                '[[ $OUT != *"features/stack"* ]] && [[ $OUT != *status-link* ]]'
 
 fresh CLAUDE.md
 drop "$T/p/CLAUDE.md" "- **Run roles in this conversation.**" "- Run roles here:"
