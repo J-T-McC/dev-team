@@ -40,11 +40,12 @@ Setup reads the project and your machine first: its commit history, the tools it
    A new project is also asked what you're building.
 2. **How the team works,** only where it applies:
    - **The stack,** for a new project: let the team pick, name it yourself, or decide at the first feature.
-   - **Where the team runs,** when Orca is installed: here in the conversation, or in [Orca](/dev-team/orca/), sized for your plan.
+   - **Where the team runs,** when Orca is installed: here in the conversation, or in [Orca](/dev-team/orca/), sized for your plan, with each role made when work first needs it or the whole team made now.
+   - **Once it's set up,** for a new project: start the team on what you described, or give it the first task yourself.
    - **Extras,** where you can pick several: the [Owner board](/dev-team/board/), [check-ins](/dev-team/checkins/), a [ticket system](/dev-team/tickets/), and giving teammates the plugin.
-3. **For an existing project,** one summary of what it found in your code, ending with: use these, show me the files first, or change something.
+3. **For an existing project,** one summary of what it found in your code, ending with: use these, show me the files first, or change something. With a ticket system or open pull requests, it also asks which one the team should start on. On an existing project the team never picks its own first task.
 
-The documents go in `dev-team/` (`.dev-team/` for a guest), and setup shows where it put everything. Anything still open in the standards isn't homework: the team proposes it when the first piece of work needs it. Setup finishes by suggesting the first thing to ask the team for.
+The documents go in `dev-team/` (`.dev-team/` for a guest), and setup shows where it put everything. Anything still open in the standards isn't homework: the team proposes it when the first piece of work needs it. Setup finishes by starting the team on what you described, if you said to, or by suggesting the first thing to ask it for.
 
 **Letting the team pick the stack** needs a few facts first: where it runs, where it's hosted, who uses it, what it stores, and what it must use. Setup asks for any your description left out. The lead engineer then chooses current, well-established tools that fit the product, and writes down why in the project's first decision record (ADR-001). Anything that costs money, such as paid hosting, still comes to you.
 
