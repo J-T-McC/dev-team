@@ -48,13 +48,20 @@ ok "ts-shop fixture: conventional, ENG"      "$(build shop existing-no-answers)$
 ok "ts-shop fixture: Biome runs, Prettier doesn't" "$(q shop '"biome" in d["code"]["tools_run"] and d["code"]["config_not_run"]==["prettier (.prettierrc, .vscode/settings.json)"]')"
 ok "set-up fixture: a re-run"                "$(build setup rerun)$(q setup 'd["project"]["state"]=="set-up" and d["project"]["dev_team_dir"]=="ours"')"
 
-# macOS: every scaffold gives the run's login shell a git that works in the sandbox, ahead of /usr/bin's xcrun stub.
-ok "every scaffold has the macOS git wrapper" "$(for f in evals/*/scaffold.sh; do grep -q 'eval-bin/git' "$f" || echo "$f "; done)"
+# macOS: every scaffold gives the run's login shell a git and python3 that work in the sandbox, ahead of /usr/bin's
+# xcrun stubs.
+ok "every scaffold has the macOS wrappers" "$(for f in evals/*/scaffold.sh; do grep -q 'for t in git python3' "$f" || echo "$f "; done)"
 if command -v xcode-select >/dev/null; then
-  ok "macOS: the run's login shell finds the wrapper" "$(for s in zsh bash; do
-    w=$(env -i HOME="$T/empty" PATH=/usr/bin:/bin /bin/$s -l -c 'command -v git' 2>/dev/null)
-    [ "$w" = "$T/empty/.eval-bin/git" ] || echo "$s finds $w "; done)"
+  ok "macOS: the run's login shell finds the wrappers" "$(for s in zsh bash; do
+    for t in git python3; do w=$(env -i HOME="$T/empty" PATH=/usr/bin:/bin /bin/$s -l -c "command -v $t" 2>/dev/null)
+    [ "$w" = "$T/empty/.eval-bin/$t" ] || echo "$s finds $t at $w "; done; done)"
 else echo "ok   macOS git wrapper: skipped, not macOS"; fi
+
+# The shell prefix (tests/eval-shell-prefix) runs what it's given, with the wrapper first, and logs it.
+mkdir -p "$T/pfx/.eval-bin" && printf '#!/bin/sh\necho wrapper\n' > "$T/pfx/.eval-bin/git" && chmod +x "$T/pfx/.eval-bin/git"
+out=$(env -i HOME="$T/pfx" PATH=/usr/bin:/bin "$REPO/tests/eval-shell-prefix" 'git; exit 3'); rc=$?
+ok "shell prefix runs the command with the wrapper first" "$([ "$out" = wrapper ] && [ $rc = 3 ] || echo "got '$out', exit $rc")"
+ok "shell prefix logs each command" "$(grep -q 'git; exit 3' "$T/pfx/.eval-prefix.log" 2>/dev/null || echo 'not logged')"
 
 # The README's case map names every case.
 ok "README maps every case" "$(for d in evals/*/; do n=$(basename "$d"); [ "$n" = results ] && continue

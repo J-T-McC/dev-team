@@ -1,0 +1,16 @@
+#!/bin/bash
+# CLAUDE_CODE_SHELL_PREFIX for eval runs on macOS (evals/README.md § git on macOS). It lives outside evals/, which a run
+# can't read, and has no .sh so CI doesn't run it as a test suite.
+# Claude Code runs each shell command it spawns as `<this> '<invocation>'`; a Bash tool invocation starts by sourcing a
+# snapshot of a login zsh when one exists. So git and python3 are fixed three ways, whichever reaches the command:
+#   - the scaffold's wrappers in ~/.eval-bin, first in the startup files the snapshot is taken from;
+#   - the same folder first here, for commands that run without a snapshot;
+#   - the /usr/bin xcrun stubs pointed at the Command Line Tools, so they needn't look tools up through xcodebuild,
+#     which the sandbox blocks.
+# Each invocation is logged to the run's ~/.eval-prefix.log, which the env-git case prints.
+{ printf '%s\n--\n' "$*" >> "$HOME/.eval-prefix.log"; } 2>/dev/null
+[ -x "$HOME/.eval-bin/git" ] && export PATH="$HOME/.eval-bin:$PATH"
+d=/Library/Developer/CommandLineTools; [ -x "$d/usr/bin/git" ] || d=$(xcode-select -p 2>/dev/null)
+[ -n "$d" ] && export DEVELOPER_DIR=$d xcrun_nocache=1
+if [ $# -gt 1 ]; then exec "$@"; fi
+exec /bin/bash -c "$1"

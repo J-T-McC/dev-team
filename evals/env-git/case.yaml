@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: env-git
+description: "The run's shell has a working git (macOS). Run first on a new machine; its output shows which fix reached the shell."
+tags: [env]
+runs: 1
+execution:
+  prompt: |
+    Run this exact command with the Bash tool, once, and nothing else. Then reply with its full output, unchanged.
+
+    echo "0=$0 SHELL=$SHELL ZDOTDIR=$ZDOTDIR DEVELOPER_DIR=$DEVELOPER_DIR"; echo "$PATH" | tr : '\n' | head -4; command -v git; git --version; git log --oneline -1; command -v python3; python3 -c 'print("py", 6*7)'; echo "-- startup files read:"; cat ~/.eval-startup.log; echo "-- prefix log:"; head -c 3000 ~/.eval-prefix.log
+  max_turns: 4
+  timeout_seconds: 180
+  allowed_tools: [Bash]
+context:
+  scaffold_script: scaffold.sh
