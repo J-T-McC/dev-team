@@ -75,6 +75,6 @@ Deferred work (scope cuts, tech debt, known bugs nobody is fixing yet) becomes a
 
 By default every role runs in your conversation. Claude invokes the role's skill, and the role's boundaries and gates apply exactly as if a separate agent had done the work, without the startup cost. A role's agent is started only when it pays for itself: for independent streams of work running at once, for pipeline reviews (always in the reviewer agent, so code is never reviewed by the conversation that wrote it), or to hand a big phase to a fresh context when the conversation has grown long.
 
-The [Orca runtime](/dev-team/orca/) is the alternative, with every role as its own long-lived session.
+The [Orca runtime](/dev-team/orca/) is the alternative, with every role as its own Claude Code session, a fresh one for each task, and several running at once.
 
 Full rules: [workflow/overview.md](https://github.com/J-T-McC/dev-team/blob/main/workflow/overview.md) and [workflow/handoffs.md](https://github.com/J-T-McC/dev-team/blob/main/workflow/handoffs.md).

@@ -11,6 +11,14 @@ A [Claude Code](https://code.claude.com) plugin that runs feature work the way a
 
 Then ask Claude to `run the dev-team:bootstrap skill` in your project.
 
+## Two ways to run it
+
+By default every role runs inside your own Claude Code conversation, one at a time. Claude loads the role's rules, does the phase and hands off through a document, so most work never pays for an agent's startup. An agent starts only when it earns its cost: independent streams of work running at once, a review by fresh eyes, or a phase too big for the conversation. If you don't use Orca, this is all you need.
+
+On the [Orca runtime](https://j-t-mcc.github.io/dev-team/orca/), every role runs as its own top-level Claude Code session (never a subagent) with your project's full tools, and several developers build at once in their own worktrees. Your session becomes the coordinator. It hands out tasks, answers the peers and takes your approvals, and waiting on peers or CI costs it nothing. Every task starts a fresh session, so this mode spends more; it pays when parallel work is worth that.
+
+Either way, the requirements, decisions, plans, task records and reviews are written to your repo, so work survives a context reset and the next session starts from the files.
+
 The plugin brings no stack, skills or tools of its own: roles run on what your project gives a Claude session. Every agent, or Orca peer, starts with your `CLAUDE.md` files, installed skills and plugins, MCP servers and SessionStart hooks, so trim what the roles don't use before running several at once ([what your project costs](https://j-t-mcc.github.io/dev-team/getting-started/#check-what-your-project-costs)).
 
 ## How it works
@@ -112,7 +120,7 @@ Project-level skills (`.claude/skills/`) work out of the box: every role has you
 /plugin update dev-team@dev-team       # then update the plugin itself
 ```
 
-Every commit to this repo is a new version (no version pinning). Seeded files (workspace `standards/` and `stack/`, the dev-team section) are project-owned and are **not** touched by updates — use the sync command below to catch up.
+Every commit to this repo is a new version (no version pinning); [releases](https://github.com/J-T-McC/dev-team/releases) mark stable points and carry the notes. Seeded files (workspace `standards/` and `stack/`, the dev-team section) are project-owned and are **not** touched by updates — use the sync command below to catch up.
 
 ## Sync seeds (per project)
 

@@ -1,8 +1,9 @@
 ---
-title: dev-team
-description: A Claude Code plugin that runs feature work like a small software team, through documents in your repo.
+title: A multi-agent development team for Claude Code
+description: A Claude Code plugin whose six roles take a feature from request to reviewed code, in your own conversation to keep token use low, or as parallel agent sessions on Orca.
 template: splash
 hero:
+  title: dev-team
   tagline: Six roles take a feature from request to reviewed code, writing everything down in your repo as they go. You sign off where it matters and nowhere else.
   actions:
     - text: Get started
@@ -18,6 +19,21 @@ import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import { Image } from 'astro:assets';
 import boardLight from '../../../../examples/board/board-light.png';
 import boardDark from '../../../../examples/board/board-dark.png';
+
+## Two ways to run it
+
+The roles, documents and gates are the same either way. What changes is where each role runs.
+
+| | Default | [Orca runtime](/dev-team/orca/) |
+|---|---|---|
+| Where roles run | in your Claude Code conversation, one at a time | each in its own Claude Code session, several at once |
+| Your session | works through each phase with you | coordinates: hands out tasks, answers the peers' questions, takes your approvals |
+| Parallel work | a subagent for each independent stream, only when it pays | developers in their own worktrees, building at the same time |
+| Token use | low: most work never starts an agent | higher: every task starts a fresh session, about 35k tokens in one measurement, most of it your project's own context |
+| While you're away | waits for you | [check-ins](/dev-team/checkins/) keep work moving on a schedule |
+| Needs | Claude Code | Claude Code run from Orca, and `/dev-team:orca` |
+
+If you don't run Claude from Orca, the default is all you need. If you do, the [recommended setup](/dev-team/orca-recommended/) configures a full team in one step.
 
 ## How a feature moves
 
@@ -35,7 +51,7 @@ Bugs and chores skip all of that. The senior-developer fixes them with tests and
 
 ## Why it works this way
 
-Nothing lives only in a chat. A role's decisions go into the workspace, so the next role, or a fresh session next week, starts from the file and not from memory. Roles run inside your own conversation by default, which costs far less than starting an agent for each one; a separate agent is used only for parallel work, an independent review, or a phase too big for the current conversation. The plugin brings no stack or tools of its own, so [your project's setup](/dev-team/getting-started/#check-what-your-project-costs) decides most of what each session costs. And every role assumes mistakes, its own included: it checks its output against the source documents before handing off, and questions an input that looks wrong instead of quietly working around it.
+Nothing lives only in a chat. A role's decisions go into the workspace, so the next role, or a fresh session next week, starts from the file and not from memory. The plugin brings no stack or tools of its own, so [your project's setup](/dev-team/getting-started/#check-what-your-project-costs) decides most of what each session costs. And every role assumes mistakes, its own included: it checks its output against the source documents before handing off, and questions an input that looks wrong instead of quietly working around it.
 
 How much you're asked is your call. At one end you sign every gate. At the other the roles sign everything except the floor: irreversible changes, security, spending, and anything that leaves the repository. [Autonomy](/dev-team/autonomy/) has the levels.
 
