@@ -15,6 +15,12 @@ else
 fi
 [ -d "$P/$WS/product" ] && echo "dev-team: this workspace uses the old type-first layout — run /dev-team:sync to move it to feature folders."
 
+# The Orca runtime, Owner board and check-ins run Python scripts; without Python 3.9+ the guard hooks stay off.
+if grep -qsE 'Runtime: Orca|\*\*Owner board:\*\*' "$P/CLAUDE.md" "$P/CLAUDE.local.md" || [ -f "$P/$WS/standards/checkins.md" ]; then
+  python3 -c 'import sys; sys.exit(sys.version_info < (3, 9))' 2>/dev/null ||
+    echo "dev-team: this project uses the Orca runtime, Owner board or check-ins, which need Python 3.9 or newer, but python3 is missing or older. The coordinator's guard hooks are off until it is installed. Tell the user once how to get it: on macOS \`xcode-select --install\`, on Linux their package manager, on Windows WSL."
+fi
+
 # Warn when an agent's memory directory grows beyond ~64KB so the user can ask that agent to curate it.
 mem_dir="$P/.claude/agent-memory"
 if [ -d "$mem_dir" ]; then

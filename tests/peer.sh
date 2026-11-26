@@ -421,4 +421,17 @@ ok "board guard without Orca, via the hook script" '[[ $OUT == *"block"*"no boar
 rm CLAUDE.md; OUT=$(echo '{}' | CLAUDE_PROJECT_DIR="$T/p3" CLAUDE_PLUGIN_ROOT="$REPO" "$REPO/hooks/coordinator.sh" stop)
 ok "no board, no peers: the hook script is silent" '[ -z "$OUT" ]'
 
+# without Python 3.9+, the guard hook stays quiet and SessionStart says why, once per session
+mkdir -p "$T/nopy" && printf '#!/bin/sh\necho "python3: not found" >&2; exit 127\n' > "$T/nopy/python3" && chmod +x "$T/nopy/python3"
+start() { CLAUDE_PROJECT_DIR="$T/p3" CLAUDE_PLUGIN_ROOT="$REPO" "$REPO/hooks/session-start.sh" 2>&1; }
+printf -- '- **Owner board:** https://claude.ai/artifact/x\n' > CLAUDE.md
+OUT=$(echo '{}' | PATH="$T/nopy:$PATH" CLAUDE_PROJECT_DIR="$T/p3" CLAUDE_PLUGIN_ROOT="$REPO" "$REPO/hooks/coordinator.sh" stop 2>&1); RC=$?
+ok "no python3: the guard hook is silent"   '[ -z "$OUT" ] && [ $RC = 0 ]'
+OUT=$(PATH="$T/nopy:$PATH" start)
+ok "no python3: session start says so"      '[[ $OUT == *"need Python 3.9 or newer"* ]]'
+OUT=$(start)
+ok "with python3: session start doesn't"    '[[ $OUT != *Python* ]]'
+rm CLAUDE.md; OUT=$(PATH="$T/nopy:$PATH" start)
+ok "no board, Orca or check-ins: no warning" '[[ $OUT != *Python* ]]'
+
 exit $fail
