@@ -7,7 +7,7 @@ Sync this project's workspace with the plugin's seeds. Seeds are **project-owned
 1. **Read the Workspace line** (from `CLAUDE.local.md`, else `CLAUDE.md`):
 
 ```bash
-source "${CLAUDE_PLUGIN_ROOT}/bin/_workspace.sh" . && echo "root=$WS features=$FEATURES committed=$WS_COMMITTED"
+source "${CLAUDE_PLUGIN_ROOT}/bin/_workspace.sh" . && echo "root=$WS features=$FEATURES committed=$WS_COMMITTED mode=$WS_MODE"
 ```
 
 A project with no Workspace line uses the defaults; offer to add the line to its dev-team section so the settings are visible.
@@ -25,10 +25,12 @@ cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/triage.md"          "$WS/triage.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/friction-log.md"    "$WS/friction-log.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/backlog-index.md"   "$WS/backlog/index.md"
 cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/backlog-archive.md" "$WS/backlog/archive.md"
-cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/standards/"*.md     "$WS/standards/"
+for f in planning documentation review coding testing architecture design; do  # only those that apply, below
+  cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/standards/$f.md" "$WS/standards/"
+done
 ```
 
-**Guest mode** (the dev-team section is in `CLAUDE.local.md`): copy only the process standards — `planning.md`, `documentation.md`, `review.md`. Code conventions (`coding.md`, `testing.md`, `architecture.md`, `design.md`) come from the repo itself; copy one only if the repo documents nothing on that subject and the Owner wants it. `tickets.md` and `checkins.md` are never copied here — `/dev-team:tickets` and `/dev-team:checkins` add them when enabled.
+Copy only the standards that apply. `design.md` only when the project has a user interface or will have one (its stack or features say so). **Guest mode** (`mode=guest`): copy only the process standards — `planning.md`, `documentation.md`, `review.md`. Code conventions (`coding.md`, `testing.md`, `architecture.md`, `design.md`) come from the repo itself; copy one only if the repo documents nothing on that subject and the Owner wants it. `tickets.md` and `checkins.md` are never copied here — `/dev-team:tickets` and `/dev-team:checkins` add them when enabled.
 
 4. **Drift check** on what already existed: `"${CLAUDE_PLUGIN_ROOT}/bin/seed-drift" .` lists what the plugin added since the project's copies were made — seed sections missing from `$WS/standards/*.md`, workspace files missing, seed rules missing from the dev-team section (`CLAUDE.md`, or `CLAUDE.local.md` in guest mode) and from its Team setup section when the project took the recommended Orca setup, Orca Runtime-line settings renamed or added (`${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` § Opt in), and links inside the workspace to a folder that contains them (a loop for every tool that walks it). It compares names only; every other difference is a project customization and always wins.
 
@@ -36,4 +38,4 @@ cp -n "${CLAUDE_PLUGIN_ROOT}/seeds/standards/"*.md     "$WS/standards/"
 
 6. **Under the Orca runtime** with no `## Team setup` section in the dev-team section, end the report with one line: the recommended setup is available with `/dev-team:orca recommended` (`${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md`). An offer, not drift. With the section, `seed-drift` reports any rule it lacks.
 
-7. Remind the user to fill placeholders in newly copied files and to commit — to the project repo, or, for an uncommitted workspace, nothing to do: the Stop hook commits the workspace's own repository, and pushes it once it has an upstream.
+7. Offer to commit what was copied, for a committed workspace. An uncommitted one needs nothing: the Stop hook commits the workspace's own repository, and pushes it once it has an upstream. Sections marked _open_ in copied files are not homework: the first plan that needs one sets it.

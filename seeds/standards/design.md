@@ -1,6 +1,6 @@
 # Design Standards
 
-> **Placeholder** — customize per project. Owned by the Designer (proposes) and Project Owner (approves).
+> Owned by the Designer (proposes) and Project Owner (approves). A section marked _open_ is set by the first design spec that needs it, which proposes it for the Owner's yes.
 
 ## Requirements (active)
 - Every UI-bearing user story maps to a flow in the design spec (plugin `templates/design-spec.md`); states (empty, loading, error, success) are designed wherever they occur.
@@ -12,23 +12,23 @@
 - A clear point of view beats a safe default: the design should stand out next to a generic version of itself.
 - No copy that explains what the design already makes obvious — no labels restating button text, no helper text for self-evident fields.
 - Empty, loading, and error states get the same care as the happy path.
-- _Customize: brand voice, references the team admires, how far to push._
+- Brand voice, and references the team admires: _open_.
 
 ## Design tool (active)
 Where mockups live. `none` → self-contained HTML in `<feature>/mockups/`.
 - **Tool:** none *(e.g. `figma`, `penpot` — reached through its MCP server)*
-- **MCP server:** _TBD_
-- **File / project / page for mockups:** _TBD_
+- **MCP server:** — *(set with the tool)*
+- **File / project / page for mockups:** — *(set with the tool)*
 - **Snapshot in the workspace:** yes *(a PNG or HTML copy of each key screen beside the frame links, so roles without the tool — and cheaper reads — can check UI against it)*
 
 ## Design system
-_TBD — component library, tokens, spacing/typography scales._
+_Open — component library, tokens, spacing/typography scales._
 
 ## Interaction patterns
-_TBD — validation feedback, confirmation dialogs, loading and error conventions._
+_Open — validation feedback, confirmation dialogs, loading and error conventions._
 
 ## Accessibility baseline
-_TBD — target WCAG level, keyboard support, screen-reader requirements._
+- WCAG 2.2 AA; everything works with a keyboard alone and reads correctly in a screen reader.
 
 ## Responsive targets
-_TBD — supported breakpoints/form factors._
+_Open — the screen sizes and devices it supports, from where the product runs._

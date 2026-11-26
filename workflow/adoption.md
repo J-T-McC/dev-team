@@ -25,7 +25,7 @@ Everything started after adoption begins at Product Manager triage, like any new
 
 ## Harvesting standards and the stack
 
-Placeholders are the wall a new adopter hits: roles stop and ask rather than guess, and in an existing codebase they are asking questions the repository can answer. So the Principal Engineer **proposes** filled standards, and the Owner approves or corrects — the ownership the standards headers already state, with a workflow behind it.
+Open standards are the wall a new adopter hits: roles stop and ask rather than guess, and in an existing codebase they are asking questions the repository can answer. So the Principal Engineer **proposes** filled standards, and the Owner approves or corrects them in one go, in setup's digest — the ownership the standards headers already state, with a workflow behind it.
 
 Evidence sources, in order of authority:
 
@@ -37,23 +37,26 @@ Evidence sources, in order of authority:
 
 Rules that keep the harvest honest:
 
-- **Cite or leave blank.** Every proposed line names the file it came from. Anything the repository does not answer stays `_TBD_` — a plausible guess in a standards file is worse than a placeholder, because placeholders make roles ask and guesses make them confident.
+- **What runs is the standard.** A tool counts when the project's scripts, CI, or git hooks run it (`bin/setup-detect`: `code.runs`, `code.tools_run`). Config that nothing runs (`code.config_not_run`), and a tool only a README or an editor setting mentions, are not the project's standard. Each such mismatch becomes one `debt` backlog item; it is never a question for the Owner at setup.
+- **Cite, or suggest and say so.** Every line found in the repository names the file it came from. A section the repository does not answer gets a suggestion from current practice for this stack, including what helps agents work well (one command that runs every check, strict types, fast targeted tests, errors that say what to do), marked `(suggested at setup)` and listed in the digest for the Owner's yes. An unlabelled guess is worse than an open section, because open sections make roles ask and guesses make them confident.
 - **Describe, do not reform.** The harvest records what the project *does*, including things the Principal Engineer would not have chosen. Improving a convention is a later, separate proposal.
-- **Conflicting evidence is a question, not an average.** Two error-handling patterns in the codebase means the Owner picks one; it does not mean the standard says "either".
-- The Owner approves the whole file; the result is project-owned like any other seed.
+- **Conflicting evidence is a question, not an average.** Two error-handling patterns in the codebase means the Owner picks one, in the digest, with the more common one suggested; it does not mean the standard says "either".
+- **Guest mode** records only what the repository does not already document.
+- The Owner approves the result in the digest; it is project-owned like any other seed.
 
 ## Before writing anything: survey
 
 Two collisions to settle first, because both are cheaper to resolve before the scaffold lands than after.
 
-**Where the workspace goes.** Choose the workspace root and the features folder (`workflow/workspace.md`) before anything is written. An existing `docs/` can host them — the folders are additive — unless it is a *published site* or a generated artifact, where new subdirectories get built, deployed, or wiped. A project dev-team does not own uses guest mode instead. Report what is already there and confirm with the Owner.
+**Where the workspace goes.** Setup's default root, `dev-team/` (`.dev-team/` for a guest), stays clear of the project's own folders. If that folder already exists and is not a dev-team workspace (`setup-detect`: `dev_team_dir: taken`), use another name and say so in the digest. Never put the workspace in a *published site* or a generated folder, where new subdirectories get built, deployed, or wiped. A project dev-team does not own uses guest mode.
 
-**An existing `CLAUDE.md`.** Appending the seed section is only safe when the file does not already rule on the same subjects. Scan for existing rules on commit messages, document locations, review or approval process, and branch/PR policy. Report each conflict as a pair — the project's rule and the seed's rule — and let the Owner name the winner. Delete the loser rather than leaving both; two rules on one subject is worse than either rule alone.
+**An existing `CLAUDE.md`.** Appending the seed section is only safe when the file does not already rule on the same subjects. Scan for existing rules on commit messages, document locations, review or approval process, and branch/PR policy. The project's rule wins by default, since it is the one in use: leave the seed's rule on that subject out, or adapt it to the project's. The digest lists each pair, so the Owner can take the seed's rule instead; then the project's line goes, with the Owner's yes. Never edit or delete the project's own lines otherwise. Two rules on one subject is worse than either rule alone.
 
 ## Order
 
-1. **Survey** — workspace location (or guest mode), existing `CLAUDE.md` conflicts. Resolve both with the Owner.
+1. **Survey** — workspace location (or guest mode), existing `CLAUDE.md` conflicts.
 2. **Scaffold** — seed sync creates directories and copies missing seeds.
-3. **Harvest** — Principal Engineer proposes `stack.md`, `coding.md`, `testing.md` with citations; Owner approves. Remaining standards stay as seeded.
-4. **Declare in-flight work** — status rows at true phases, `pre-adoption` approvals recorded.
-5. **Stop.** Nothing else is documented. The next *new* piece of work starts at Product Manager triage.
+3. **Harvest** — Principal Engineer writes `stack.md`, `coding.md`, `testing.md` with citations and labelled suggestions, and files each tool mismatch to the backlog. Remaining standards stay as seeded.
+4. **Declare in-flight work** — status rows at true phases, `pre-adoption` approvals recorded; the Owner's open pull requests (`setup-detect`: `open_prs`) are the first candidates.
+5. **Digest** — one message to the Owner: what was found and from where, the suggestions, the conflicts, the backlog items, the in-flight rows. Use these / show me the files first / change something.
+6. **Stop.** Nothing else is documented. The next *new* piece of work starts at Product Manager triage.

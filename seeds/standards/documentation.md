@@ -26,7 +26,7 @@ Agents read the live documents many times a day, so their size is paid for on ev
 ## Placeholders (customize per project)
 
 ### Diagrams
-_TBD — tool and format (e.g. Mermaid in markdown)._
+Mermaid in markdown, so diagrams diff and render where the documents do.
 
 ### Document lifecycle
 Superseded text is deleted, not archived; git history keeps it.

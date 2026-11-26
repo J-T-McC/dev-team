@@ -5,11 +5,11 @@ description: Every line, file and environment variable a project uses to configu
 
 ## Lines in CLAUDE.md
 
-All of these go in the project's dev-team section: `CLAUDE.md`, or `CLAUDE.local.md` in guest mode. Bootstrap writes the first two.
+All of these go in the project's dev-team section: `CLAUDE.md`, or `CLAUDE.local.md` for "just me" and guest mode. Setup writes the first two.
 
 | Line | Example | Sets |
 |---|---|---|
-| [`**Workspace:**`](/dev-team/workspace/#the-workspace-line) | `` `docs` · features `docs/features` · folders `slug` · committed `` | where documents go and how folders are named |
+| [`**Workspace:**`](/dev-team/workspace/#the-workspace-line) | `` `dev-team` · features `dev-team/features` · folders `slug` · committed `` | where documents go and how folders are named |
 | [`**Autonomy:**`](/dev-team/autonomy/) | `standard`, or `autonomous; Owner keeps: PRD, release` | who signs each gate |
 | [`**Role models:**`](/dev-team/roles/#models-and-effort) | `designer: opus/high; senior-developer: sonnet` | the model and effort per role |
 | [`**Runtime: Orca.**`](/dev-team/orca/) | see below | the Orca runtime and its launch settings |

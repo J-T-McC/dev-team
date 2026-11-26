@@ -2,7 +2,7 @@
 
 Paid evals for dev-team's setup flow, run with [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals.md). Each run is a full Claude session on your own plan, so the suite runs only at the points below, and only the cases that cover what changed. `tests/evals.sh` checks the suite for free on every PR: its case files and graders use only documented fields, its fixtures build what its cases grade, and this README maps every case.
 
-The cases describe the **v1 setup flow**: one question about whose project it is, suggested answers from `bin/setup-detect`, and a `dev-team/` workspace. Until v1 lands, most of them fail on today's setup, which is the baseline.
+The cases describe the **v1 setup flow**: one question about whose project it is, suggested answers from `bin/setup-detect`, and a `dev-team/` workspace. The setup before v1 failed most of them; that is the [baseline](#baseline), and [v1](#v1) is measured against it.
 
 ## When to run
 
@@ -43,7 +43,7 @@ claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit --
   - the prefix also points the stubs at the Command Line Tools.
 
   The prefix lives outside `evals/`, because a run can't read `evals/`. Run `env-git` first on a new machine: its output shows which layer reached the shell.
-- **No new repository.** The sandbox blocks writes to a new repository's `.git/hooks` and `.git/config`, so `git init` fails in a run. A guest workspace's own history can't be created there, so `guest-all-answers` grades the attempt and what the user is told. Users with Claude Code's sandbox turned on will hit the same block.
+- **No new repository, no writes into `.git/`.** The sandbox blocks writes to a new repository's `.git/hooks` and `.git/config`, so `git init` fails in a run, and the run's permission mode refuses writes into the project's `.git/`, such as `.git/info/exclude`. So `guest-all-answers` grades the attempt at both, and what the user is told. Users with Claude Code's sandbox turned on hit the first block; everyone else gets a permission prompt for the second.
 - **"Writes nothing"** means no Write or Edit call and no new `.md` file. Setup also writes with `cp` and `sed`, which only the second check catches. A file it changes in place with Bash isn't caught.
 - **No environment per case.** A case can't set `PATH` or variables other than `EVAL_*`, so running inside Orca, the plan sizes and a missing Python are tested by `tests/setup-detect.sh` instead.
 
@@ -57,7 +57,7 @@ claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit --
 | `stack-missing-facts` | empty | "let the team pick" without saying where it runs: asks where it runs and is hosted before picking; no ADR, writes nothing |
 | `new-all-answers` | empty | writes `dev-team/status.md` (not `docs/`); a committed `dev-team` Workspace line; ends with a next step, no TBD homework |
 | `existing-all-answers` | ts-shop | the coding standard names Biome and cites `package.json` or `biome.json`, not Prettier or Oxlint; the mismatch is in the backlog; the project's commit style and its own `CLAUDE.md` line are kept |
-| `guest-all-answers` | ts-shop | their `CLAUDE.md` and `.gitignore` untouched; the section in `CLAUDE.local.md` with a `.dev-team`, not-committed Workspace line; `.dev-team` in `.git/info/exclude`; tries `git init` for its own history and tells the user if that failed |
+| `guest-all-answers` | ts-shop | their `CLAUDE.md` and `.gitignore` untouched; the section in `CLAUDE.local.md` with a `.dev-team`, not-committed Workspace line; tries to add `.dev-team` to `.git/info/exclude` and to `git init` its own history, and tells the user what failed |
 | `rerun` | set-up | says it's already set up, shows the settings, offers changes; writes nothing |
 | `checkins-plain-words` | set-up | "can you set up check-ins" reaches the check-ins setup and explains that it needs Orca; writes nothing |
 
@@ -75,7 +75,7 @@ Fixtures are each case's `scaffold.sh`. Cases that share one keep identical copi
 | `bin/setup-detect` | none (`tests/setup-detect.sh`), unless it changes what setup shows: then the `stage-1` cases |
 | `seeds/CLAUDE.project.md`, `seeds/standards/`, `seeds/stack.md` | the `stage-2` cases |
 | the commit format in `seeds/standards/coding.md` | `new-no-answers`, `existing-no-answers`, `existing-all-answers` |
-| harvest or stack-pick rules in `skills/principal-engineer/` | `existing-all-answers`, `stack-missing-facts` |
+| harvest or stack-pick rules in `skills/principal-engineer/`, `workflow/stack-pick.md` | `existing-all-answers`, `stack-missing-facts` |
 | `skills/orchestrator/` routing, `commands/` | `checkins-plain-words` |
 | anything else | none |
 
@@ -88,6 +88,28 @@ Measured on Opus 5.5, at API prices (on a subscription, runs count against your 
 - the `llm` judges: under $0.01 a run.
 
 All 9 cases once: about $2.40. Three runs each: about $7.
+
+## v1
+
+**2026-11-26**, the v1 branch, Opus 5.5, 1 run per case:
+
+| Case | Baseline | v1 | Turns | Cost | What v1 does |
+|---|---|---|---|---|---|
+| `env-git` | 1.00 | 1.00 | 2 | $0.13 | git and python3 work in the run |
+| `new-no-answers` | 0.50 | 1.00 | 4 | $0.17 | runs `setup-detect`; asks whose project, autonomy, commits and what you're building, in plain words |
+| `existing-no-answers` | 0.67 | 1.00 | 4 | $0.17 | recommends keeping conventional commits with ENG IDs, quoting a real commit |
+| `stack-missing-facts` | 0.80 | 1.00 | 5 | $0.19 | asks where it runs, where it's hosted, who uses it, what it stores and what it must use, each with a suggestion |
+| `new-all-answers` | 0.00 | 1.00 | 8 | $0.28 | writes `dev-team/` with a committed Workspace line; ends with a first request to try; no homework |
+| `existing-all-answers` | 0.20 | 1.00 | 12 | $0.49 | Biome cited from its config and scripts; Prettier and Oxlint filed to the backlog; commit style and the project's own lines kept |
+| `guest-all-answers` | 1.00 | 1.00 | 30 | $0.76 | writes only `CLAUDE.local.md` and `.dev-team/`; tries the exclude line and `git init`, and gives the commands for both when the run blocks them |
+| `rerun` | 0.50 | 1.00 | 5 | $0.18 | shows the settings and asks what to change; copies nothing |
+| `checkins-plain-words` | 1.00 | 1.00 | 6 | $0.14 | reaches check-ins and explains Orca |
+
+How it got there, $7.32 in all:
+
+- **Run 1** ($3.23) wasn't valid. `setup-detect` couldn't make its temp folder in the sandbox: on macOS a bare `mktemp -d` ignores `TMPDIR`. Every case then read the machine wrong (no Python, no Orca), and Claude Code's sandbox would do the same to real users. Fixed in the script. The `detect` graders also missed a quoted command path, and were fixed.
+- **Run 2** ($2.44), every case. Two misses left. The commit question didn't name the project's style in words, and the skill now says to. The guest case's exclude line was refused: the run's permission mode blocks writes into `.git/`, so its grader now checks the attempt and what the user is told, like the history graders.
+- **Re-runs** of those two cases ($1.65). The guest case ran twice: the first time, one judge that checked two things at once failed a message that covered both, so it was split into two judges, one per thing.
 
 ## Baseline
 

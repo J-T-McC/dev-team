@@ -25,4 +25,4 @@ For changes that touch access, money, or existing data, check in this order and 
 3. **Cost** — performance and spend.
 
 ## Checklists
-_TBD — per-project checklist (security, performance, accessibility…)._
+None beyond § Review order. Add one when reviews keep missing the same thing.

@@ -27,10 +27,10 @@ Rules:
 What agents in this project cannot do; the Product Manager checks every request against it before triage, and any role that hits one mid-work stops and marks the feature blocked on the Owner.
 - Anything on the autonomy floor: deploys and releases outside the repo, payments, deleting or migrating existing data, security-sensitive changes the Owner has not signed.
 - Steps that need a person: meetings, sign-offs, stakeholder or customer conversations.
-- _Customize: systems agents cannot reach (production data, third-party dashboards, devices), and work the team keeps for humans._
+- Systems agents cannot reach in this project, and work the team keeps for people: none listed yet. Add them as they come up.
 
 ## Estimation
-_TBD — whether estimates are used at all._
+None: work is sized as tasks instead (§ Task sizing).
 
 ## Definition of done
-_TBD — default: acceptance criteria met, tests written and passing, completion notes recorded in the task file, status flipped in the index._
+Acceptance criteria met, tests written and passing, completion notes recorded in the task file, status flipped in the index.

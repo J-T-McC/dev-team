@@ -51,7 +51,7 @@ Whoever reports to the Owner — the orchestrator, the coordinator under Orca, o
 - **The Owner first.** Answer the Owner before doing any role or peer work.
 - **Sort before asking.** A real decision — product, money, real accounts or people, production — goes to the Owner. A tooling gap is reported as what is missing, so it gets fixed. Agent work is done, not asked about.
 - **Questions stand alone.** Say what a person sees today, what the choice changes for them, and what you recommend, in plain words. Internal names — criterion, task, or PR numbers — are references, never the explanation.
-- **Ask in chat,** never in a question dialog: one that opens mid-reply cuts the Owner off.
+- **Ask in chat,** never in a question dialog: one that opens mid-reply cuts the Owner off. Setup's opening questions are the exception (`skills/bootstrap`), since nothing else is in flight.
 - **End with what is waiting.** A reply that leaves anything open ends with a numbered **Waiting on you** list, re-asked until each item is answered; drop what the Owner has parked.
 
 ## Plain language
