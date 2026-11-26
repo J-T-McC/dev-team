@@ -22,5 +22,5 @@ This repo **is** the dev-team Claude Code plugin and its marketplace. Do not sca
 - Path rules: plugin-internal references use `${CLAUDE_PLUGIN_ROOT}/…`; workspace references use project-relative `docs/…`
 - A change people would notice — a command, setting, state, or behaviour — updates its `site/` page in the same PR
 - Run `claude plugin validate .` and `tests/*.sh` before committing. Never run `evals/` without the maintainer's OK on the cases, runs and cost cap (`evals/README.md`); CI (`.github/workflows/tests.yml`) runs `tests/*.sh` on Linux and macOS for every PR
-- A PR's title becomes its squash commit and sets the release (`.github/workflows/release.yml`): `feat` → minor, `fix` or `perf` → patch, `!` → major, other types → none. The `pr title` check fails a title that isn't a conventional commit
+- A PR's title becomes its squash commit and sets the release (`.github/workflows/release.yml`): `feat` → minor, `fix` or `perf` → patch, `!` → major, other types → none, and the release job is skipped (`.github/release-due.sh`). The `pr title` check fails a title that isn't a conventional commit
 - Consuming projects pull changes with `/plugin update dev-team@dev-team`, then `/dev-team:sync` for seed drift
