@@ -16,12 +16,14 @@
   peer sizes             each peer's context size against the project's Peer size limit
   peer limits [--clear [<model>]]  models out of usage, as the watcher saw them
   peer list [--board-json <dir>]   homes, roles, models, worktrees, current task; or Owner-board peers rows as files
+  peer team [--create | --rename <home> <name>]   the homes Team setup names, with each one's name; --create makes
+                         every home's worktree now (no session until its first task); --rename gives a home a new name
   peer board-stamp [--rows <dir>]  record that the Owner board matches <ws>/status.md now (workflow/board.md)
   peer hook prompt|stop  the coordinator's guard hooks (hooks/coordinator.sh)
 
 Homes, the team's Run, and its PRs are machine-local state: <git common dir>/dev-team/peers.json.
 """
-import hashlib, json, os, re, shlex, shutil, signal, subprocess, sys, time
+import hashlib, json, os, random, re, shlex, shutil, signal, subprocess, sys, time
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -51,6 +53,16 @@ STUCK = re.compile(r"API Error[^\n]*|\S*overloaded_error[^\n]*", re.I)
 RESUME = "Resume this session with"  # Claude prints it on exit: what is above it on the screen is a dead session
 MONTHS = "jan feb mar apr may jun jul aug sep oct nov dec".split()
 ROLE_RANK = {"product-manager": 1, "designer": 2, "principal-engineer": 3, "senior-developer": 4, "reviewer": 5}
+# Each home gets a first name the first time it's used, shown beside its role (workflow/orca.md § Topology).
+NAMES = ("Ada", "Alma", "Ari", "Bea", "Bob", "Bruno", "Cal", "Cleo", "Dara", "Eli", "Elsa", "Esme", "Finn", "Gus",
+         "Hana", "Hugo", "Ida", "Ines", "Iris", "Ivo", "Jada", "Jonah", "Juno", "Kai", "Kit", "Lena", "Leo", "Lou",
+         "Mae", "Mara", "Maya", "Milo", "Nell", "Nia", "Nico", "Noor", "Ola", "Omar", "Otis", "Pablo", "Pia", "Quinn",
+         "Rafa", "Remy", "Rita", "Rosa", "Ruth", "Sana", "Sandra", "Saul", "Sol", "Tess", "Theo", "Uma", "Vera",
+         "Wren", "Yara", "Yuki", "Zane", "Zora")
+ROLE_WORD = {"product-manager": "product manager", "designer": "designer", "principal-engineer": "lead engineer",
+             "senior-developer": "developer", "reviewer": "reviewer"}
+HOME_ROLE = (("dt-product", "product-manager"), ("dt-designer", "designer"), ("dt-architect", "principal-engineer"),
+             ("dt-reviewer", "reviewer"), ("dt-dev", "senior-developer"))
 FAIL = ("FAILURE", "TIMED_OUT", "STARTUP_FAILURE", "ERROR", "ACTION_REQUIRED")
 PR_URL = re.compile(r"github\.com/([\w.-]+/[\w.-]+)/pull/(\d+)")
 
@@ -505,6 +517,38 @@ def new_worktree(sel, name, base):
     return "path:" + path
 
 
+def pick_name(reg):
+    taken = {h.get("name") for h in reg["homes"].values()}
+    return random.choice([n for n in NAMES if n not in taken] or NAMES)
+
+
+def label(home, h):
+    return f"{h.get('name') or home} · {ROLE_WORD.get(h['role'], h['role'])}"
+
+
+def label_worktree(home, h):
+    """A home's own worktree (named after it, as Team setup makes them) shows the home's name and role in Orca."""
+    path = h.get("worktree")
+    if h.get("env") or not path or Path(path).name != home or h.get("labelled") == path:
+        return
+    d, _ = orca("worktree", "set", "--worktree", "path:" + path, "--display-name", label(home, h))
+    if d.get("ok"):
+        h["labelled"] = path
+
+
+def team_homes():
+    """The homes the dev-team section's Team setup § Homes rule names, in order; `dt-dev-1` to `dt-dev-4` expands."""
+    m = re.search(r"^- \*\*Homes\.\*\*(.*)$", project_text(), re.M)
+    line = re.sub(r"`(dt-[\w-]*?)(\d+)` to `\1(\d+)`",
+                  lambda x: ", ".join(f"`{x.group(1)}{i}`" for i in range(int(x.group(2)), int(x.group(3)) + 1)),
+                  m.group(1) if m else "")
+    return list(dict.fromkeys(re.findall(r"`(dt-[\w-]+)`", line)))
+
+
+def home_role(home):
+    return next((r for prefix, r in HOME_ROLE if home == prefix or home.startswith(prefix + "-")), None)
+
+
 def home_or_die(reg, home):
     h = reg["homes"].get(home)
     if h and h.get("asleep"):
@@ -554,6 +598,9 @@ def cmd_dispatch(argv):
         die(f"{home} is still working on '{h['title']}' ({h['dispatch']}). Wait for its report; to cancel, follow "
             "Orca's recovery guide (worker-stop, then worker-abandon if it reports stop_unknown).")
     wt = val.get("--worktree")
+    name = (h or {}).get("name") or pick_name(reg)
+    if h and h.get("worktree") and not env and wt == "new-top-level" and val.get("--name") == home:
+        wt = None  # `peer team --create` made it already: reuse it
     model, effort, flags = (h or {}).get("model"), (h or {}).get("effort"), []
     version, sel = (h or {}).get("orca"), (h or {}).get("worktree_sel")
     if "--keep" in on_:
@@ -604,7 +651,7 @@ def cmd_dispatch(argv):
             cmd = shlex.join(shlex.split(os.environ.get("DEV_TEAM_CLAUDE", "claude")) + flags)
             d, raw = orca("terminal", "create", "--worktree",
                           new_worktree(target, val.get("--name"), val.get("--base-branch")),
-                          "--title", home, "--command", cmd)
+                          "--title", label(home, {"name": name, "role": role}), "--command", cmd)
             term = find(d, "handle") or die("terminal create failed:\n" + raw[:800], 1)
             orca("terminal", "wait", "--terminal", term, "--for", "tui-idle", "--timeout-ms", "90000")
             path = term_info({"terminal": term}).get("worktreePath") or \
@@ -614,10 +661,11 @@ def cmd_dispatch(argv):
         # Recorded before worker-start, so a failed start still leaves the new session closable.
         reg["homes"][home] = dict(h or {}, role=role, terminal=term, worktree=path or (h or {}).get("worktree"),
                                   dispatch=None, title=title, since=time.strftime("%Y-%m-%d %H:%M"), model=model,
-                                  effort=effort, asleep=False, env=env, orca=version, once=any(once))
+                                  effort=effort, asleep=False, env=env, orca=version, once=any(once), name=name)
+        label_worktree(home, reg["homes"][home])
         save(reg)
 
-    body = ROLE_LINE.format(role=role, home=home)
+    body = ROLE_LINE.format(role=role, home=home) + f" Your name on the team is {name}."
     if "--settings" in flags and not env:
         body += ADVISOR_LINE
     d, raw = orca("orchestration", "worker-start", "--run", run, "--task-title", title, "--spec", body + "\n\n" + spec,
@@ -643,6 +691,7 @@ def cmd_dispatch(argv):
         "since": time.strftime("%Y-%m-%d %H:%M"), "model": model, "effort": effort, "asleep": False,
         "env": env, "worktree_sel": sel if env else None, "orca": version,
         "once": any(once) if mode != "keep" else (h or {}).get("once", False),
+        "name": name, "labelled": reg["homes"].get(home, {}).get("labelled"),
     }
     save(reg)
     if (w.get("dispatch") or {}).get("status") == "failed" or (w.get("worker") or {}).get("state") == "failed":
@@ -650,7 +699,7 @@ def cmd_dispatch(argv):
             "A terminal that already holds a dispatch fails this way: dispatch it fresh"
             + (", without --keep." if mode == "keep" else "."), 1)
     where = f" on {env}" if env else ""
-    print(f"dispatched {home} ({mode}{where}, {model}/{effort}): {title} — {task} {dispatch}")
+    print(f"dispatched {home}, {name} ({mode}{where}, {model}/{effort}): {title} — {task} {dispatch}")
 
 
 # --- switch and sleep -----------------------------------------------------------------------------------------------
@@ -1239,6 +1288,8 @@ def home_state(h):
 def cmd_list(argv):
     _, val, _ = opts(argv, ("--board-json",))
     reg = load()
+    for h in reg["homes"].values():
+        h["name"] = h.get("name") or pick_name(reg)
     states = {home: home_state(h) for home, h in reg["homes"].items()}
     save(reg)
     if val.get("--board-json"):
@@ -1250,22 +1301,67 @@ def cmd_list(argv):
             st, task = states[home], h.get("title") or ""
             doing = task if st == "working" else f"{'Asleep' if st in ('asleep', 'exited') else 'Idle'}" + \
                 (f" · last: {task}" if task and task != "(adopted)" else "")
-            (out / f"{home}.json").write_text(json.dumps({"name": home, "role": h["role"], "doing": doing,
+            (out / f"{home}.json").write_text(json.dumps({"name": h["name"], "role": h["role"], "doing": doing,
                                                           "order": n}, indent=2, ensure_ascii=False) + "\n")
         return print(f"wrote {len(ranked)} peers row(s) to {out}")
     print(f"run: {reg.get('run') or 'none yet'}")
     for home, h in sorted(reg["homes"].items()):
         model = f"{h.get('model') or '?'}/{h.get('effort') or '?'}" + (" (this task)" if h.get("once") else "")
         where = f"@{h['env']}" if h.get("env") else Path(h.get("worktree") or "?").name
-        print(f"{home:14} {h['role']:19} {states[home]:8} {model:24} {where:24} {h.get('title', '')} "
+        print(f"{home:14} {h['name']:8} {h['role']:19} {states[home]:8} {model:24} {where:24} {h.get('title', '')} "
               f"({h.get('since', '?')})")
     for f, v in sorted(limits().items()):
         print(f"out of usage: {f} — {v['text']}")
 
 
+def cmd_team(argv):
+    """The team Team setup names: who is who, and each home's worktree. --create makes the missing worktrees now:
+    worktrees only, since every task starts a fresh session and one started early would only be replaced."""
+    pos, val, on_ = opts(argv, ("--rename",), ("--create",))
+    reg = load()
+    named = team_homes()
+    if val.get("--rename"):
+        home = val["--rename"]
+        h = reg["homes"].get(home) or die(f"no home {home} yet: `peer team --create` or its first dispatch makes it")
+        if len(pos) != 1 or not re.fullmatch(r"[A-Z][\w'-]{0,19}", pos[0]):
+            die("peer team --rename <home> <name>: one name, starting with a capital letter")
+        h.update(name=pos[0], labelled=None)
+        label_worktree(home, h)
+        save(reg)
+        return print(f"{home} is now {label(home, h)}")
+    if "--create" in on_:
+        if not named:
+            die("the dev-team section has no Team setup § Homes rule naming the homes; /dev-team:orca recommended "
+                "writes one. Without it, each home is made by its first dispatch.")
+        for home in named:
+            if (reg["homes"].get(home) or {}).get("worktree"):
+                continue
+            role = home_role(home) or die(f"{home}: can't tell its role from the name; its first dispatch makes it")
+            path = new_worktree("new-top-level", home, None)[len("path:"):]
+            reg["homes"][home] = {"role": role, "terminal": None, "worktree": path, "dispatch": None, "title": "",
+                                  "since": time.strftime("%Y-%m-%d %H:%M"), "asleep": True, "env": None,
+                                  "name": pick_name(reg)}
+            label_worktree(home, reg["homes"][home])
+            save(reg)
+            print(f"{home}: made {path}; no session until its first task")
+    for h in reg["homes"].values():
+        h["name"] = h.get("name") or pick_name(reg)
+    for home, h in reg["homes"].items():
+        label_worktree(home, h)
+    save(reg)
+    for home in named + sorted(set(reg["homes"]) - set(named)):
+        h = reg["homes"].get(home)
+        if h:
+            print(f"{home:14} {label(home, h):28} {home_state(h):8} {h.get('worktree') or '?'}")
+        else:
+            print(f"{home:14} {'':28} {'not made':8} its first dispatch, or `peer team --create`, makes it")
+    save(reg)
+
+
 CMDS = {"dispatch": cmd_dispatch, "tell": cmd_tell, "switch": cmd_switch, "sleep": cmd_sleep, "release": cmd_sleep,
         "adopt": cmd_adopt, "watch": cmd_watch, "pending": cmd_pending, "pr": cmd_pr, "prs": cmd_prs,
-        "sizes": cmd_sizes, "limits": cmd_limits, "list": cmd_list, "board-stamp": cmd_board_stamp, "hook": cmd_hook}
+        "sizes": cmd_sizes, "limits": cmd_limits, "list": cmd_list, "team": cmd_team, "board-stamp": cmd_board_stamp,
+        "hook": cmd_hook}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in CMDS:

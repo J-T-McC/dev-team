@@ -53,7 +53,7 @@ Only the questions that apply; skip the round when none do.
   - **Decide at the first feature:** the team proposes a stack with the first plan, for your yes.
 
   **Let the team pick** needs the facts in `${CLAUDE_PLUGIN_ROOT}/workflow/stack-pick.md` § Facts first. Ask for each one the description left out, each with a suggested answer and room for their own, and pick nothing until they're answered.
-- **Where the team runs** (only when `machine.tools` has `orca`, or `claude.in_orca` is true): recommend `suggest.runtime`, with its reason. The answers: **here, in this conversation** (one role at a time), or **Orca, sized for your plan** (each role its own session, side by side; sizes in `${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md` § Team shape), or Orca at another size.
+- **Where the team runs** (only when `machine.tools` has `orca`, or `claude.in_orca` is true): recommend `suggest.runtime`, with its reason. The answers: **here, in this conversation** (one role at a time), or **Orca, sized for your plan** (each role its own session, side by side; sizes in `${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md` § Team shape), or Orca at another size. In the same round, **when to make the team**, if they pick Orca: **as work needs it (Recommended)**, or **all now**, so the whole team, each with a name, is in Orca's sidebar from the start, with no session or usage until its first task.
 - **Anything else to set up now?** Several answers allowed. Offer the board and check-ins only when `suggest.extras.available` lists them, and say in one line why one can't be offered yet:
   - **A live board of what needs you** (the Owner board): one page showing what's waiting on you, who's working on what, and the work in flight.
   - **Scheduled check-ins:** Orca checks on the team on a timer, for new tickets and stalled work.
@@ -73,7 +73,7 @@ Only the questions that apply; skip the round when none do.
    - **The team picks:** invoke the `dev-team:principal-engineer` skill to pick and record it (`workflow/stack-pick.md`).
    - **Named:** fill the rows they named, each checked as current (`workflow/stack-pick.md` § Defaults); the rest stay _open_.
    - **Later:** the rows stay _open_.
-5. **Where the team runs, and extras:** follow each chosen command's file. Orca: `${CLAUDE_PLUGIN_ROOT}/commands/orca.md`, `recommended` at the chosen size. The board: `commands/board.md`. Check-ins: `commands/checkins.md`. Tickets: `commands/tickets.md`. Sharing the plugin: add this to `.claude/settings.json`:
+5. **Where the team runs, and extras:** follow each chosen command's file. Orca: `${CLAUDE_PLUGIN_ROOT}/commands/orca.md`, `recommended` at the chosen size, with the answer on when to make the team. The board: `commands/board.md`. Check-ins: `commands/checkins.md`. Tickets: `commands/tickets.md`. Sharing the plugin: add this to `.claude/settings.json`:
 
 ```json
 {

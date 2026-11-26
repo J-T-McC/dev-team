@@ -14,7 +14,7 @@ STATE = os.path.join(D, "state.json")
 JSON = "--json" in sys.argv
 argv = [a for a in sys.argv[1:] if a != "--json"]
 with open(os.path.join(D, "calls.log"), "a") as f:
-    f.write(json.dumps(argv) + "\n")
+    f.write(json.dumps(argv, ensure_ascii=False) + "\n")
 s = json.load(open(STATE)) if os.path.exists(STATE) else {}
 for k, v in {"n": 0, "nt": 0, "stage": "running", "batches": [], "dispatches": {}, "terminals": {}, "screens": {}}.items():
     s.setdefault(k, v)
