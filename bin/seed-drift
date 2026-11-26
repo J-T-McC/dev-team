@@ -43,7 +43,9 @@ if grep -qs -e '^# Development Organization' -e '\*\*Workspace:\*\*' "$section";
   if grep -qs '^## Team setup' "$section"; then
     have=$(sed -n '/^## Team setup/,/^## /p' "$section" | label)
     while IFS= read -r l; do
-      printf '%s\n' "$have" | grep -qxF "$l" || say "$(basename "$section"): Team setup has no \"$l\" rule (dev-team workflow/orca-recommended.md)"
+      hint="dev-team workflow/orca-recommended.md"
+      [ "$l" = Workspace ] && hint="committed or not, as dev-team commands/orca.md step 4 writes it"
+      printf '%s\n' "$have" | grep -qxF "$l" || say "$(basename "$section"): Team setup has no \"$l\" rule ($hint)"
     done < <(sed -n '/^## Team setup/,$p' "$PLUGIN/seeds/orca-recommended.md" | label)
   fi
 

@@ -28,11 +28,11 @@ A preset for the Orca runtime (`workflow/orca.md`) that held up through weeks of
 
 ## Roles and git
 
-- **Document roles never branch** (Team setup § Git). Their output is specs in the workspace; they need the code only to read, at the default branch's latest commit. An uncommitted workspace is reached from any worktree by its absolute path (`workflow/workspace.md` § Guest mode).
+- **Document roles never branch** (Team setup § Git). Their output is specs in the workspace; they need the code only to read, at the default branch's latest commit. The workspace is reached from any worktree by its absolute path in the main checkout, committed or not, so every role reads and writes one live copy: a committed workspace's copy inside each worktree is only that branch's snapshot, and specs written there would split across worktrees (`workflow/workspace.md` § Guest mode).
 - **Each developer starts each task on a new branch from the default branch, and owns its branches.** Two peers on one branch overwrite each other's pushes, and a branch per task keeps each PR to one change. Streams no longer merge into a shared feature branch (`workflow/orca.md` § Parallel streams): each task is its own PR.
 - **Reviews are read-only.** A reviewer that checks out a developer's branch can leave changes on it or move it under the developer. Fetch and diff, and test the reviewed commit, detached, in the reviewer's own worktree. That a reviewer never reviews a change it implemented is a plugin rule (`workflow/orca.md` § Peer lifetime).
 - **Peers never merge a PR.** The merge puts a change on the branch everyone builds on, so it stays with the Owner.
-- **The workspace is its own repository and is pushed** (Team setup § Workspace), so the specs reach every machine the team uses. `not committed` on the Workspace line makes it its own repository (`workflow/workspace.md` § The Workspace line, § Guest mode). The plugin's Stop hook commits it after each turn that changed it, and pushes it once it has an upstream.
+- **The workspace is its own repository and is pushed** (Team setup § Workspace), so the specs reach every machine the team uses. `not committed` on the Workspace line makes it its own repository (`workflow/workspace.md` § The Workspace line, § Guest mode). The plugin's Stop hook commits it after each turn that changed it, and pushes it once it has an upstream. A project that keeps its workspace committed with the code keeps that choice: the coordinator commits the live copy on the default branch and pushes it (the Workspace rule `commands/orca.md` writes).
 
 ## PR flow
 

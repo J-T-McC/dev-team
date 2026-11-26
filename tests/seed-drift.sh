@@ -65,6 +65,9 @@ ok "Team setup: a full copy is quiet"        '[ $RC = 0 ]'
 drop "$T/p/CLAUDE.md" "- **Tests.** Mid-work" "- Tests: mid-work"
 run
 ok "Team setup: a missing rule reported"     '[[ $OUT == *"CLAUDE.md: Team setup has no \"Tests\" rule"* ]] && [[ $OUT != *"missing rule"* ]]'
+drop "$T/p/CLAUDE.md" "- **Workspace.** Not committed" "- Workspace: not committed"
+run
+ok "Team setup: no Workspace rule points to both forms" '[[ $OUT == *"no \"Workspace\" rule (committed or not, as dev-team commands/orca.md step 4 writes it)"* ]]'
 
 fresh CLAUDE.md
 mkdir -p "$T/p/docs/features/a"; ln -s .. "$T/p/docs/features/a/up"; ln -s ../../docs "$T/p/docs/features/self"
