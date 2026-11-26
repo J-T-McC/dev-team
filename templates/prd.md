@@ -10,7 +10,7 @@
 <One-sentence description.>
 
 ## Problem
-<What user or business problem exists today?>
+<What user or business problem exists today? An Owner's request given in chat, not a ticket, is quoted here word for word, so every role can check against it.>
 
 ## Goals
 <Bulleted, measurable outcomes.>

@@ -2,6 +2,8 @@
 
 Work that is real but not now. **Any role files** an item; the **Product Manager** owns this index — priority, status, and promotion. Item detail lives in its own file (`B<NNN>-<slug>.md`, from the plugin's `templates/backlog-item.md`); never expand detail here. Rules: `<ws>/standards/planning.md`.
 
+**Order:** the rows are the rank, top first. Items waiting on the Owner sit last, marked *parked*.
+
 | ID | Item | Type | Priority | Status |
 |---|---|---|---|---|
 

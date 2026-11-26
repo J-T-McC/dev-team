@@ -9,7 +9,7 @@ Check-ins are Orca automations that run a role on a schedule. They need the [Orc
 |---|---|---|---|
 | advance | every 30 minutes | orchestrator | for each feature in flight, answer "what's next?" and dispatch what's ready |
 | stalled | hourly | orchestrator | find failed or stuck work, re-dispatch failed tasks, report sessions that aren't responding |
-| groom | weekdays at 09:00 (off at first) | product-manager | triage new tickets assigned to you |
+| groom | weekdays at 09:00 (off at first; hourly when the team [works through tickets](/dev-team/autonomy/#what-the-team-works-on)) | product-manager | triage new tickets assigned to you |
 
 ## Set them up
 

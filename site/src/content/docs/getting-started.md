@@ -41,9 +41,9 @@ Setup reads the project and your machine first: its commit history, the tools it
 2. **How the team works,** only where it applies:
    - **The stack,** for a new project: let the team pick, name it yourself, or decide at the first feature.
    - **Where the team runs,** when Orca is installed: here in the conversation, or in [Orca](/dev-team/orca/), sized for your plan, with each role made when work first needs it or the whole team made now.
-   - **Once it's set up,** for a new project: start the team on what you described, or give it the first task yourself.
+   - **What the team works on** ([more](/dev-team/autonomy/#what-the-team-works-on)): for a new project, build what you described on its own, start it and wait for you, or wait for your first task; for an existing one, only what you hand it, your tickets as they arrive, or what the product manager picks.
    - **Extras,** where you can pick several: the [Owner board](/dev-team/board/), [check-ins](/dev-team/checkins/), a [ticket system](/dev-team/tickets/), and giving teammates the plugin.
-3. **For an existing project,** one summary of what it found in your code, ending with: use these, show me the files first, or change something. With a ticket system or open pull requests, it also asks which one the team should start on. On an existing project the team never picks its own first task.
+3. **For an existing project,** one summary of what it found in your code, ending with: use these, show me the files first, or change something. If the team works only on what you hand it, and there's a ticket system or open pull requests, it also asks which one the team should start on. On an existing project the team never picks its own first task.
 
 The documents go in `dev-team/` (`.dev-team/` for a guest), and setup shows where it put everything. Anything still open in the standards isn't homework: the team proposes it when the first piece of work needs it. Setup finishes by starting the team on what you described, if you said to, or by suggesting the first thing to ask it for.
 
