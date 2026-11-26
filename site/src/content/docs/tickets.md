@@ -17,7 +17,7 @@ The command finds the connections available in your session and asks, one topic 
 
 ## How the team uses it
 
-A ticket is read once, when work starts. The role that takes it copies what it needs into its own document and records the ticket ID there and in the `status.md` row. From then on the documents are the truth. A ticket change that alters requirements is a requirement change, and goes back to the product-manager.
+A ticket is read once, when work starts. The role that takes it copies what it needs into its own document and records the ticket ID there and in the `status.md` row. Commits carry it too (`feat(auth): ENG-123 add login timeout`), so anyone reading the history can find the ticket; dev-team's own task IDs go in a commit only when there's no ticket. From then on the documents are the truth. A ticket change that alters requirements is a requirement change, and goes back to the product-manager.
 
 Only the orchestrator and the product-manager write to the tracker, and only what the config's Elevation section allows: a release comment, say, or tickets for high-priority bugs. Findings, questions and task notes never go out. Every other role turns a finding worth a ticket into a backlog item.
 
