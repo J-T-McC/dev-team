@@ -36,4 +36,4 @@ A project on the Orca runtime without the recommended setup gets one line at the
 
 ## What changed
 
-The [commit history](https://github.com/J-T-McC/dev-team/commits/main) lists every change, and releases have notes on the [releases page](https://github.com/J-T-McC/dev-team/releases).
+The [commit history](https://github.com/J-T-McC/dev-team/commits/main) lists every change. Each merged feature or fix is also tagged as a release, with notes, on the [releases page](https://github.com/J-T-McC/dev-team/releases): a feature raises the minor version (1.1.0), a fix the patch (1.1.1), and a change that breaks existing projects the major (2.0.0). The tags are markers: `/plugin update` brings every commit either way.
