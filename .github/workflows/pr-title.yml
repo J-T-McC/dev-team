@@ -1,0 +1,21 @@
+name: pr title
+
+# The squash commit takes the PR title, and the release workflow reads it to set the version,
+# so the title must be a conventional commit: type(scope)!: summary.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: conventional commit
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: .github/pr-title.sh "$TITLE"
