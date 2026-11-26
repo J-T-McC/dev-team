@@ -11,7 +11,7 @@ ok() { if [ -z "$2" ]; then echo "ok   $1"; else echo "FAIL $1 — $2"; fail=1; 
 ok "every case and grader uses documented fields" "$(python3 - <<'PY'
 import glob, os, re
 keys = {"regex": {"pattern", "flags", "match", "target"}, "tool_used": {"tool", "input_match", "min", "max"},
-        "tool_order": {"before", "after"}, "file_exists": {"path", "exists"}, "llm": {"criteria", "focus", "target"},
+        "tool_order": {"before", "after"}, "file_exists": {"path", "exists"}, "llm": {"criteria", "focus"},
         "baseline": {"baseline_file", "criteria"}}
 common = {"type", "weight", "arm"}
 bad = []
@@ -39,13 +39,22 @@ same() { local a=$1; shift; for b; do cmp -s "evals/$a/scaffold.sh" "evals/$b/sc
 ok "shared fixtures are identical" "$(same new-no-answers stack-missing-facts new-all-answers)$(same existing-no-answers existing-all-answers guest-all-answers)$(same rerun checkins-plain-words)"
 
 # Each fixture builds, in an environment as bare as the eval's, and gives setup-detect what its cases grade.
-build() { mkdir -p "$T/$1" && (cd "$T/$1" && env -i PATH=/usr/bin:/bin HOME="$T" bash "$REPO/evals/$2/scaffold.sh") >/dev/null 2>&1 || echo "$2: scaffold failed"; }
-q() { (cd "$T/$1" && env -i PATH=/usr/bin:/bin HOME="$T" "$REPO/bin/setup-detect") |
+# Like an eval run: the scaffold's HOME is the run's home ($T/<name>), its working directory the run's ($T/<name>/cwd).
+build() { mkdir -p "$T/$1/cwd" && (cd "$T/$1/cwd" && env -i PATH=/usr/bin:/bin HOME="$T/$1" bash "$REPO/evals/$2/scaffold.sh") >/dev/null 2>&1 || echo "$2: scaffold failed"; }
+q() { (cd "$T/$1/cwd" && env -i PATH=/usr/bin:/bin HOME="$T/$1" "$REPO/bin/setup-detect") |
       python3 -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if eval(sys.argv[1]) else 1)' "$2" || echo "$1: $2"; }
 ok "empty fixture: a new project"            "$(build empty new-no-answers)$(q empty 'd["project"]["state"]=="new" and d["project"]["commits"]==1')"
 ok "ts-shop fixture: conventional, ENG"      "$(build shop existing-no-answers)$(q shop 'd["project"]["state"]=="existing" and d["commits"]["style"]=="conventional" and d["commits"]["ticket_prefix"]=="ENG"')"
 ok "ts-shop fixture: Biome runs, Prettier doesn't" "$(q shop '"biome" in d["code"]["tools_run"] and d["code"]["config_not_run"]==["prettier (.prettierrc, .vscode/settings.json)"]')"
 ok "set-up fixture: a re-run"                "$(build setup rerun)$(q setup 'd["project"]["state"]=="set-up" and d["project"]["dev_team_dir"]=="ours"')"
+
+# macOS: every scaffold gives the run's login shell a git that works in the sandbox, ahead of /usr/bin's xcrun stub.
+ok "every scaffold has the macOS git wrapper" "$(for f in evals/*/scaffold.sh; do grep -q 'eval-bin/git' "$f" || echo "$f "; done)"
+if command -v xcode-select >/dev/null; then
+  ok "macOS: the run's login shell finds the wrapper" "$(for s in zsh bash; do
+    w=$(env -i HOME="$T/empty" PATH=/usr/bin:/bin /bin/$s -l -c 'command -v git' 2>/dev/null)
+    [ "$w" = "$T/empty/.eval-bin/git" ] || echo "$s finds $w "; done)"
+else echo "ok   macOS git wrapper: skipped, not macOS"; fi
 
 # The README's case map names every case.
 ok "README maps every case" "$(for d in evals/*/; do n=$(basename "$d"); [ "$n" = results ] && continue
