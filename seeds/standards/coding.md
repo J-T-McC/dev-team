@@ -4,18 +4,20 @@
 
 ## Commit messages (active)
 
-Format: `<type>(<scope>): <task IDs> <what changed>`
+Format: `<type>(<scope>): <ID> <what changed>`
 
 - **Type:** `feat` | `fix` | `refactor` | `test` | `docs` | `chore` | `perf` | `build`.
 - **Scope:** the feature slug for pipeline work (`user-authentication`), the fix slug for fast-path work, the doc area for doc-only commits (`standards`, `backlog`).
-- **Task IDs:** range (`T1-T10`) or list (`T2, T5`) of the tasks the commit completes; a backlog item uses its ID (`B7`). Omit when no task or item applies.
+- **ID:** the ticket ID when the work has one (`ENG-123`), from the `Ticket:` line in its documents or its `status.md` row, so people can find the ticket from the history. With no ticket, the task IDs the commit completes (range `T1-T4` or list `T2, T5`) or the backlog item's ID (`B7`) — the last resort, since only dev-team's agents know what they mean. Omit when nothing applies. The ID goes after the colon: `feat(auth) - ENG-123` is not a conventional commit, so release tools and commit linters skip it.
 - **Subject:** imperative, lowercase after the colon, no trailing period, ≤72 characters total.
 
 ```
-feat(user-authentication): T1-T4 users table, hashing, register endpoint
-fix(session-expiry-off-by-one): clamp TTL to the configured window
+feat(user-authentication): ENG-123 users table, hashing, register endpoint
+fix(session-expiry-off-by-one): ENG-131 clamp TTL to the configured window
 docs(standards): add commit message format
 ```
+
+Without a ticket, the first would be `feat(user-authentication): T1-T4 users table, hashing, register endpoint`.
 
 Body is optional and terse — **one summarized line per fact, ≤5 lines**. Facts only: behaviour changed, migration required, deviation from the plan. No paragraphs, no restating the diff, no narrating process. Anything longer belongs in the task's completion notes or the fix record, which the commit references rather than repeats.
 

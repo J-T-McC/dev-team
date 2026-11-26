@@ -33,7 +33,7 @@ Ask the **orchestrator** skill "what's next?".
 ## Conventions
 
 - Naming: one folder per feature in the features folder, holding `prd.md`, `design.md`, `mockups/`, `plan.md`, `tasks/` (`index.md` + `T01-<slug>.md`), `questions/` (`q001-<slug>.md`), `review.md`. Shared: ADRs `<ws>/architecture/adr-001-<slug>.md`; backlog `<ws>/backlog/` (`index.md`, `archive.md`, `B001-<slug>.md`); fixes `<ws>/fixes/<date>-<slug>.md`; finished features `<ws>/status-done.md`
-- Commits: `<type>(<scope>): <task IDs> <what changed>`, short body if any (`<ws>/standards/coding.md`)
+- Commits: `<type>(<scope>): <ticket ID> <what changed>` (task IDs only when there's no ticket), short body if any (`<ws>/standards/coding.md`)
 - Every artifact starts from a plugin template and ends with a Handoff section
 - Standards: `<ws>/standards/`; stack: `<ws>/stack/stack.md`. Where placeholders remain, ask the Owner.
 
