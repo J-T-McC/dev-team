@@ -2,7 +2,7 @@
 
 This project uses the **dev-team** Claude Code plugin: a pipeline of roles that work through documents. The workspace is the source of truth; if it isn't written down, it doesn't exist.
 
-- **Workspace:** `docs` · features `docs/features` · folders `slug` · committed
+- **Workspace:** `dev-team` · features `dev-team/features` · folders `slug` · committed
 
 Below, `<ws>` is the workspace root and `<feature>` a feature's folder (dev-team `workflow/workspace.md`).
 
@@ -35,6 +35,6 @@ Ask the **orchestrator** skill "what's next?".
 - Naming: one folder per feature in the features folder, holding `prd.md`, `design.md`, `mockups/`, `plan.md`, `tasks/` (`index.md` + `T01-<slug>.md`), `questions/` (`q001-<slug>.md`), `review.md`. Shared: ADRs `<ws>/architecture/adr-001-<slug>.md`; backlog `<ws>/backlog/` (`index.md`, `archive.md`, `B001-<slug>.md`); fixes `<ws>/fixes/<date>-<slug>.md`; finished features `<ws>/status-done.md`
 - Commits: `<type>(<scope>): <ticket ID> <what changed>` (task IDs only when there's no ticket), short body if any (`<ws>/standards/coding.md`)
 - Every artifact starts from a plugin template and ends with a Handoff section
-- Standards: `<ws>/standards/`; stack: `<ws>/stack/stack.md`. Where placeholders remain, ask the Owner.
+- Standards: `<ws>/standards/`; stack: `<ws>/stack/stack.md`. A section marked _open_ (older copies: _TBD_) is set by the first plan or design spec that needs it, which proposes it for the Owner's yes; never guess one
 
 The plugin ships the templates, workflow rules, and a worked example; the roles know where they are.

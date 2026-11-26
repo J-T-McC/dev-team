@@ -1,6 +1,6 @@
 # Coding Standards
 
-> Sections marked _TBD_ are **placeholders** — customize per project. Until customized, the Senior Developer must ask the Project Owner before assuming a convention. Owned by the Principal Engineer (proposes) and Project Owner (approves).
+> Owned by the Principal Engineer (proposes) and Project Owner (approves). Setup fills what it can from the code; a section marked _open_ is set by the first plan that needs it, which proposes it for the Owner's yes. Until then, follow the code around you and never guess a new convention.
 
 ## Commit messages (active)
 
@@ -34,21 +34,23 @@ Applies when `gh extension list` shows `github/gh-stack`. Who syncs what is deci
 - **Keeping branches current — the owner syncs by default.** Your own stack (every branch yours): `gh stack sync`, which rebases and force-pushes the whole stack with lease. A stack shared with others: bring only your branch up to date — merge the branch below into it and push — and never run `gh stack sync`, which would rewrite their branches. When many hands share stacks, the orchestrator (the coordinator under Orca) may name one **stack keeper** for a while: it brings lower changes up with merge commits only, never force-pushes, and tells each owner to pull. Say who syncs when a stack forms, and change it when the stack changes.
 
 ## Naming
-_TBD — casing, file naming, module naming._
+_Open — casing, file naming, module naming._
 
 ## Project structure
-_TBD — directory layout, module boundaries._
+_Open — directory layout, module boundaries._
 
 ## Error handling
-_TBD — error types, propagation, user-facing messages._
+_Open — error types, propagation, user-facing messages._
 
 ## Logging
-_TBD — levels, format, what must never be logged (secrets, credentials, tokens)._
+- Never log secrets, credentials, tokens, or personal data.
+- _Open — levels, format._
 
 ## Comments and documentation in code
 - Comment only the *why* the code cannot say: a non-obvious choice, a constraint or workaround, a link to the issue or spec behind it. Most code needs none.
 - Never: narrate what the code does, restate a name or signature, log history ("changed X to Y"), or leave commented-out code.
-- Docstrings only on public interfaces, one or two lines. _Customize: docstring format, if any._
+- Docstrings only on public interfaces, one or two lines, in the language's usual format.
 
 ## Dependencies
-_TBD — approval process for adding dependencies. Default: new dependencies require an ADR._
+- A new dependency is a major decision: an ADR and the Owner's yes (dev-team `workflow/handoffs.md` § Autonomy).
+- Prefer an established, maintained library over writing your own; prefer what the project already uses over a new one.

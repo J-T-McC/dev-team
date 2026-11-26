@@ -12,7 +12,7 @@ fresh() {  # fresh <claude-file> [workspace root]: a project whose dev-team sect
   cp "$REPO/seeds/stack.md" "$W/stack/stack.md"; cp "$REPO/seeds/backlog-index.md" "$W/backlog/index.md"
   cp "$REPO/seeds/backlog-archive.md" "$W/backlog/archive.md"
   for f in status status-done triage friction-log; do cp "$REPO/seeds/$f.md" "$W/$f.md"; done
-  sed "s|\`docs\` · features \`docs/features\`|\`${2:-docs}\` · features \`${2:-docs}/features\`|" \
+  sed "s|\`dev-team\` · features \`dev-team/features\`|\`${2:-docs}\` · features \`${2:-docs}/features\`|" \
     "$REPO/seeds/CLAUDE.project.md" > "$T/p/$1"
 }
 run() { OUT=$("$REPO/bin/seed-drift" "$T/p"); RC=$?; }

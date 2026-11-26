@@ -7,11 +7,21 @@ The [Orca runtime](/dev-team/orca/) has plenty of settings, and much of what mak
 
 ## Turn it on
 
-Bootstrap offers it when you say you run Claude from Orca. In a project that's already set up, run:
+Setup offers it when it finds Orca, sized for your Claude plan. In a project that's already set up, ask for it, or run:
 
 ```
-/dev-team:orca recommended
+/dev-team:orca recommended [small | medium | large]
 ```
+
+Every home is another Claude session drawing on the same usage limits, so the team's size follows your plan:
+
+| Size | Plan | Homes |
+|---|---|---|
+| small | Pro | one of each: product, designer, architect, reviewer, developer |
+| medium | Max 5x | small, plus a second developer |
+| large | Max 20x | two reviewers and four developers |
+
+Setup reads your plan from Claude Code to suggest one. On Pro it suggests running the team in the conversation instead, with small second: every Orca task starts a fresh session, and Pro's limits run out fast.
 
 Plain `/dev-team:orca` in a project without the Orca runtime asks whether you want this setup or just the runtime.
 
@@ -39,7 +49,7 @@ Most of the setup is how the plugin already works: a fresh session for every tas
 
 | Area | Default | Recommended setup |
 |---|---|---|
-| Homes | product, designer, architect, a reviewer, and developers the coordinator adds as needed | a second reviewer and four developers; a new home needs your yes |
+| Homes | product, designer, architect, a reviewer, and developers the coordinator adds as needed | sized by plan (above); a new home needs your yes |
 | Worktrees | one per feature, and one per parallel stream | one per home, named after it |
 | Branches | parallel streams merge into a feature branch | a new branch from the default branch for every task, one PR per ticket to start |
 | Reviews | in the feature's worktree | read-only: the reviewer fetches and diffs, and tests the reviewed commit in its own worktree |

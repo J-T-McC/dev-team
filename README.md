@@ -9,7 +9,7 @@ A [Claude Code](https://code.claude.com) plugin that runs feature work the way a
 /plugin install dev-team@dev-team --scope local
 ```
 
-Run both inside your project: `--scope local` installs it for you, in that project only, where leaving it out loads it into every session in every project. Then ask Claude to `run the dev-team:bootstrap skill` in your project.
+Run both inside your project: `--scope local` installs it for you, in that project only, where leaving it out loads it into every session in every project. Then ask Claude to `set up dev-team in this project`.
 
 Needs macOS or Linux (WSL on Windows) and git. The optional Orca runtime, Owner board, check-ins and audit also need Python 3.9+, and the Orca runtime and Owner board need the GitHub CLI (`gh`) ([Install](https://j-t-mcc.github.io/dev-team/getting-started/#install)).
 
@@ -65,9 +65,9 @@ docs/                    workspace root
     user-auth/           prd.md  design.md  mockups/  plan.md  tasks/  questions/  review.md
 ```
 
-Bootstrap asks for three settings, recorded in one `Workspace:` line: the **root** (`docs`), the **features folder** (anywhere — e.g. next to a team's own feature folders), and **folder naming** (`slug` for small projects, `F###-slug` or `<ticket>-slug` for large ones). Live indexes stay small — finished features and closed backlog items move to archives — so agents never pay for history. Projects on the older type-first layout are moved by `/dev-team:sync` (dry run first, `git mv`, links rewritten).
+One `Workspace:` line records the **root** (`dev-team`; projects with no line use `docs`), the **features folder** (anywhere — e.g. next to a team's own feature folders), and **folder naming** (`slug` for small projects, `F###-slug` or `<ticket>-slug` for large ones). Setup uses the defaults and shows them, instead of asking. Live indexes stay small — finished features and closed backlog items move to archives — so agents never pay for history. Projects on the older type-first layout are moved by `/dev-team:sync` (dry run first, `git mv`, links rewritten).
 
-**Guest mode** is for someone else's project whose team does not use dev-team: the dev-team section goes in `CLAUDE.local.md`, the plugin is installed at local scope, the workspace is a hidden `.dev-team/` folder, their conventions win for code, commits, and PRs, and nothing outside the workspace mentions dev-team. The workspace can be **committed** (history with the code) or **not** (excluded locally; it becomes its own git repository, committed automatically by a Stop hook).
+Setup's first question is whose project it is. **Shared:** the section goes in `CLAUDE.md` and the workspace is committed with the code. **Just me for now:** the section goes in `CLAUDE.local.md` and the workspace is excluded locally, as its own git repository committed automatically by a Stop hook, until you share it. **Guest mode** is for someone else's project whose team does not use dev-team: like "just me", with the workspace in a hidden `.dev-team/` folder, the plugin at local scope, their conventions winning for code, commits, and PRs, and nothing outside the workspace mentioning dev-team.
 
 ## Orca runtime (optional)
 
@@ -97,15 +97,15 @@ Bootstrap asks whether to connect one. Set up or fine-tune any time with `/dev-t
 /plugin install dev-team@dev-team
 ```
 
-Then scaffold the project workspace (asks own project or guest and the workspace settings, seeds standards/stack, writes the dev-team section; asks your autonomy level and whether to connect a ticket system):
+Then set the project up. Ask Claude:
 
 ```
-run the dev-team:bootstrap skill
+set up dev-team in this project
 ```
 
-Fill in `stack/stack.md` and customize `standards/*.md` in the workspace — agents stop and ask rather than guess while placeholders remain. Commit the scaffolded files to your project repo. Nothing from your project ever flows back into this repo.
+The `bootstrap` skill reads the project and machine first (`bin/setup-detect`), then asks at most three rounds of questions, each with a suggested answer: whose project it is, how involved you want to be, the commit style, and, for a new project, what you're building and who picks the stack; then where the team runs and any extras. It writes the dev-team section, the workspace and the seeds, checks them, and ends with the first thing to ask the team for. Standards it can't fill yet are marked _open_ and set by the first plan that needs them, not left as homework. Nothing from your project ever flows back into this repo.
 
-**Adopting into an existing project?** Bootstrap takes a second path ([`workflow/adoption.md`](workflow/adoption.md)): it surveys for collisions with your existing folders and `CLAUDE.md` first, then has the principal-engineer **harvest** the standards and stack from your codebase — manifests, CI, lint config, test layout, commit history — citing the file behind every line and leaving anything unevidenced as `_TBD_`; you approve. In-flight features enter at their true phase marked `pre-adoption` (upstream gates waived, downstream gates apply). Shipped work is **never** documented backwards — no retro PRDs, no retro ADRs. Documents are written forward, for the next change.
+**Adopting into an existing project?** Bootstrap takes a second path ([`workflow/adoption.md`](workflow/adoption.md)): it surveys for collisions with your existing folders and `CLAUDE.md` first, then has the principal-engineer **harvest** the standards and stack from your codebase — manifests, CI, lint config, test layout, commit history — citing the file behind every line. What the scripts and CI run is the standard; config nothing runs becomes a backlog item instead of a question. Gaps get a labelled suggestion, and you approve it all in one summary. In-flight features enter at their true phase marked `pre-adoption` (upstream gates waived, downstream gates apply). Shipped work is **never** documented backwards — no retro PRDs, no retro ADRs. Documents are written forward, for the next change.
 
 Keep the project `CLAUDE.md` lean — it is loaded every session, while skills and the workspace load on demand. The seed [`seeds/CLAUDE.project.md`](seeds/CLAUDE.project.md) is the recommended shape.
 
@@ -137,7 +137,7 @@ Plugin updates never touch project-owned files, so a project bootstrapped before
 - **Reports drift** (`bin/seed-drift`): seed sections (`##` headings) absent from your standards, workspace files and seed rules absent from the project, Orca Runtime-line settings renamed or added since, and links inside the workspace to a folder that contains them — names only, so your customizations never show up as drift
 - **Appends only what you approve** — never overwrites, rewrites, or deletes project content
 
-After a sync, fill placeholders in newly copied files and commit them to your project repo.
+After a sync, commit newly copied files to your project repo.
 
 ## Develop the framework locally
 

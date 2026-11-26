@@ -75,7 +75,7 @@ Fixtures are each case's `scaffold.sh`. Cases that share one keep identical copi
 | `bin/setup-detect` | none (`tests/setup-detect.sh`), unless it changes what setup shows: then the `stage-1` cases |
 | `seeds/CLAUDE.project.md`, `seeds/standards/`, `seeds/stack.md` | the `stage-2` cases |
 | the commit format in `seeds/standards/coding.md` | `new-no-answers`, `existing-no-answers`, `existing-all-answers` |
-| harvest or stack-pick rules in `skills/principal-engineer/` | `existing-all-answers`, `stack-missing-facts` |
+| harvest or stack-pick rules in `skills/principal-engineer/`, `workflow/stack-pick.md` | `existing-all-answers`, `stack-missing-facts` |
 | `skills/orchestrator/` routing, `commands/` | `checkins-plain-words` |
 | anything else | none |
 

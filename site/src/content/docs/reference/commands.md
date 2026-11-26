@@ -7,7 +7,7 @@ description: The slash commands, the skills, and the scripts the roles and the c
 
 | Command | What it does |
 |---|---|
-| `dev-team:bootstrap` | sets up a project; ask Claude to run the skill ([Get started](/dev-team/getting-started/)) |
+| `dev-team:bootstrap` | sets up a project, or changes its setup; ask Claude to set up dev-team ([Get started](/dev-team/getting-started/)) |
 | `dev-team:<role>` | runs a role in your conversation: `orchestrator`, `product-manager`, `designer`, `principal-engineer`, `senior-developer`, `reviewer` |
 | `/dev-team:sync` | moves an old layout, copies missing seed files, reports drift ([Update and sync](/dev-team/updating/)) |
 | `/dev-team:tickets ["change"]` | sets up, tunes or turns off the ticket system ([Ticket systems](/dev-team/tickets/)) |

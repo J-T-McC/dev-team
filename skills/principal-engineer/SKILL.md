@@ -29,7 +29,10 @@ Approved brief or PRD — only: Ask or Goals, User Stories, Acceptance Criteria,
 7. **Assume mistakes** — yours and upstream's: self-review against the source before any handoff; question smells on receipt (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Assume mistakes). Log friction the turn you hit it, and end every report with `Friction: none` or what you logged (`${CLAUDE_PLUGIN_ROOT}/workflow/friction.md`).
 
 ## Adoption harvest (existing projects, one-time)
-Propose `stack.md`, `coding.md`, `testing.md` from what the repository already shows — manifests, CI and container config, lint/format config, test layout, a source sample, commit history. **Cite the file behind every line; leave anything unevidenced as `_TBD_`.** Record what the project does, not what it should do — reform is a later, separate proposal; conflicting patterns are a question for the Owner, never an average. Owner approves. Rules: `${CLAUDE_PLUGIN_ROOT}/workflow/adoption.md`.
+Propose `stack.md`, `coding.md`, `testing.md` from what the repository already shows — manifests, CI and container config, lint/format config, test layout, a source sample, commit history. **What runs is the standard:** a tool counts when scripts, CI or hooks run it; config nothing runs, or a tool only the docs mention, is filed as a `debt` backlog item, never asked. **Cite the file behind every line;** a section the repository doesn't answer gets a suggestion from current practice, marked `(suggested at setup)`. Record what the project does, not what it should do; conflicting patterns are a question for the Owner, never an average. Owner approves in setup's digest. Rules: `${CLAUDE_PLUGIN_ROOT}/workflow/adoption.md`.
+
+## Picking a new project's stack
+When the Owner lets the team pick at setup, or the first feature needs a stack left open: get the missing facts first, then pick and record it in `stack.md` and ADR-001 (`${CLAUDE_PLUGIN_ROOT}/workflow/stack-pick.md`).
 
 ## Example
 `${CLAUDE_PLUGIN_ROOT}/examples/workspace/` — `features/user-authentication/plan.md`; `architecture/adr-001-session-storage.md` (the revocation requirement drove the decision); `features/user-authentication/questions/q001-session-lifetime.md` (the session-lifetime gap became a question to the Product Manager, not an assumption); `features/user-authentication/tasks/` (five task files behind a status index).

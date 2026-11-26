@@ -1,6 +1,6 @@
 # Architecture Standards
 
-> **Placeholder** — customize per project. Owned by the Principal Engineer (proposes) and Project Owner (approves).
+> Owned by the Principal Engineer (proposes) and Project Owner (approves). Setup fills what it can from the code; a section marked _open_ is set by the first plan that needs it, which proposes it for the Owner's yes.
 
 ## Requirements (active)
 - Significant, hard-to-reverse decisions require an ADR (plugin `templates/adr.md`).
@@ -8,13 +8,15 @@
 - Every technical plan section must trace to a PRD acceptance criterion.
 
 ## Module boundaries
-_TBD — layering rules, allowed dependencies between modules._
+_Open — layering rules, allowed dependencies between modules._
 
 ## API design
-_TBD — REST/GraphQL/RPC conventions, versioning, error format._
+_Open — REST/GraphQL/RPC conventions, versioning, error format._
 
 ## Data
-_TBD — migration policy, naming, soft-delete policy._
+_Open — migration policy, naming, soft-delete policy._
 
 ## Security baseline
-_TBD — authn/authz patterns, secret handling, input validation defaults._
+- Secrets never in code, logs, or the repository; they come from the environment or a secret manager.
+- Validate input where it enters the system; deny by default.
+- _Open — sign-in and permission patterns._

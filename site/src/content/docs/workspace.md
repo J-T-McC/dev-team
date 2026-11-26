@@ -6,7 +6,7 @@ description: Where the team keeps its documents, how they're named, and guest mo
 Everything the team writes goes in one workspace inside your project. Each feature gets one folder holding everything it produces. Shared material (status, ADRs, backlog, fixes, standards, stack) sits at the workspace root.
 
 ```
-docs/                     workspace root
+dev-team/                 workspace root
   status.md               work in flight: phase, role, blockers, approvals, path
   status-done.md          finished work, newest first
   triage.md               requests only a person can do, with the reason
@@ -22,20 +22,35 @@ docs/                     workspace root
 
 ## The Workspace line
 
-One line in the dev-team section of `CLAUDE.md` sets the layout:
+One line in the dev-team section of `CLAUDE.md` (or `CLAUDE.local.md`, below) sets the layout:
 
 ```
-- **Workspace:** `docs` · features `docs/features` · folders `slug` · committed
+- **Workspace:** `dev-team` · features `dev-team/features` · folders `slug` · committed
 ```
 
 | Setting | Values | Default |
 |---|---|---|
-| root (first value) | any folder | `docs` (guest mode: `.dev-team`) |
+| root (first value) | any folder | `dev-team` (guest mode: `.dev-team`) |
 | `features` | any folder, inside the root or not | `<root>/features` |
 | `folders` | `slug`, `F###-slug`, `<ticket>-slug` | `slug` |
 | committed | `committed`, `not committed` | `committed` |
+| `just me` | there or not | not there |
+
+A project with no Workspace line at all uses `docs`, as projects did before `dev-team/` became the default, so older projects keep working without a move.
 
 Use `slug` on small projects, `F###-slug` on large ones with many features, and `<ticket>-slug` when work comes from tickets. Change a setting only together with a move: `/dev-team:sync` moves the files.
+
+## Whose project
+
+Setup's first question decides where the dev-team section goes and whether the workspace is committed:
+
+| Answer | Section | Workspace | The line ends with |
+|---|---|---|---|
+| Your project, shared | `CLAUDE.md` | committed with your code | `· committed` |
+| Your project, just you for now | `CLAUDE.local.md` | kept out of the repository, in its own history | `· not committed · just me` |
+| Someone else's | `CLAUDE.local.md` | kept out of the repository, in its own history | `· not committed` |
+
+"Just you" works like guest mode for where things live, but the conventions are yours to choose. Nobody else has the workspace, so code, commits and PRs never link into it. When you're ready, ask to share dev-team with the team: the section moves to `CLAUDE.md` and the workspace is committed with your code.
 
 ## Small files on purpose
 
@@ -53,7 +68,7 @@ The dev-team section goes in `CLAUDE.local.md`, which is never committed, and th
 
 Their conventions win for commits, branches, PRs, code style, reviews and test commands. The workspace's standards record only what their repository doesn't already document. Code, comments, commit messages, PRs and ticket comments never mention dev-team, its roles or its paths, since teammates couldn't follow those links anyway.
 
-The workspace can be committed with their code or not. Not committed, it's listed in `.git/info/exclude` and becomes its own git repository, so its history is kept, and a Stop hook commits it whenever it changes. Give that repository a remote (`git -C .dev-team push -u origin HEAD`) and the hook pushes it too, so your other machines can pull the specs. Keep feature folders inside the root in that case: folders outside it are excluded too, but get no history. New git worktrees don't contain an uncommitted workspace, so peers working in one use the main checkout's workspace by its full path.
+The workspace is never committed with their code. It's listed in `.git/info/exclude` and becomes its own git repository, so its history is kept, and a Stop hook commits it whenever it changes. If Claude Code's sandbox stops setup from creating that repository, setup says so and gives you the command to run. Give that repository a remote (`git -C .dev-team push -u origin HEAD`) and the hook pushes it too, so your other machines can pull the specs. Keep feature folders inside the root in that case: folders outside it are excluded too, but get no history. New git worktrees don't contain an uncommitted workspace, so peers working in one use the main checkout's workspace by its full path.
 
 ## Moving an older project
 

@@ -1,6 +1,6 @@
 # Recommended Orca setup (optional)
 
-A preset for the Orca runtime (`workflow/orca.md`) that held up through weeks of daily use, so a new project's team runs well from the first day. A project opts in with `/dev-team:orca recommended`, or at bootstrap, which offers it when the Owner uses Orca. It writes the Runtime line and a **Team setup** section from `${CLAUDE_PLUGIN_ROOT}/seeds/orca-recommended.md` into the dev-team section. Every value stays the project's to change afterwards; `/dev-team:sync` reports Team setup rules added to the plugin later. This file says why each value is there. Where the plugin already does something, it points there instead of repeating it.
+A preset for the Orca runtime (`workflow/orca.md`) that held up through weeks of daily use, so a new project's team runs well from the first day. A project opts in with `/dev-team:orca recommended [small | medium | large]`, or at setup, which offers it sized for the Owner's plan when it finds Orca. It writes the Runtime line and a **Team setup** section from `${CLAUDE_PLUGIN_ROOT}/seeds/orca-recommended.md` into the dev-team section. Every value stays the project's to change afterwards; `/dev-team:sync` reports Team setup rules added to the plugin later. This file says why each value is there. Where the plugin already does something, it points there instead of repeating it.
 
 ## Models, effort, advisor
 
@@ -14,7 +14,15 @@ A preset for the Orca runtime (`workflow/orca.md`) that held up through weeks of
 
 ## Team shape
 
-- **One home per role, each in its own worktree named after it** (Team setup § Homes): product, designer, architect, two reviewers, four developers. A second reviewer means one review never waits behind another. A home's own worktree means no peer works in another's half-finished checkout; `peer dispatch` reuses a home's worktree when no `--worktree` is given. This replaces the plugin default of one worktree per feature and a child worktree per stream (`workflow/orca.md` § Topology, § Parallel streams).
+- **One home per role, each in its own worktree named after it** (Team setup § Homes), in three sizes by plan, since every home is another session drawing on the same usage limits:
+
+  | Size | Plan | Homes |
+  |---|---|---|
+  | small | Pro | one of each: product, designer, architect, reviewer, developer |
+  | medium | Max 5x | small plus a second developer |
+  | large | Max 20x | two reviewers, four developers |
+
+  `bin/setup-detect` suggests the size from the plan it reads (`suggest.runtime`); an unknown plan, an API key, or a Team or Enterprise plan is asked, with small suggested. On Pro, setup recommends running in the conversation instead, with small second: each Orca task starts a fresh session, and Pro's limits run out fast. A second reviewer means one review never waits behind another. A home's own worktree means no peer works in another's half-finished checkout; `peer dispatch` reuses a home's worktree when no `--worktree` is given. This replaces the plugin default of one worktree per feature and a child worktree per stream (`workflow/orca.md` § Topology, § Parallel streams).
 - **A new home needs the Owner's yes.** Each home is another session on the machine and another share of usage. Without the preset, the coordinator adds developer homes itself (`workflow/orca.md` § Coordinator loop).
 - **A fresh session per task, `--keep` only for a follow-up on the same PR,** and the coordinator waking and sleeping homes without asking: plugin defaults (`workflow/orca.md` § Peer lifetime, § Machine resources).
 
