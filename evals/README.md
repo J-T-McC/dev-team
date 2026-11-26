@@ -30,18 +30,20 @@ claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit --
 - **`--ablation none`**: without it, every case also runs without the plugin, at twice the cost, as a comparison that means nothing for setup.
 - **`--allow-tools Bash Write Edit`**: setup runs scripts and writes files.
 - **`--no-publish`** keeps the report on your machine.
+- **`--case`** takes one name or glob. A second `--case` replaces the first, so run separate cases one command at a time.
 - **`--keep-temp`** keeps each run's folder and transcript, to read why a case failed.
 - **`--trust-plugin`** skips the first-run trust question, for unattended runs only.
 
 ## What a case can check
 
 - **No answers mid-run.** The question tool doesn't exist in eval runs, so setup asks in plain text and ends its turn. Stage-1 cases give no answers and grade the questions in the final message, plus that nothing was written. Stage-2 cases give every answer in the prompt and grade the files setup wrote.
-- **git on macOS.** `/usr/bin/git` is an xcrun stub, and it fails in the run's sandbox: it can't write its cache under `/var/folders`, or look git up through `xcodebuild`. Setting `PATH` before the run doesn't help. Each Bash command starts from a snapshot of a login zsh when one exists, and macOS's `path_helper` puts `/usr/bin` first in that snapshot. The fix has three layers:
-  - every scaffold writes a `git` wrapper to the run's home and puts it first in the startup files the snapshot is taken from;
-  - `tests/eval-shell-prefix` puts the wrapper first for commands that run without a snapshot;
-  - the prefix also points the stub at the Command Line Tools.
+- **git on macOS.** `/usr/bin/git` and `/usr/bin/python3` are xcrun stubs, and they fail in the run's sandbox: they can't write their cache under `/var/folders`, or look the tool up through `xcodebuild`. Setting `PATH` before the run doesn't help. Each Bash command starts from a snapshot of a login zsh when one exists, and macOS's `path_helper` puts `/usr/bin` first in that snapshot. The fix has three layers:
+  - every scaffold writes `git` and `python3` wrappers to the run's home and puts that folder first in the startup files the snapshot is taken from;
+  - `tests/eval-shell-prefix` puts the wrappers first for commands that run without a snapshot;
+  - the prefix also points the stubs at the Command Line Tools.
 
   The prefix lives outside `evals/`, because a run can't read `evals/`. Run `env-git` first on a new machine: its output shows which layer reached the shell.
+- **No new repository.** The sandbox blocks writes to a new repository's `.git/hooks` and `.git/config`, so `git init` fails in a run. A guest workspace's own history can't be created there, so `guest-all-answers` grades the attempt and what the user is told. Users with Claude Code's sandbox turned on will hit the same block.
 - **"Writes nothing"** means no Write or Edit call and no new `.md` file. Setup also writes with `cp` and `sed`, which only the second check catches. A file it changes in place with Bash isn't caught.
 - **No environment per case.** A case can't set `PATH` or variables other than `EVAL_*`, so running inside Orca, the plan sizes and a missing Python are tested by `tests/setup-detect.sh` instead.
 
@@ -55,7 +57,7 @@ claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit --
 | `stack-missing-facts` | empty | "let the team pick" without saying where it runs: asks where it runs and is hosted before picking; no ADR, writes nothing |
 | `new-all-answers` | empty | writes `dev-team/status.md` (not `docs/`); a committed `dev-team` Workspace line; ends with a next step, no TBD homework |
 | `existing-all-answers` | ts-shop | the coding standard names Biome and cites `package.json` or `biome.json`, not Prettier or Oxlint; the mismatch is in the backlog; the project's commit style and its own `CLAUDE.md` line are kept |
-| `guest-all-answers` | ts-shop | their `CLAUDE.md` and `.gitignore` untouched; the section in `CLAUDE.local.md` with a `.dev-team`, not-committed Workspace line; `.dev-team` in `.git/info/exclude`, with its own history |
+| `guest-all-answers` | ts-shop | their `CLAUDE.md` and `.gitignore` untouched; the section in `CLAUDE.local.md` with a `.dev-team`, not-committed Workspace line; `.dev-team` in `.git/info/exclude`; tries `git init` for its own history and tells the user if that failed |
 | `rerun` | set-up | says it's already set up, shows the settings, offers changes; writes nothing |
 | `checkins-plain-words` | set-up | "can you set up check-ins" reaches the check-ins setup and explains that it needs Orca; writes nothing |
 
@@ -79,29 +81,28 @@ Fixtures are each case's `scaffold.sh`. Cases that share one keep identical copi
 
 ## Cost
 
-Measured in run 1 on Opus 5.5, at API prices (on a subscription, runs count against your usage limits instead of costing money):
+Measured on Opus 5.5, at API prices (on a subscription, runs count against your usage limits instead of costing money):
 
-- a run that only asks: $0.13–0.29, 4–10 turns, under a minute;
-- a run that writes the workspace: $0.27–0.55, 7–22 turns, up to about a minute and a half;
+- a run that only asks: $0.13–0.25, 4–8 turns, under a minute;
+- a run that writes the workspace: $0.22–0.61, 6–21 turns, up to about two minutes;
 - the `llm` judges: under $0.01 a run.
 
-All 8 cases once: about $2.50. Three runs each: about $7.50.
+All 9 cases once: about $2.40. Three runs each: about $7.
 
 ## Baseline
 
-**Run 1** (2026-11-26, `main` at `16a6c2e`, Opus 5.5, 1 run per case, $1.81): **not valid as a baseline**, kept for its costs.
+**Run 2** (2026-11-26, `main` at `4a2b02b` plus this suite's fixes, Opus 5.5, 1 run per case, $2.35): today's setup, before v1. `guest-all-answers` comes from a re-run after its history graders changed.
 
-- git failed in every run. The `PATH` fix it used doesn't survive `path_helper`, so setup worked blind. The guest run chose "committed" because a separate workspace history needs git.
-- `existing-all-answers` didn't load: its `llm` graders used `target`, which only `regex` accepts. `llm` takes `focus`.
-- Three runs wrote files with `cp` and `sed` and still passed "writes nothing".
+| Case | Score | Turns | Cost | What today's setup does |
+|---|---|---|---|---|
+| `env-git` | 1.00 | 2 | $0.13 | git and python3 work in the run |
+| `new-no-answers` | 0.50 | 4 | $0.14 | asks about folders, root and naming; uses jargon; no `setup-detect` |
+| `existing-no-answers` | 0.67 | 6 | $0.18 | quotes a real commit but offers no commit-style choice |
+| `stack-missing-facts` | 0.80 | 5 | $0.16 | asks about folders and extras, not where the app runs |
+| `new-all-answers` | 0.00 | 6 | $0.22 | writes `docs/`; leaves placeholders as homework |
+| `existing-all-answers` | 0.20 | 21 | $0.61 | writes `docs/`, so the `dev-team/` checks fail; keeps the commit style |
+| `guest-all-answers` | 1.00 | 10 | $0.36 | does everything asked; reports that the history couldn't be created |
+| `rerun` | 0.50 | 8 | $0.25 | runs a sync, copying files, instead of offering changes |
+| `checkins-plain-words` | 1.00 | 5 | $0.13 | reaches check-ins and explains Orca |
 
-| Case | Score | Turns | Cost |
-|---|---|---|---|
-| `new-no-answers` | 0.40 | 4 | $0.14 |
-| `existing-no-answers` | 0.40 | 6 | $0.16 |
-| `stack-missing-facts` | 0.50 | 10 | $0.29 |
-| `new-all-answers` | 0.00 | 7 | $0.27 |
-| `existing-all-answers` | didn't load | | |
-| `guest-all-answers` | 0.40 | 22 | $0.55 |
-| `rerun` | 0.67 | 9 | $0.26 |
-| `checkins-plain-words` | 1.00 | 5 | $0.13 |
+**Run 1** (2026-11-26, $1.81) wasn't valid. git failed in every run, one case didn't load (its `llm` graders used `target`, which only `regex` accepts; `llm` takes `focus`), and Bash writes passed "writes nothing". Three probe runs of `env-git` ($0.42) found the git fix.

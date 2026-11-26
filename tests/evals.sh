@@ -48,12 +48,13 @@ ok "ts-shop fixture: conventional, ENG"      "$(build shop existing-no-answers)$
 ok "ts-shop fixture: Biome runs, Prettier doesn't" "$(q shop '"biome" in d["code"]["tools_run"] and d["code"]["config_not_run"]==["prettier (.prettierrc, .vscode/settings.json)"]')"
 ok "set-up fixture: a re-run"                "$(build setup rerun)$(q setup 'd["project"]["state"]=="set-up" and d["project"]["dev_team_dir"]=="ours"')"
 
-# macOS: every scaffold gives the run's login shell a git that works in the sandbox, ahead of /usr/bin's xcrun stub.
-ok "every scaffold has the macOS git wrapper" "$(for f in evals/*/scaffold.sh; do grep -q 'eval-bin/git' "$f" || echo "$f "; done)"
+# macOS: every scaffold gives the run's login shell a git and python3 that work in the sandbox, ahead of /usr/bin's
+# xcrun stubs.
+ok "every scaffold has the macOS wrappers" "$(for f in evals/*/scaffold.sh; do grep -q 'for t in git python3' "$f" || echo "$f "; done)"
 if command -v xcode-select >/dev/null; then
-  ok "macOS: the run's login shell finds the wrapper" "$(for s in zsh bash; do
-    w=$(env -i HOME="$T/empty" PATH=/usr/bin:/bin /bin/$s -l -c 'command -v git' 2>/dev/null)
-    [ "$w" = "$T/empty/.eval-bin/git" ] || echo "$s finds $w "; done)"
+  ok "macOS: the run's login shell finds the wrappers" "$(for s in zsh bash; do
+    for t in git python3; do w=$(env -i HOME="$T/empty" PATH=/usr/bin:/bin /bin/$s -l -c "command -v $t" 2>/dev/null)
+    [ "$w" = "$T/empty/.eval-bin/$t" ] || echo "$s finds $t at $w "; done; done)"
 else echo "ok   macOS git wrapper: skipped, not macOS"; fi
 
 # The shell prefix (tests/eval-shell-prefix) runs what it's given, with the wrapper first, and logs it.

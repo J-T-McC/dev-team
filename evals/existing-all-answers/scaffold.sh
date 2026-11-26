@@ -3,10 +3,14 @@
 # nothing runs it; the README mentions Oxlint. 20 conventional commits with ENG- ticket IDs.
 # Shared by existing-no-answers, existing-all-answers and guest-all-answers: keep the copies identical (tests/evals.sh).
 set -e
-# macOS: an eval run's shell is a login shell, whose path_helper puts /usr/bin/git first: an xcrun stub that fails in
-# the run's sandbox. This scaffold's HOME is the run's home, so a wrapper there reaches the real git (evals/README.md).
-if d=$(xcode-select -p 2>/dev/null) && [ -x "$d/usr/bin/git" ]; then
-  mkdir -p "$HOME/.eval-bin" && printf '#!/bin/sh\nexec "%s" "$@"\n' "$d/usr/bin/git" > "$HOME/.eval-bin/git" && chmod +x "$HOME/.eval-bin/git"
+# macOS: /usr/bin/git and /usr/bin/python3 are xcrun stubs that fail in a run's sandbox. This scaffold's HOME is the
+# run's home, so wrappers there, first in the startup files the run's shell snapshot is taken from, reach the real
+# tools (evals/README.md § git on macOS).
+if d=$(xcode-select -p 2>/dev/null); then
+  mkdir -p "$HOME/.eval-bin"
+  for t in git python3; do
+    if [ -x "$d/usr/bin/$t" ]; then printf '#!/bin/sh\nexec "%s" "$@"\n' "$d/usr/bin/$t" > "$HOME/.eval-bin/$t"; chmod +x "$HOME/.eval-bin/$t"; fi
+  done
   for f in .zshrc .zprofile .bashrc .bash_profile; do echo 'export PATH="$HOME/.eval-bin:$PATH"' >> "$HOME/$f"; done
 fi
 g() { git -c user.name=dev -c user.email=dev@example.com "$@"; }
