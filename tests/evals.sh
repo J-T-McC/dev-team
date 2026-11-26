@@ -56,6 +56,12 @@ if command -v xcode-select >/dev/null; then
     [ "$w" = "$T/empty/.eval-bin/git" ] || echo "$s finds $w "; done)"
 else echo "ok   macOS git wrapper: skipped, not macOS"; fi
 
+# The shell prefix (tests/eval-shell-prefix) runs what it's given, with the wrapper first, and logs it.
+mkdir -p "$T/pfx/.eval-bin" && printf '#!/bin/sh\necho wrapper\n' > "$T/pfx/.eval-bin/git" && chmod +x "$T/pfx/.eval-bin/git"
+out=$(env -i HOME="$T/pfx" PATH=/usr/bin:/bin "$REPO/tests/eval-shell-prefix" 'git; exit 3'); rc=$?
+ok "shell prefix runs the command with the wrapper first" "$([ "$out" = wrapper ] && [ $rc = 3 ] || echo "got '$out', exit $rc")"
+ok "shell prefix logs each command" "$(grep -q 'git; exit 3' "$T/pfx/.eval-prefix.log" 2>/dev/null || echo 'not logged')"
+
 # The README's case map names every case.
 ok "README maps every case" "$(for d in evals/*/; do n=$(basename "$d"); [ "$n" = results ] && continue
   grep -q "\`$n\`" evals/README.md || echo "$n "; done)"

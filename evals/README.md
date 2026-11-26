@@ -8,6 +8,7 @@ The cases describe the **v1 setup flow**: one question about whose project it is
 
 | When | What | How often |
 |---|---|---|
+| A new machine, or a Claude Code update | `env-git` (about $0.20) | once, before any other case |
 | The baseline | every case, on `main`, 1 run | once, when the suite lands, and again when the suite changes |
 | A PR that changes what setup does | the cases [mapped below](#which-cases-to-run) to the files it changes | once, at the end, before merge |
 | Choosing a model to recommend | a few cases on 2–3 models | once |
@@ -19,10 +20,12 @@ Never in CI. Never for a change to docs, to scripts only (their free tests cover
 ## How to run
 
 ```bash
+CLAUDE_CODE_SHELL_PREFIX="$PWD/tests/eval-shell-prefix" \
 claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit --no-publish \
   --max-cost-usd <cap> --case '<name>' [--runs <n>] [--keep-temp]
 ```
 
+- **`CLAUDE_CODE_SHELL_PREFIX`**: for git on macOS ([below](#what-a-case-can-check)). It does nothing elsewhere.
 - **`--scaffold`** builds each case's test repository from its `scaffold.sh`.
 - **`--ablation none`**: without it, every case also runs without the plugin, at twice the cost, as a comparison that means nothing for setup.
 - **`--allow-tools Bash Write Edit`**: setup runs scripts and writes files.
@@ -33,7 +36,12 @@ claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit --
 ## What a case can check
 
 - **No answers mid-run.** The question tool doesn't exist in eval runs, so setup asks in plain text and ends its turn. Stage-1 cases give no answers and grade the questions in the final message, plus that nothing was written. Stage-2 cases give every answer in the prompt and grade the files setup wrote.
-- **git on macOS.** A run's shell is a login shell, and macOS's `path_helper` puts `/usr/bin/git` first. That's an xcrun stub, and it fails in the run's sandbox. Setting `PATH` before the run doesn't help, since `path_helper` reorders it. So every scaffold writes a `git` wrapper into the run's home folder and puts it first in the shell's startup files. `tests/evals.sh` checks that each scaffold has it and that a login shell finds it.
+- **git on macOS.** `/usr/bin/git` is an xcrun stub, and it fails in the run's sandbox: it can't write its cache under `/var/folders`, or look git up through `xcodebuild`. Setting `PATH` before the run doesn't help. Each Bash command starts from a snapshot of a login zsh when one exists, and macOS's `path_helper` puts `/usr/bin` first in that snapshot. The fix has three layers:
+  - every scaffold writes a `git` wrapper to the run's home and puts it first in the startup files the snapshot is taken from;
+  - `tests/eval-shell-prefix` puts the wrapper first for commands that run without a snapshot;
+  - the prefix also points the stub at the Command Line Tools.
+
+  The prefix lives outside `evals/`, because a run can't read `evals/`. Run `env-git` first on a new machine: its output shows which layer reached the shell.
 - **"Writes nothing"** means no Write or Edit call and no new `.md` file. Setup also writes with `cp` and `sed`, which only the second check catches. A file it changes in place with Bash isn't caught.
 - **No environment per case.** A case can't set `PATH` or variables other than `EVAL_*`, so running inside Orca, the plan sizes and a missing Python are tested by `tests/setup-detect.sh` instead.
 
@@ -41,6 +49,7 @@ claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit --
 
 | Case | Fixture | Checks |
 |---|---|---|
+| `env-git` | one commit | the run's shell has a working git; its output shows which macOS fix reached the shell. Not a setup case |
 | `new-no-answers` | empty | runs `setup-detect`; asks whose project (3 answers), autonomy and commit style, each with a meaning and a recommended answer; plain words; writes nothing |
 | `existing-no-answers` | ts-shop | recommends the project's own commit style, quoting a real `ENG-` commit; writes nothing |
 | `stack-missing-facts` | empty | "let the team pick" without saying where it runs: asks where it runs and is hosted before picking; no ADR, writes nothing |
