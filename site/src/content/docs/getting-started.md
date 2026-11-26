@@ -31,6 +31,13 @@ Run `/context` in a new session in the project to see what every session starts 
 
 That covers what a session starts with. What agents read during the work can cost more. In one measured week, a 95 KB plan was read whole 23 times, and a notes file with one heading for 51 entries could only ever be read whole. Once the team has worked for a week or so, run `/dev-team:audit`. It reads the project's session transcripts with a script and gives the coordinator a summary: the files that cost the most to read, whole and in part, who read them, and what every session loads. The coordinator then lists the bloat it found in one table (rules stated twice, retired rules, history inside rules, documents over the size limit or with no headings) with the expected saving for each. It applies only what you approve, never changes what a rule means, and records the run in the friction log. The orchestrator offers a new audit when the last one is about two weeks old.
 
+The audit looks back over the last week of the team's sessions, or as many days as you give it (`/dev-team:audit 14` looks back two weeks). Those days are a sample of real use. The audit isn't looking for documents that grew. It works out what each file costs, which is its size times how often sessions loaded it:
+
+- A document agents read during the work costs what its reads in those days came to. A big plan nobody opened costs nothing; a smaller one read whole for every task costs a lot.
+- A file every session loads, such as `CLAUDE.md`, `CLAUDE.local.md` or the memory index, is measured as it is now, and the days give the number of sessions. A 45 KB `CLAUDE.md` is about 11k tokens, so across 200 sessions a week it comes to about 2.3M tokens. The prompt cache makes repeated loads cheaper, but every session still carries the file in its context.
+
+Keeping documents from growing is the job of the [size rule and its hook](/dev-team/workspace/#small-files-on-purpose). The audit is the check that shows what is still expensive, and each run's friction-log entry lets the next run show whether costs went down.
+
 The plugin keeps its own share small. Roles run in your conversation unless there's a reason to start an agent, the descriptions it adds to every session are short, the coordinator reads summaries and document headers rather than transcripts, specs point to files instead of pasting them, and waiting on peers or CI spends nothing while it waits.
 
 ## Set up the project

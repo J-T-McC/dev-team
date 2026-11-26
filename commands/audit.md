@@ -7,7 +7,7 @@ Find what the team's frequently read and always-loaded files cost in tokens, and
 
 Request: $ARGUMENTS
 
-1. **Measure.** Run `"${CLAUDE_PLUGIN_ROOT}/bin/token-audit" --days <N> .` (N from the request, default 7) and read only its summary; never open the transcripts. It lists the files that cost the most to read, whole-file and partial, with their readers (peer home, inline role, or agent), then the totals per reader.
+1. **Measure.** Run `"${CLAUDE_PLUGIN_ROOT}/bin/token-audit" --days <N> .` (N from the request, default 7) and read only its summary; never open the transcripts. The N days are a sample of real use, not a search for files that grew: a file's cost is its size × how often those sessions loaded it. It lists the files that cost the most to read, whole-file and partial, with their readers (peer home, inline role, or agent), then the totals per reader.
 
 2. **Size.** The same output lists what every session loads, with sizes: the `CLAUDE.md` chain and its imports, the dev-team section and its Team setup, the memory index, and the SessionStart hook output sessions actually got. Then the workspace documents over the size limit (`<ws>/standards/documentation.md` § Size and reading; 25 KB by default) that were read or changed in the window.
 
@@ -19,7 +19,7 @@ Request: $ARGUMENTS
    - a frequently read file with no headings, or one section holding most of it, so nobody can read part of it: one heading per entry;
    - a live document over the limit or often read whole: its owning role replaces superseded text in place and splits it into part files.
 
-   Expected saving: the share of a file cut × its weekly read cost, or, for an always-loaded file, the tokens cut × sessions per week.
+   Expected saving: the share of a file cut × its weekly read cost, or, for an always-loaded file, the tokens cut × sessions per week. Weekly figures are the window's × 7 ÷ N.
 
 4. **Report** one short table, the largest saving first, and the total:
 
