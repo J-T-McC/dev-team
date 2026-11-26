@@ -1,0 +1,12 @@
+schema_version: "1.1"
+name: new-all-answers
+description: "A new project with every answer given up front: setup writes the workspace and ends with a next step."
+tags: [setup, stage-2, new]
+runs: 3
+execution:
+  prompt: "Set up dev-team in this project. My answers: it's my project, shared with the repository; standard autonomy; dev-team's commit style; decide the stack at the first feature; no extras. I'm building a habit tracker web app. Don't ask me anything else: go ahead and set it up."
+  max_turns: 60
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill]
+context:
+  scaffold_script: scaffold.sh

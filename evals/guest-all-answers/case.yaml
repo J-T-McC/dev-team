@@ -1,0 +1,12 @@
+schema_version: "1.1"
+name: guest-all-answers
+description: "Someone else's project: setup leaves their files alone and keeps its workspace out of their history."
+tags: [setup, stage-2, guest]
+runs: 3
+execution:
+  prompt: "Set up dev-team in this project. It's someone else's project, so I'm a guest. My answers: standard autonomy; no extras. Use the standards you find as proposed. Don't ask me anything else: go ahead and set it up."
+  max_turns: 80
+  timeout_seconds: 1200
+  allowed_tools: [Read, Glob, Grep, Skill]
+context:
+  scaffold_script: scaffold.sh
