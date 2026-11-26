@@ -1,0 +1,273 @@
+#!/bin/bash
+# setup-detect [--other-projects <dir>] [project-dir] — what setup can learn about the project, the machine and Claude
+# before asking anything, and what it suggests for each choice (skills/bootstrap). Prints JSON. Read-only. Its only
+# network calls are gh's, made only when gh is logged in and the remote is on GitHub. Runs on macOS's bash 3.2.
+P=. OTHER=
+while [ $# -gt 0 ]; do
+  case $1 in
+    --other-projects) OTHER=$2; shift 2 ;;
+    *) P=$1; shift ;;
+  esac
+done
+cd "$P" 2>/dev/null || { echo "setup-detect: no such folder: $P" >&2; exit 2; }
+TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
+
+j() { printf '"%s"' "$(printf '%s' "$1" | tr -d '\000-\010\013-\037' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g')"; }
+jarr() { local out= line; while IFS= read -r line; do [ -n "$line" ] && out="$out${out:+, }$(j "$line")"; done; printf '[%s]' "$out"; }
+jnull() { if [ -n "$1" ]; then j "$1"; else printf null; fi; }
+any() { local f; for f; do [ -e "$f" ] && return 0; done; return 1; }
+ver() { "$@" 2>&1 | head -3 | grep -oE '[0-9]+(\.[0-9]+)+' | head -1; }
+
+# ---- the machine: tool versions, checked in parallel -------------------------------------------------------------
+mkdir "$TMP/v"
+for t in git gh python3 node npm pnpm yarn bun deno go cargo java php composer ruby dotnet docker orca uv mise asdf; do
+  command -v "$t" >/dev/null 2>&1 || continue
+  # macOS ships a java stub that opens an install dialog when no JDK is present.
+  [ "$t" = java ] && [ -x /usr/libexec/java_home ] && ! /usr/libexec/java_home >/dev/null 2>&1 && continue
+  (
+    case $t in
+      go) v=$(ver go version) ;;
+      python3) v=$(python3 -c 'import sys; print("%d.%d.%d" % sys.version_info[:3])' 2>/dev/null) ;;
+      *) v=$(ver "$t" --version) ;;
+    esac
+    case $t in
+      python3) [ -n "$v" ] || exit 0 ;;
+      gh) gh auth status >/dev/null 2>&1 && v="$v logged in" || v="$v not logged in" ;;
+      docker) [ -n "$(docker version --format '{{.Server.Version}}' 2>/dev/null)" ] && v="$v running" || v="$v not running" ;;
+    esac
+    printf '%s' "${v:-installed}" > "$TMP/v/$t"
+  ) &
+done
+gh_stack=false
+( command -v gh >/dev/null 2>&1 && gh extension list 2>/dev/null | grep -q 'gh-stack' && touch "$TMP/gh_stack" ) &
+( command -v claude >/dev/null 2>&1 && claude auth status --json > "$TMP/auth" 2>/dev/null ) &
+
+# ---- the project ----------------------------------------------------------------------------------------------
+GIT=; git rev-parse --is-inside-work-tree >/dev/null 2>&1 && GIT=1
+commits=0; [ -n "$GIT" ] && commits=$(git rev-list --count HEAD 2>/dev/null || echo 0)
+if [ -n "$GIT" ]; then git ls-files --cached --others --exclude-standard 2>/dev/null
+else find . -type f -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/vendor/*' 2>/dev/null | head -50000
+fi > "$TMP/files"
+src='\.(ts|tsx|js|jsx|mjs|cjs|py|go|rs|java|kt|rb|php|cs|swift|c|cc|cpp|h|hpp|scala|ex|exs|dart|vue|svelte)$'
+source_files=$(grep -cE "$src" "$TMP/files")
+if grep -qs -e '\*\*Workspace:\*\*' -e '^# Development Organization' CLAUDE.md CLAUDE.local.md; then state=set-up
+elif [ "$source_files" -gt 0 ] || [ "$commits" -gt 3 ]; then state=existing
+else state=new
+fi
+
+url=; [ -n "$GIT" ] && url=$(git remote get-url origin 2>/dev/null)
+remote=$(printf '%s' "$url" | sed -E -e 's#^[a-z+]+://##' -e 's#^[^@/]*@##' -e 's#^([^/:]+):([^0-9])#\1/\2#' -e 's#\.git$##' -e 's#/$##')
+wait  # tool versions and auth, before anything needs gh
+v() { cat "$TMP/v/$1" 2>/dev/null; }
+gh_ok=; case $(v gh) in *" not logged in") ;; *" logged in") gh_ok=1 ;; esac
+[ -e "$TMP/gh_stack" ] && gh_stack=true
+
+access=unknown
+if [ -z "$url" ]; then access="no remote"
+elif [ -n "$gh_ok" ] && [ "${remote%%/*}" = github.com ]; then
+  or=${remote#github.com/}
+  line=$(gh api graphql -f query='query($o:String!,$n:String!){viewer{login} repository(owner:$o,name:$n){viewerPermission owner{login}}}' \
+    -f o="${or%%/*}" -f n="${or#*/}" --jq '[.data.viewer.login, .data.repository.viewerPermission, .data.repository.owner.login] | join(" ")' 2>/dev/null)
+  set -- $line
+  if [ -n "$1" ] && [ "$1" = "$3" ]; then access=owner
+  else case $2 in ADMIN|MAINTAIN) access=admin ;; WRITE|TRIAGE) access=write ;; READ) access=read ;; esac
+  fi
+fi
+dev_team_dir=absent; [ -e dev-team ] && { [ -f dev-team/status.md ] && dev_team_dir=ours || dev_team_dir=taken; }
+
+# ---- commit history -------------------------------------------------------------------------------------------
+subjects=; [ -n "$GIT" ] && [ "$commits" -gt 0 ] && subjects=$(git log -20 --format=%s 2>/dev/null)
+conv_re='^[a-z]+(\([^)]+\))?!?: .'
+n=$(printf '%s\n' "$subjects" | grep -c .)
+conv=$(printf '%s\n' "$subjects" | grep -cE "$conv_re")
+if [ "$n" -lt 5 ]; then style="too few"; elif [ $((conv * 5)) -ge $((n * 4)) ]; then style=conventional; else style=free; fi
+ticket=$(printf '%s\n' "$subjects" | while IFS= read -r s; do
+    printf '%s\n' "$s" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | sed 's/-[0-9]*$//' | sort -u
+  done | grep -vxE 'UTF|ISO|RFC|SHA|CVE|ES|TLS|SSL|HTTP' | sort | uniq -c | sort -rn | awk '$1 >= 3 { print $2; exit }')
+if [ "$style" = conventional ]; then example=$(printf '%s\n' "$subjects" | grep -E "$conv_re" | head -1)
+elif [ -n "$ticket" ]; then example=$(printf '%s\n' "$subjects" | grep -E "$ticket-[0-9]+" | head -1)
+else example=$(printf '%s\n' "$subjects" | head -1)
+fi
+
+# ---- code: languages, UI, what runs, what is configured but never run -------------------------------------------
+{
+  [ -f package.json ] && { [ -f tsconfig.json ] && echo typescript || echo javascript; }
+  any pyproject.toml requirements.txt setup.py Pipfile && echo python
+  any go.mod && echo go
+  any Cargo.toml && echo rust
+  any composer.json && echo php
+  any Gemfile && echo ruby
+  any pom.xml build.gradle build.gradle.kts && echo java
+  any *.csproj *.sln && echo csharp
+  any pubspec.yaml && echo dart
+  any mix.exs && echo elixir
+  any Package.swift *.xcodeproj && echo swift
+} > "$TMP/langs"
+ui=false
+if grep -qsE '"(react|vue|svelte|@angular/core|solid-js|preact|next|nuxt|@remix-run/react|astro|react-native|expo)"[[:space:]]*:' package.json ||
+   grep -qs 'flutter' pubspec.yaml || any ios android ||
+   grep -qE '\.(tsx|jsx|vue|svelte|blade\.php|erb|xib|storyboard)$' "$TMP/files"; then ui=true; fi
+
+pm=npm; [ -f pnpm-lock.yaml ] && pm=pnpm; [ -f yarn.lock ] && pm=yarn; any bun.lockb bun.lock && pm=bun
+scripts() { awk -v k="\"$2\"" '$0 ~ k "[[:space:]]*:[[:space:]]*\\{" { s = 1; next } s && /^[[:space:]]*\}/ { s = 0 } s' "$1" 2>/dev/null; }
+scripts package.json scripts > "$TMP/npm"; scripts composer.json scripts > "$TMP/composer"
+runs=
+add_run() { case ",$runs," in *"\"$1\":"*) return ;; esac; runs="$runs${runs:+, }$(j "$1"): $(j "$2")"; }
+for k in test lint format:format format:fmt typecheck:typecheck typecheck:type-check check; do
+  purpose=${k%%:*} key=${k#*:}
+  grep -qE "^[[:space:]]*\"$key\"[[:space:]]*:" "$TMP/npm" && { [ "$key" = test ] && [ "$pm" != bun ] && add_run test "$pm test" || add_run "$purpose" "$pm run $key"; }
+  grep -qE "^$key:" Makefile 2>/dev/null && add_run "$purpose" "make $key"
+  grep -qE "^[[:space:]]*\"$key\"[[:space:]]*:" "$TMP/composer" && add_run "$purpose" "composer $key"
+done
+
+ls .github/workflows/*.yml .github/workflows/*.yaml .gitlab-ci.yml .circleci/config.yml bitbucket-pipelines.yml \
+   azure-pipelines.yml Jenkinsfile 2>/dev/null > "$TMP/ci"
+# Everything that actually runs: package and composer scripts, make, CI, git hooks, lint-staged.
+cat "$TMP/npm" "$TMP/composer" Makefile $(cat "$TMP/ci") .husky/* lefthook.yml .pre-commit-config.yaml .lintstagedrc* \
+  2>/dev/null > "$TMP/runs"
+grep -A20 '"lint-staged"' package.json 2>/dev/null >> "$TMP/runs"
+: > "$TMP/tools_run"; : > "$TMP/not_run"
+while read -r tool files; do
+  found=; for f in $files; do [ -e "$f" ] && found="$found${found:+, }$f"; done
+  for sec in $(printf '%s' "$files" | tr ' ' '\n' | grep '^pyproject:'); do
+    grep -qs "^\[tool\.${sec#pyproject:}" pyproject.toml && found="$found${found:+, }pyproject.toml"
+  done
+  ext=$(printf '%s' "$files" | tr ' ' '\n' | grep '^vscode:' | sed 's/^vscode://')
+  [ -n "$ext" ] && grep -qsF "$ext" .vscode/settings.json && found="$found${found:+, }.vscode/settings.json"
+  if grep -qwF "$tool" "$TMP/runs"; then echo "$tool" >> "$TMP/tools_run"
+  elif [ -n "$found" ]; then echo "$tool ($found)" >> "$TMP/not_run"
+  fi
+done <<'EOF'
+biome biome.json biome.jsonc vscode:biomejs.biome
+eslint .eslintrc .eslintrc.js .eslintrc.cjs .eslintrc.json .eslintrc.yml eslint.config.js eslint.config.mjs eslint.config.cjs eslint.config.ts vscode:dbaeumer.vscode-eslint
+prettier .prettierrc .prettierrc.json .prettierrc.js .prettierrc.cjs .prettierrc.yml .prettierrc.yaml prettier.config.js prettier.config.cjs prettier.config.mjs vscode:esbenp.prettier-vscode
+oxlint .oxlintrc.json oxlintrc.json
+stylelint .stylelintrc .stylelintrc.json stylelint.config.js stylelint.config.mjs
+tsc
+vitest vitest.config.ts vitest.config.js vitest.config.mts
+jest jest.config.js jest.config.ts jest.config.cjs jest.config.mjs
+playwright playwright.config.ts playwright.config.js
+ruff ruff.toml .ruff.toml pyproject:ruff vscode:charliermarsh.ruff
+black pyproject:black
+mypy mypy.ini pyproject:mypy
+flake8 .flake8
+pyright pyrightconfig.json
+pytest pytest.ini pyproject:pytest
+golangci-lint .golangci.yml .golangci.yaml .golangci.toml
+gofmt
+rubocop .rubocop.yml
+rspec .rspec
+phpstan phpstan.neon phpstan.neon.dist
+php-cs-fixer .php-cs-fixer.php .php-cs-fixer.dist.php
+pint pint.json
+phpunit phpunit.xml phpunit.xml.dist
+EOF
+
+# ---- Claude: auth, plan hint, Orca, where the plugin is installed -----------------------------------------------
+field() { grep -oE "\"$1\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" "$TMP/auth" 2>/dev/null | head -1 | sed -E 's/.*"([^"]*)"$/\1/'; }
+auth=$(field authMethod); tier=$(field planTier); sub=$(field subscriptionType)
+case $auth in
+  api_key|api_key_helper) plan=api ;;
+  *) case "$tier $sub" in *20x*) plan=max_20x ;; *5x*) plan=max_5x ;; *" pro") plan=pro ;; *) plan=unknown ;; esac ;;
+esac
+in_orca=false; [ -n "$ORCA_TERMINAL_HANDLE" ] && in_orca=true
+cfg=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
+scopes=$(for s in "local .claude/settings.local.json" "project .claude/settings.json" "user $cfg/settings.json"; do
+  grep -qsE '"dev-team@dev-team"[[:space:]]*:[[:space:]]*true' "${s#* }" && echo "${s%% *}"; done)
+
+open_prs='[]'
+if [ "$state" = existing ] && [ -n "$gh_ok" ] && [ "${remote%%/*}" = github.com ]; then
+  open_prs=$(gh pr list --author @me --state open --limit 20 --json number,title,headRefName \
+    --jq 'map({number, title, branch: .headRefName})' 2>/dev/null)
+  [ -n "$open_prs" ] || open_prs='[]'
+fi
+
+# ---- suggestions --------------------------------------------------------------------------------------------
+python_ok=; case $(v python3) in 3.[0-8].*|"") ;; *) python_ok=1 ;; esac
+case $access in
+  "no remote") sp=mine-shared why="no remote: a project only you have" ;;
+  owner)       sp=mine-shared why="you own $remote" ;;
+  admin)       sp=mine-just-me why="you admin $remote, but others work on it: try it privately first" ;;
+  write|read)  sp=guest why="you don't admin $remote" ;;
+  *)           sp= why="couldn't tell who owns $remote" ;;
+esac
+if [ "$style" = conventional ]; then sc=project wc="$conv of the last $n commits are conventional"
+elif [ -n "$ticket" ]; then sc=project wc="recent commits name $ticket tickets"
+else sc=dev-team wc="no consistent style in the last $n commits"
+fi
+if [ "$in_orca" = true ] && [ -n "$python_ok" ] && [ -n "$gh_ok" ]; then
+  case $plan in
+    pro)     sr=in-conversation wr="Pro: every Orca task starts a fresh session, which uses up Pro's limits fast; small Orca is the alternative" ;;
+    max_5x)  sr=orca-medium wr="running inside Orca on Max 5x" ;;
+    max_20x) sr=orca-large wr="running inside Orca on Max 20x" ;;
+    *)       sr=orca-small wr="running inside Orca; plan unknown" ;;
+  esac
+elif [ "$in_orca" = true ]; then sr=in-conversation wr="Orca needs Python 3.9+ and gh logged in"
+elif [ -n "$(v orca)" ]; then sr=in-conversation wr="Orca is installed, but setup isn't running inside it"
+else sr=in-conversation wr="Orca isn't installed"
+fi
+avail=; unavail=
+[ -n "$python_ok" ] && avail="$avail
+board" || unavail="$unavail
+board: needs Python 3.9+"
+if [ -n "$(v orca)" ] && [ -n "$python_ok" ]; then avail="$avail
+check-ins"; else unavail="$unavail
+check-ins: needs Orca and Python 3.9+"; fi
+[ "${remote%%/*}" = github.com ] && [ -n "$gh_ok" ] && avail="$avail
+tickets: GitHub"
+
+notices=$(
+  printf '%s\n' "$scopes" | grep -qx user &&
+    echo "dev-team is installed for every project (user scope), so every Claude Code session loads it. Reinstalling it with --scope local limits it to this project."
+  [ -n "$python_ok" ] || echo "Python 3.9 or newer is missing: the Orca runtime, Owner board, check-ins and audit need it (macOS: xcode-select --install; Linux: your package manager)."
+  [ -n "$gh_ok" ] || echo "gh isn't installed or logged in: the Orca runtime and Owner board need it (gh auth login)."
+  [ "$dev_team_dir" = taken ] && echo "A dev-team/ folder already exists and isn't dev-team's workspace: pick another folder for it."
+)
+
+# ---- other projects (only after the Owner said yes): what they are built with -----------------------------------
+oth=
+if [ -n "$OTHER" ]; then
+  here=$(pwd -P); : > "$TMP/o"; count=0
+  for d in "$OTHER"/*/; do
+    [ -e "$d.git" ] || continue
+    [ "$(cd "$d" && pwd -P)" = "$here" ] && continue
+    count=$((count + 1))
+    (
+      cd "$d" || exit 0
+      [ -f package.json ] && { [ -f tsconfig.json ] && echo typescript || echo javascript
+        grep -oE '"(react|next|vue|nuxt|svelte|@sveltejs/kit|astro|@angular/core|express|fastify|@nestjs/core|hono|react-native|expo)"[[:space:]]*:' package.json |
+          sed -E 's/"([^"]*)".*/\1/'; }
+      any pyproject.toml requirements.txt && { echo python; cat pyproject.toml requirements.txt 2>/dev/null |
+        grep -oiE '\b(django|fastapi|flask)\b' | tr '[:upper:]' '[:lower:]' | sort -u; }
+      any go.mod && echo go; any Cargo.toml && echo rust; any Gemfile && { echo ruby; grep -qs "'rails'" Gemfile && echo rails; }
+      any composer.json && { echo php; grep -oE '"(laravel/framework|symfony/framework-bundle)"' composer.json | tr -d '"'; }
+    ) | sort -u >> "$TMP/o"
+  done
+  others=$(sort "$TMP/o" | uniq -c | sort -rn | awk '{ printf "%s%s: %s", (NR > 1 ? ", " : ""), "\"" $2 "\"", $1 }')
+  oth=",
+  \"other_projects\": { \"projects\": $count, \"built_with\": { $others } }"
+fi
+
+# ---- output -------------------------------------------------------------------------------------------------
+tools=; for f in "$TMP"/v/*; do [ -e "$f" ] && tools="$tools${tools:+, }$(j "$(basename "$f")"): $(j "$(cat "$f")")"; done
+case $(uname -s) in Darwin) os=macos ;; Linux) grep -qsi microsoft /proc/version && os=wsl || os=linux ;; *) os=$(uname -s) ;; esac
+cat <<EOF
+{
+  "project": { "state": "$state", "commits": $commits, "source_files": $source_files, "remote": $(jnull "$remote"),
+               "access": "$access", "dev_team_dir": "$dev_team_dir" },
+  "commits": { "style": "$style", "matched": "$conv of $n", "example": $(jnull "$example"), "ticket_prefix": $(jnull "$ticket") },
+  "code": { "languages": $(jarr < "$TMP/langs"), "ui": $ui, "runs": { $runs },
+            "tools_run": $(sort -u "$TMP/tools_run" | jarr), "config_not_run": $(jarr < "$TMP/not_run"), "ci": $(jarr < "$TMP/ci") },
+  "machine": { "os": "$os", "tools": { $tools }, "gh_stack": $gh_stack },
+  "claude": { "auth": $(jnull "$auth"), "plan": "$plan", "in_orca": $in_orca, "install_scope": $(printf '%s\n' "$scopes" | jarr) },
+  "open_prs": $open_prs,
+  "suggest": {
+    "project": { "value": $(jnull "$sp"), "why": $(j "$why") },
+    "commits": { "value": "$sc", "why": $(j "$wc") },
+    "autonomy": { "value": "standard" },
+    "runtime": { "value": "$sr", "why": $(j "$wr") },
+    "extras": { "available": $(printf '%s\n' "$avail" | jarr), "unavailable": $(printf '%s\n' "$unavail" | jarr) }
+  },
+  "notices": $(printf '%s\n' "$notices" | jarr)$oth
+}
+EOF
