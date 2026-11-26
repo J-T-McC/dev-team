@@ -10,7 +10,8 @@ while [ $# -gt 0 ]; do
   esac
 done
 cd "$P" 2>/dev/null || { echo "setup-detect: no such folder: $P" >&2; exit 2; }
-TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
+# A template under $TMPDIR: on macOS a bare `mktemp -d` ignores TMPDIR, and Claude Code's sandbox only allows TMPDIR.
+TMP=$(mktemp -d "${TMPDIR:-/tmp}/setup-detect.XXXXXX") || exit 1; trap 'rm -rf "$TMP"' EXIT
 
 j() { printf '"%s"' "$(printf '%s' "$1" | tr -d '\000-\010\013-\037' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g')"; }
 jarr() { local out= line; while IFS= read -r line; do [ -n "$line" ] && out="$out${out:+, }$(j "$line")"; done; printf '[%s]' "$out"; }

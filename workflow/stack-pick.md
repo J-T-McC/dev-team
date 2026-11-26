@@ -4,12 +4,12 @@ How the Principal Engineer chooses the stack for a new project: at setup, when t
 
 ## Facts first
 
-A stack picked without these facts is a guess. Ask the Owner for each one the description leaves out, in one round, each with a suggested answer and room for their own. Choose nothing until they are answered.
+A stack picked without these facts is a guess. Ask the Owner for each one the description leaves out, in one round. Every question gets a suggested answer and ends with "or your own answer". Name no language, framework or host while asking: choose nothing until they are answered.
 
 | Fact | Why it matters | Suggest |
 |---|---|---|
 | **Where it runs:** web, phone, desktop, an API or service, a command-line tool | the platform decides most of the stack | what the description implies; a web app when it only says "an app" |
-| **Where it's hosted** | deploy, database, and running cost | one or two managed hosts with a free tier that fit; "on my machine" for a tool |
+| **Where it's hosted** | deploy, database, and running cost | a managed host with a free tier, chosen with the stack; "on my machine" for a tool |
 | **Who uses it, and how many** | sign-in, data, scale | "me and a few people" for a first version |
 | **What it stores** | accounts, offline use, sensitive data (health, money, children's data) | what the description implies |
 | **What it must use or connect to** | an existing service or account, a language the Owner reads, a company rule | nothing |

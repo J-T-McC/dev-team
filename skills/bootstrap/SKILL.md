@@ -10,7 +10,7 @@ Read the project, ask at most three rounds of questions (plus the stack facts, w
 ## How to ask
 
 - **Every question has a recommended answer,** listed first, and every answer has a one-line meaning. Use `setup-detect`'s suggestion, with its reason, where it has one.
-- **Plain words for someone new to dev-team.** Explain each dev-team word where it first appears: *the team* (dev-team's roles: a product manager, a designer, a lead engineer, developers and a reviewer), *you* as the Owner (the person who decides), *the workspace* (the folder where the team keeps its documents), *Orca* (an app that runs each role as its own Claude session). Never offer something only as a slash command: say what it does; the command can follow in brackets.
+- **Plain words for someone new to dev-team.** Explain each dev-team word where it first appears: *the team* (dev-team's roles: a product manager, a designer, a lead engineer, developers and a reviewer), *you* as the Owner (the person who decides), *the workspace* (the folder where the team keeps its documents), *Orca* (an app that runs each role as its own Claude session), *the Owner board* (a live page of what needs you). Never offer something only as a slash command: say what it does; the command can follow in brackets.
 - **Use the question tool when the session has it** (AskUserQuestion): one dialog per round, up to four questions, the recommended answer first and marked "(Recommended)". Setup is the one place a dialog is right (`${CLAUDE_PLUGIN_ROOT}/workflow/communication.md` § Talking to the Owner). Without the tool, ask the round as a numbered list in chat, each answer on its own line with its meaning, and end the turn.
 - **Answers already given count,** in any words. Ask only what is still missing; with nothing missing, go straight to writing. "Don't ask me anything else" means: take the recommended answer for anything missing, and say which ones you took.
 - **Write nothing until the last round is answered,** with a tool call or a shell command alike. An existing project's digest comes after writing.
@@ -22,7 +22,7 @@ Read the project, ask at most three rounds of questions (plus the stack facts, w
 "${CLAUDE_PLUGIN_ROOT}/bin/setup-detect"
 ```
 
-It prints JSON: the project (`state`, `access`, `dev_team_dir`), its commit style, its code and tools, the machine, Claude's plan and whether this runs inside Orca, and `suggest` (a suggested answer, with a reason, for each question below). Never ask what it already answers. Pass each of its `notices` on in plain words, in your first message.
+It prints JSON: the project (`state`, `access`, `dev_team_dir`), its commit style, its code and tools, the machine, Claude's plan and whether this runs inside Orca, and `suggest` (a suggested answer, with a reason, for each question below). Never ask what it already answers. Pass on its `notices` that matter for this setup, after the questions, in plain words, explaining any term they use.
 
 - `state: set-up` → **Already set up**, below. Nothing else in this file applies.
 - `state: existing` → every step, including step 5.
@@ -67,7 +67,7 @@ Only the questions that apply; skip the round when none do.
    - **Autonomy** set to the answer.
    - **Commits:** dev-team's style keeps the seed's line. The project's style: `- Commits: follow this project's style, e.g. \`<commits.example>\``. Their own: their words. Guest: `- Commits: follow this repository's conventions`.
    - **Shared:** append it to `CLAUDE.md`, or create the file. Never change the project's own lines; rules on the same subject follow `workflow/adoption.md` § Before writing anything. **Just me, guest:** write it to `CLAUDE.local.md`, never `CLAUDE.md`. If `claude.install_scope` has no `local`, tell them to install the plugin for this project only (`/plugin install dev-team@dev-team --scope local`).
-2. **Just me, guest: the workspace's own history.** Add the root to `.git/info/exclude` (never `.gitignore`), then `mkdir -p <root> && git -C <root> init -q` (for example `git -C .dev-team init -q`). If `git init` fails, as it does where a sandbox blocks writing a new repository, say so plainly and give the Owner the command to run themselves. From then on the plugin's Stop hook commits the workspace whenever it changes.
+2. **Just me, guest: the workspace's own history.** Three separate commands, so one that is blocked doesn't stop the others: add the root and, unless `git check-ignore -q CLAUDE.local.md` says it's ignored already, `CLAUDE.local.md` to `.git/info/exclude` (never `.gitignore`), with `printf`; `mkdir -p <root>`; then `git -C <root> init -q` (for example `git -C .dev-team init -q`). If a step fails, as `git init` does where a sandbox blocks writing a new repository, say so plainly and give the Owner the exact commands to run themselves. From then on the plugin's Stop hook commits the workspace whenever it changes.
 3. **Folders and seeds:** follow `${CLAUDE_PLUGIN_ROOT}/commands/sync.md` step 3. It creates the folders and copies the seeds that apply; `design.md` only when `code.ui` is true or the description has screens.
 4. **The stack** (new projects): the **Product** line in `<ws>/stack/stack.md` comes from the description.
    - **The team picks:** invoke the `dev-team:principal-engineer` skill to pick and record it (`workflow/stack-pick.md`).
