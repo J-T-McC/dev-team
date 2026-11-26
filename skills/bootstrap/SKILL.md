@@ -39,7 +39,7 @@ It prints JSON: the project (`state`, `access`, `dev_team_dir`), its commit styl
    - **Supervised:** you approve every step.
    - **Autonomous:** the team approves its own work. You still decide anything that can't be undone, costs money, touches security, or leaves the repository.
 3. **Commit messages.** Guests always keep the project's style; say so.
-   - `suggest.commits` is `project`: **keep this project's style (Recommended)**, shown with `commits.example` quoted exactly. Then dev-team's style, then your own.
+   - `suggest.commits` is `project`: **keep this project's style (Recommended)**: say what it is in words (from `commits.style` and `commits.ticket_prefix`, such as "conventional commits with ENG ticket IDs"), and quote `commits.example` exactly. Then dev-team's style, with its example, then your own.
    - Otherwise: **dev-team's style (Recommended):** `<type>(<scope>): <ticket ID> <what changed>`, such as `feat(auth): ENG-123 add login timeout`; with no ticket system, the task's ID takes the ticket's place. Then your own; then this project's style, only when it has history to quote.
 4. **New projects: what are you building?** Ask it in chat, after the dialog (or with the list, without one): what it is, who it's for, where it runs (web, phone, desktop, a service), where you'd host it if you know, and anything it must use. The stack question needs it.
 
