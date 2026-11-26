@@ -43,6 +43,7 @@ The settings come after the line's first sentence, each ending with a full stop:
 | `standards/planning.md` | the Agent limits list and backlog rules | bootstrap |
 | `standards/design.md` | the design tool, if any | bootstrap |
 | `standards/coding.md` | coding conventions, including stacked PRs when `gh-stack` is installed | bootstrap |
+| `standards/documentation.md` | how documents are written, and the size limit for live ones (§ Size and reading, 25 KB by default) | bootstrap |
 | `standards/tickets.md` | the ticket-system config | `/dev-team:tickets` |
 | `standards/checkins.md` | the check-in schedule | `/dev-team:checkins` |
 | `stack/stack.md` | the project's stack | bootstrap, then you |

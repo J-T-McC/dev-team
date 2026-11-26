@@ -277,15 +277,21 @@ ok "a dead session's last screen is not busy" '[ $RC = 0 ] && [[ $OUT == *"(fres
 state stage '"settled"'; TT=$(home dt-dev-1 terminal)
 shows "$TT" "  2 background shells · ↓ to manage"
 # Stand-ins run on python3: macOS hides the environment of system binaries such as /bin/sleep.
-bg() { ORCA_TERMINAL_HANDLE=$1 sh -c "$2 >/dev/null 2>&1 & echo \$!"; }  # started outside this shell's jobs
-M=$(bg "$TT" "python3 -c 'import time; time.sleep(60)' fake-mcp-server")
-V=$(bg "$TT" "python3 -c 'import time; time.sleep(60)' vite-dev")
+# bg <terminal> <command> [dir]: started outside this shell's jobs, in dir (default here).
+bg() { (cd "${3:-.}" && ORCA_TERMINAL_HANDLE=$1 sh -c "$2 >/dev/null 2>&1 & echo \$!"); }
+mkdir -p "$T/wt1" "$T/service"; setreg "r['homes']['dt-dev-1']['worktree'] = '$T/wt1'"
+M=$(bg "$TT" "python3 -c 'import time; time.sleep(60)' fake-mcp-server" "$T/wt1")
+V=$(bg "$TT" "python3 -c 'import time; time.sleep(60)' vite-dev" "$T/wt1")
+W=$(bg "$TT" "python3 -c 'import time; time.sleep(60)' $T/wt1/node_modules/.bin/watcher" "$T/service")
+S=$(bg "$TT" "python3 -c 'import time; time.sleep(60)' desktop-mcp-backend" "$T/service")
 sleep 1
 run dispatch dt-dev-1 senior-developer "T07"
 ok "no Claude process in it: not busy"     '[ $RC = 0 ]'
 ok "MCP servers it left are stopped"       '[[ $OUT == *"stopped 1 MCP server process(es)"*"fake-mcp-server"* ]] && ! kill -0 $M 2>/dev/null'
 ok "anything else it left is named"        '[[ $OUT == *"still running from its closed session"*"vite-dev"* ]] && kill -0 $V'
-kill $V
+ok "a process naming the worktree is named" '[[ $OUT == *"watcher"* ]] && kill -0 $W'
+ok "a service run from elsewhere is left alone" '[[ $OUT != *"desktop-mcp-backend"* ]] && kill -0 $S'
+kill $V $W $S
 state stage '"settled"'; TT=$(home dt-dev-1 terminal)
 shows "$TT" "✻ Working… (esc to interrupt)"
 mkdir -p "$T/standin"; printf '#!/usr/bin/env python3\nimport time; time.sleep(60)\n' > "$T/standin/claude"; chmod +x "$T/standin/claude"

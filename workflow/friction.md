@@ -34,3 +34,4 @@ Fixing is maintenance, done by the orchestrator (the coordinator under the Orca 
 
 - Changes to checked-in files that agents load (`CLAUDE.md`, `AGENTS.md`, project skills) go to the Owner first: they reach everyone on the repository.
 - A fix that belongs in the dev-team plugin itself goes to the Owner as a suggestion for it.
+- Token burns are measured, not guessed: `/dev-team:audit` (`${CLAUDE_PLUGIN_ROOT}/commands/audit.md`) finds what the team's sessions pay to read files and load at start, and records each run here as one entry.

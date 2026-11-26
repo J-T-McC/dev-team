@@ -83,7 +83,7 @@ Two plugin hooks act in the coordinator's session only. On every prompt they lis
 
 A fresh dispatch refuses while the peer is busy: its dispatch still running, its working line on screen, or a background shell or monitor that closing would kill. A session that has already exited isn't busy, whatever its last screen shows.
 
-Closing a session stops the MCP server processes it left running and names anything else it left, such as a dev server, for you to close. Add `Session caches:` to the Runtime line to clear per-session caches inside the peer's worktree as well.
+Closing a session stops the MCP server processes it left running and names anything else it left, such as a dev server, for you to close. It counts only processes started from the peer's worktree, so a machine-wide service the session happened to start, such as Docker Desktop, is left running for everyone. Add `Session caches:` to the Runtime line to clear per-session caches inside the peer's worktree as well.
 
 `peer sleep <home>` (or `--idle` for all idle peers) closes a session and keeps its worktree; the next dispatch wakes it. A sleeping peer gets no messages, so anything for it goes in its next spec. A session that ended outside `peer`, after an `/exit` or a crash, keeps its terminal on record, so the next dispatch closes the shell left behind. `peer adopt` makes a home of a terminal you started by hand.
 

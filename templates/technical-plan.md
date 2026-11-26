@@ -1,4 +1,5 @@
 # Technical Plan: <Feature Name>
+<!-- Change this document in place, never below the old text; past ~25 KB, split it into part files (`<ws>/standards/documentation.md` § Size and reading). -->
 
 - **Status:** Draft | In Review | Approved
 - **Author:** Principal Engineer

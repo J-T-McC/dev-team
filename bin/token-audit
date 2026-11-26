@@ -1,0 +1,505 @@
+#!/usr/bin/env python3
+"""token-audit [--days N] [--top N] [project-dir] — what the team's sessions pay to read files (commands/audit.md).
+
+Scans this project's Claude Code transcripts (~/.claude/projects/: the main checkout's folder, each git worktree's,
+and their subagents) from the last N days (default 7), matches every Read, Grep and shell read (cat, head, sed, grep,
+…) to its result, and prints a summary only:
+  - the files that cost the most, split into whole-file and partial reads, with their top readers (peer home or role);
+  - totals per reader;
+  - what every session loads: the CLAUDE.md chain and its imports, the dev-team section, the memory index, and the
+    SessionStart hook output the sessions actually got;
+  - workspace documents over the size limit (<ws>/standards/documentation.md § Size and reading; default 25 KB).
+Tokens are estimated as characters ÷ 4. A shell command that reads several files shares its output evenly.
+"""
+import argparse, glob, json, os, re, shlex, subprocess, sys, time
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+CLAUDE_DIR = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+HOME = str(Path.home())
+ROLES = ("orchestrator", "product-manager", "designer", "principal-engineer", "senior-developer", "reviewer")
+PEER = re.compile(r"You are the dev-team ([\w-]+) peer \[dev-team home ([^\]\s]+)\]")
+TYPED = re.compile(r"<command-name>/?dev-team:([\w-]+)</command-name>")
+READERS = {"cat", "head", "tail", "sed", "awk", "grep", "egrep", "fgrep", "rg", "nl", "less", "more", "bat", "cut"}
+WHOLE = {"cat", "nl", "less", "more", "bat"}
+PATTERN_FIRST = {"sed", "awk", "grep", "egrep", "fgrep", "rg"}  # first operand is the pattern or script
+GREP_OPTS = {"-A", "-B", "-C", "-m", "-e", "-f", "-g", "-t", "-T", "-M", "-d", "-D", "--max-count", "--include",
+             "--exclude", "--glob", "--type", "--context", "--regexp", "--file"}
+VALUE_OPTS = {"head": {"-n", "-c"}, "tail": {"-n", "-c"}, "sed": {"-e", "-f"}, "awk": {"-F", "-v", "-f"},
+              "cut": {"-d", "-f", "-c", "-b"}, "bat": {"-l", "-r", "--language", "--line-range"},
+              **{g: GREP_OPTS for g in ("grep", "egrep", "fgrep", "rg")}}
+SEPARATORS = {";", "&&", "||", "|", "&", "(", ")", "|&"}
+HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1[^\n]*\n.*?\n\s*\2(?=\s|$)", re.S)
+MANY = 5
+SEARCH = f"(shell searches over more than {MANY} files)"
+SKIP_LINE = ('{"type":"api-request', '{"type":"file-history', '{"type":"data-flow', '{"type":"queue-operation')
+
+
+def tok(n):
+    if n >= 1e6:
+        return f"{n / 1e6:.1f}M"
+    return f"{n / 1e3:.0f}k" if n >= 1e4 else f"{n / 1e3:.1f}k" if n >= 1e3 else str(int(n))
+
+
+def kb(n):
+    return f"{n / 1024:.1f} KB"
+
+
+def git(cwd, *a):
+    p = subprocess.run(["git", "-C", str(cwd), *a], capture_output=True, text=True)
+    return p.stdout.strip() if p.returncode == 0 else ""
+
+
+def slug(path):
+    return re.sub(r"[^A-Za-z0-9]", "-", str(path))
+
+
+def text_of(content):
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in content)
+    return ""
+
+
+class Audit:
+    def __init__(self, top, days):
+        self.top = top
+        self.cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%S")
+        self.since = time.time() - days * 86400
+        listed = git(top, "worktree", "list", "--porcelain").splitlines()
+        wts = [line[9:] for line in listed if line.startswith("worktree ")]
+        self.worktrees = sorted({str(top), *wts}, key=len, reverse=True)
+        self.roots = sorted({r for w in self.worktrees for r in (w, os.path.realpath(w))}, key=len, reverse=True)
+        self.files = defaultdict(lambda: {"calls": 0, "tokens": 0, "whole_calls": 0, "whole": 0,
+                                          "by": defaultdict(int)})
+        self.readers = defaultdict(lambda: {"calls": 0, "tokens": 0, "whole": 0})
+        self.sessions = 0
+        self.starts = []  # per session: {hook: characters of SessionStart output}
+        self.seen = set()
+
+    # --- where the transcripts are ------------------------------------------------------------------------------
+    def folders(self):
+        """[(folder, worktree)]: each worktree's own folder, plus folders of sessions started in a subfolder of one."""
+        out, base = [], CLAUDE_DIR / "projects"
+        names = {slug(w): w for w in self.worktrees}
+        for d in sorted(base.glob("*")) if base.is_dir() else []:
+            if d.name in names:
+                out.append((d, names[d.name]))
+            elif any(d.name.startswith(s + "-") for s in names):
+                cwd = self.first_cwd(d) or ""
+                w = next((w for w in self.worktrees if cwd == w or cwd.startswith(w + "/")), None)
+                if w:
+                    out.append((d, w))
+        return out
+
+    @staticmethod
+    def first_cwd(d):
+        for f in sorted(d.glob("*.jsonl"))[:3]:
+            for line in f.open(errors="ignore"):
+                m = re.search(r'"cwd":\s*"([^"]+)"', line)
+                if m:
+                    return m.group(1)
+        return None
+
+    def locate(self, key):
+        """The file a workspace-relative key names, in the main checkout or else the first worktree that has it."""
+        if key.startswith(("~", "/", "(")) or re.match(r"[\w.-]+:", key):
+            return None
+        return next((Path(w) / key for w in [str(self.top), *self.worktrees] if (Path(w) / key).is_file()), None)
+
+    # --- paths --------------------------------------------------------------------------------------------------
+    def norm(self, p, cwd):
+        p = os.path.expanduser(p)
+        if not os.path.isabs(p):
+            p = os.path.join(cwd or str(self.top), p)
+        p = os.path.normpath(p)
+        for r in self.roots:
+            if p == r or p.startswith(r + "/"):
+                return p[len(r) + 1:] or "."
+        m = re.match(r".*/plugins/cache/[^/]+/([^/]+)/[^/]+/(.+)", p)
+        if m:
+            return f"{m.group(1)}:{m.group(2)}"
+        if p.startswith(str(CLAUDE_DIR / "projects")) and "/tool-results/" in p:
+            return "(a saved tool output)"
+        return "~" + p[len(HOME):] if p.startswith(HOME + "/") else p
+
+    def shell_reads(self, cmd, cwd):
+        """[(path, whole)] the files a shell command reads, best effort."""
+        cmd = HEREDOC.sub(" ", cmd).replace("\n", " ; ")
+        try:
+            lex = shlex.shlex(cmd, posix=True, punctuation_chars=True)
+            lex.whitespace_split = True
+            words = list(lex)
+        except ValueError:
+            return []
+        simple, cur = [], []
+        for w in words + [";"]:
+            if w in SEPARATORS:
+                if cur:
+                    simple.append((cur, w in ("|", "|&")))
+                cur = []
+            else:
+                cur.append(w)
+        found, here = [], cwd
+        for argv, piped in simple:
+            while argv and re.match(r"^\w+=", argv[0]):
+                argv = argv[1:]
+            if not argv:
+                continue
+            prog = os.path.basename(argv[0])
+            if prog == "cd" and len(argv) > 1:
+                here = os.path.normpath(os.path.join(here or str(self.top), os.path.expanduser(argv[1])))
+                continue
+            if prog not in READERS or (prog == "sed" and any(a.startswith(("-i", "--in-place")) for a in argv)):
+                continue
+            ops, skip, pattern_given = [], False, False
+            for a in argv[1:]:
+                if skip:
+                    skip = False
+                    continue
+                if a in (">", ">>", "2>", "&>", ">&"):
+                    skip = True
+                    continue
+                if a == "<":
+                    continue
+                if a.startswith("-") and a != "-":
+                    if a in VALUE_OPTS.get(prog, ()):
+                        skip = True
+                        pattern_given = pattern_given or a in ("-e", "-f", "--regexp", "--file")
+                    continue
+                ops.append(a)
+            if prog in PATTERN_FIRST and not pattern_given and ops:
+                ops = ops[1:]
+            hits = []
+            for a in ops:
+                if "$" in a or a == "-":
+                    continue
+                path = os.path.join(here or str(self.top), os.path.expanduser(a))
+                if re.search(r"[*?[]", a):
+                    try:
+                        hits += [h for h in glob.glob(path) if os.path.isfile(h)]
+                    except re.error:
+                        pass
+                elif os.path.isfile(path) or (re.search(r"\.\w{1,8}$", a) and not os.path.isdir(path)):
+                    hits.append(path)
+            # A search over many files is not a read of each one: it counts once, as a search.
+            found += [(SEARCH, False)] if len(hits) > MANY else [(h, prog in WHOLE and not piped) for h in hits]
+        return found
+
+    # --- one transcript -----------------------------------------------------------------------------------------
+    def scan(self, f, worktree, agent=None):
+        main = worktree == str(self.top)
+        name = None if main else Path(worktree).name  # the peer home, once its task names it; else the worktree
+        role, home, pending, active, start, before_reply, done = None, None, {}, False, defaultdict(int), True, []
+        cwd = worktree
+        for line in f.open(errors="ignore"):
+            if line.startswith(SKIP_LINE):
+                continue
+            if not any(k in line for k in ('"tool_use"', '"tool_result"', '"attachment"', "dev-team", '"assistant"')):
+                continue
+            try:
+                e = json.loads(line)
+            except ValueError:
+                continue
+            t = e.get("type")
+            cwd = e.get("cwd") or cwd
+            if t == "attachment" and before_reply and not agent:
+                a = e.get("attachment") or {}
+                if a.get("type") == "hook_success" and str(a.get("hookEvent", "")).startswith("SessionStart"):
+                    out = a.get("stdout") or ""
+                    try:
+                        ctx = ((json.loads(out) or {}).get("hookSpecificOutput") or {}).get("additionalContext") or ""
+                    except (ValueError, AttributeError):
+                        ctx = text_of(a.get("content")) or out
+                    if ctx and (e.get("timestamp") or "") >= self.cutoff:
+                        start[hook_name(a.get("command") or "")] += len(ctx)
+                continue
+            msg = e.get("message") or {}
+            content = msg.get("content")
+            if t == "assistant":
+                before_reply = False
+            if t == "user":
+                blocks = [b for b in content or [] if isinstance(b, dict)] if isinstance(content, list) else []
+                txt = content if isinstance(content, str) else text_of([b for b in blocks if b.get("type") == "text"])
+                # A peer's task arrives in its prompt or, from Orca, in a command's output. In the main checkout only
+                # the prompt counts: the coordinator reads peers' screens and specs.
+                seen = txt if main or agent else txt + "".join(
+                    text_of(b.get("content")) for b in blocks if b.get("type") == "tool_result")
+                m = PEER.search(seen)
+                if m and home in (None, m.group(2)):
+                    home, role = m.group(2), m.group(1)
+                m = TYPED.search(txt)
+                if m and m.group(1) in ROLES and not home and not agent:
+                    role = m.group(1)
+            if not isinstance(content, list):
+                continue
+            for b in content:
+                if not isinstance(b, dict):
+                    continue
+                if b.get("type") == "tool_use":
+                    pending[b.get("id")] = (b.get("name"), b.get("input") or {}, cwd, role)
+                    if b.get("name") == "Skill" and not home and not agent:
+                        s = str((b.get("input") or {}).get("skill", ""))
+                        if s.startswith("dev-team:") and s[9:] in ROLES:
+                            role = s[9:]
+                elif b.get("type") == "tool_result":
+                    if (e.get("timestamp") or "") < self.cutoff:
+                        continue
+                    active = True
+                    call = pending.pop(b.get("tool_use_id"), None)
+                    if not call or b.get("tool_use_id") in self.seen:
+                        continue
+                    self.seen.add(b.get("tool_use_id"))
+                    done.append([call, len(text_of(b.get("content"))), e.get("toolUseResult")])
+        # A peer is its home (or worktree); the main checkout's inline work is its role, an agent its type. Calls
+        # made before the main checkout's role was known belong to it when the session had one role.
+        roles = {c[3] for c, _, _ in done if c[3]} | ({role} if role else set())
+        for call, chars, result in done:
+            r = call[3] or (next(iter(roles)) if len(roles) == 1 else None)
+            who = f"{agent} (agent)" if agent else home or name or r or "main checkout"
+            self.count((*call[:3], who), chars, result)
+        if active or start:
+            self.sessions += 1
+        if start:
+            self.starts.append(dict(start))
+
+    def count(self, call, chars, result):
+        name, inp, cwd, who = call
+        reads = []
+        if name == "Read" and inp.get("file_path"):
+            fi = result.get("file") if isinstance(result, dict) and isinstance(result.get("file"), dict) else None
+            if fi and fi.get("totalLines"):
+                whole = (fi.get("startLine") or 1) <= 1 and (fi.get("numLines") or 0) >= fi["totalLines"]
+            else:
+                whole = not inp.get("offset") and not inp.get("limit")
+            reads = [(inp["file_path"], whole)]
+        elif name == "Grep" and inp.get("path"):
+            p = os.path.join(cwd or str(self.top), os.path.expanduser(inp["path"]))
+            reads = [(p, False)] if os.path.isfile(p) else []
+        elif name == "Bash" and inp.get("command"):
+            reads = self.shell_reads(inp["command"], cwd)
+        if not reads:
+            return
+        share = chars / 4 / len(reads)
+        for path, whole in reads:
+            key, r = self.norm(path, cwd), self.readers[who]
+            s = self.files[key]
+            s["calls"] += 1
+            s["tokens"] += share
+            s["by"][who] += share
+            r["calls"] += 1
+            r["tokens"] += share
+            if whole:
+                s["whole_calls"] += 1
+                s["whole"] += share
+                r["whole"] += share
+
+    def run(self):
+        found = self.folders()
+        # Oldest first: a resumed session repeats its history, and each call counts once, where it was made.
+        def oldest(files):
+            recent = [f for f in files if f.stat().st_mtime >= self.since]
+            return sorted(recent, key=lambda f: (f.stat().st_mtime, f.name))
+
+        for d, w in found:
+            for f in oldest(d.glob("*.jsonl")):
+                self.scan(f, w)
+            for f in oldest(d.glob("*/subagents/*.jsonl")):
+                try:
+                    agent = json.loads(f.with_suffix(".meta.json").read_text()).get("agentType") or "subagent"
+                except (OSError, ValueError):
+                    agent = "subagent"
+                self.scan(f, w, agent.split(":")[-1])
+        return found
+
+
+def hook_name(command):
+    m = re.search(r"/plugins/(?:cache|marketplaces)/[^/]+/([^/\"']+)", command)
+    if m:
+        return m.group(1)
+    w = next((x for x in command.split() if "/" in x), command.split()[0] if command.split() else "?")
+    return os.path.basename(w.strip("\"'"))[:40]
+
+
+def headings(path):
+    """(heading count, largest stretch between headings in bytes) of a text file, or None."""
+    try:
+        lines = Path(path).read_text(errors="ignore").splitlines(keepends=True)
+    except OSError:
+        return None
+    n, cur, big, fence = 0, 0, 0, False
+    for line in lines:
+        if line.startswith("```"):
+            fence = not fence
+        if not fence and re.match(r"#{1,6} ", line):
+            n, big, cur = n + 1, max(big, cur), 0
+        cur += len(line.encode())
+    return n, max(big, cur)
+
+
+def workspace(top):
+    for name in ("CLAUDE.local.md", "CLAUDE.md"):
+        try:
+            m = re.search(r"\*\*Workspace:\*\* *`([^`]*)`", (top / name).read_text())
+        except OSError:
+            continue
+        if m:
+            return m.group(1).rstrip("/")
+    return "docs"
+
+
+def size_limit(top, ws):
+    try:
+        text = (top / ws / "standards" / "documentation.md").read_text()
+    except OSError:
+        return 25
+    sec = re.search(r"^## Size and reading\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
+    m = re.search(r"(\d+) ?KB", sec.group(1)) if sec else None
+    return int(m.group(1)) if m else 25
+
+
+def imports(path, depth=0, seen=None):
+    """CLAUDE.md @imports, outside code, up to 5 levels deep: [(path, importer)]."""
+    seen = seen if seen is not None else set()
+    try:
+        text = Path(path).read_text(errors="ignore")
+    except OSError:
+        return []
+    text = re.sub(r"```.*?```", "", text, flags=re.S)
+    text = re.sub(r"`[^`\n]*`", "", text)
+    out = []
+    for m in re.finditer(r"(?:^|\s)@([~\w./-]+)", text):
+        p = Path(os.path.expanduser(m.group(1)))
+        p = p if p.is_absolute() else Path(path).parent / p
+        if p.is_file() and str(p.resolve()) not in seen and depth < 5:
+            seen.add(str(p.resolve()))
+            out.append((p, path))
+            out += imports(p, depth + 1, seen)
+    return out
+
+
+def section(text, start, stop):
+    m = re.search(rf"^{start}.*?(?=^{stop}|\Z)", text, re.M | re.S)
+    return len(m.group(0).encode()) if m else 0
+
+
+def report_loaded(top, audit, folders):
+    print("\nAlways loaded")
+    rows, chain = [], []
+    d = top
+    while True:
+        chain += [d / "CLAUDE.md", d / "CLAUDE.local.md"]
+        if d.parent == d:
+            break
+        d = d.parent
+    chain += [top / ".claude" / "CLAUDE.md", CLAUDE_DIR / "CLAUDE.md"]
+    chain += sorted((top / ".claude" / "rules").glob("**/*.md")) if (top / ".claude" / "rules").is_dir() else []
+    shown = set()
+    for f in chain:
+        if not f.is_file() or str(f.resolve()) in shown:
+            continue
+        shown.add(str(f.resolve()))
+        text, note = f.read_text(errors="ignore"), ""
+        if f.parent.name == "rules" or ".claude/rules/" in str(f):
+            front = re.match(r"---\n(.*?)\n---", text, re.S)
+            note = " (path-scoped: loads with matching files)" if front and "paths:" in front.group(1) else ""
+        dt = section(text, "# Development Organization", "# ")
+        if dt:
+            team = section(text, "## Team setup", "#{1,2} ")
+            note += f" — dev-team section {kb(dt)}" + (f", its Team setup {kb(team)}" if team else "")
+        rows.append((f.stat().st_size, rel(top, f) + note))
+        for p, by in imports(f, seen=shown):
+            rows.append((p.stat().st_size, f"{rel(top, p)} — imported by {rel(top, Path(by))}"))
+    for d, _ in folders:
+        m = d / "memory" / "MEMORY.md"
+        if m.is_file() and str(m) not in shown:
+            shown.add(str(m))
+            n = len(m.read_text(errors="ignore").splitlines())
+            rows.append((m.stat().st_size, f"memory index {rel(top, m)} ({n} lines)"))
+    for size, what in rows:
+        print(f"  {kb(size):>9}  ≈{tok(size / 4):>5}  {what}")
+    if audit.starts:
+        per = defaultdict(int)
+        for s in audit.starts:
+            for k, v in s.items():
+                per[k] += v
+        n = len(audit.starts)
+        avg = sum(per.values()) / n
+        parts = ", ".join(f"{k} {kb(v / n)}" for k, v in sorted(per.items(), key=lambda x: -x[1]) if v / n >= 100)
+        print(f"  {kb(avg):>9}  ≈{tok(avg / 4):>5}  SessionStart hook output, average of {n} session(s): {parts}")
+    agents = sorted((top / ".claude" / "agent-memory").glob("*/MEMORY.md"))
+    if agents:
+        print("Loaded by one role's agent only")
+        for f in agents:
+            print(f"  {kb(f.stat().st_size):>9}  ≈{tok(f.stat().st_size / 4):>5}  {rel(top, f)}")
+
+
+def rel(top, p):
+    p = str(p)
+    if p.startswith(str(top) + "/"):
+        return p[len(str(top)) + 1:]
+    return "~" + p[len(HOME):] if p.startswith(HOME + "/") else p
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("project", nargs="?", default=".")
+    ap.add_argument("--days", type=float, default=7)
+    ap.add_argument("--top", type=int, default=15)
+    a = ap.parse_args()
+    top = Path(git(a.project, "rev-parse", "--show-toplevel") or a.project).resolve()
+    audit = Audit(top, a.days)
+    folders = audit.run()
+    wts = len({w for _, w in folders} - {str(top)})
+    total = sum(s["tokens"] for s in audit.files.values())
+    whole = sum(s["whole"] for s in audit.files.values())
+    calls = sum(s["calls"] for s in audit.files.values())
+    days = f"{a.days:g} day" + ("" if a.days == 1 else "s")
+    print(f"Reads, last {days}: {audit.sessions} sessions, subagents included, in the main checkout and {wts} other "
+          f"worktree(s). Tokens ≈ characters ÷ 4.")
+    if not calls:
+        print(f"  no file reads found under {CLAUDE_DIR / 'projects'} for this project")
+    else:
+        print(f"All file reads: {tok(total)} tokens in {calls} calls; whole-file {tok(whole)} "
+              f"({whole / max(total, 1):.0%}), partial {tok(total - whole)}.")
+        print("\nTop files by tokens\n  tokens  calls  whole calls/tokens  partial calls/tokens  file — top readers")
+        for key, s in sorted(audit.files.items(), key=lambda x: -x[1]["tokens"])[:a.top]:
+            by = ", ".join(f"{w} {tok(v)}" for w, v in sorted(s["by"].items(), key=lambda x: -x[1])[:3])
+            f = audit.locate(key)
+            h = headings(f) if f and f.suffix == ".md" else None
+            shape = ""
+            if h and f.stat().st_size > 8192:
+                shape = " [no headings]" if not h[0] else f" [{h[0]} heading(s), largest section {kb(h[1])}]"
+            print(f"  {tok(s['tokens']):>6}  {s['calls']:>5}  {s['whole_calls']:>8} / {tok(s['whole']):<8}"
+                  f"  {s['calls'] - s['whole_calls']:>9} / {tok(s['tokens'] - s['whole']):<9}  {key}{shape} — {by}")
+        print("\nBy reader\n  tokens  calls   whole  reader")
+        for w, r in sorted(audit.readers.items(), key=lambda x: -x[1]["tokens"]):
+            print(f"  {tok(r['tokens']):>6}  {r['calls']:>5}  {tok(r['whole']):>6}  {w}")
+    report_loaded(top, audit, folders)
+    ws = workspace(top)
+    limit = size_limit(top, ws)
+    big = []
+    for f in (top / ws).rglob("*.md") if (top / ws).is_dir() else []:
+        if ".git" not in f.relative_to(top).parts and f.stat().st_size > limit * 1024:
+            big.append(f)
+    # Live: read or changed in the window. The rest is history nobody pays for, so it is only counted.
+    live = [f for f in big if rel(top, f) in audit.files or f.stat().st_mtime >= audit.since]
+    print(f"\nWorkspace docs over {limit} KB, read or changed in the last {days} "
+          f"(<ws>/standards/documentation.md § Size and reading)")
+    if not live:
+        print("  none")
+    for f in sorted(live, key=lambda x: -x.stat().st_size):
+        key, h = rel(top, f), headings(f)
+        s = audit.files.get(key)
+        reads = f", read {s['calls']}× for {tok(s['tokens'])} ({s['whole_calls']} whole)" if s else ", not read"
+        shape = "" if not h else " [no headings]" if not h[0] else f" [largest section {kb(h[1])}]"
+        when = datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d")
+        print(f"  {kb(f.stat().st_size):>9}  {key}{shape}, changed {when}{reads}")
+    if len(big) > len(live):
+        print(f"  and {len(big) - len(live)} more, neither read nor changed")
+
+
+if __name__ == "__main__":
+    sys.exit(main())

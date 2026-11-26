@@ -14,6 +14,7 @@ description: The slash commands, the skills, and the scripts the roles and the c
 | `/dev-team:checkins ["change"]` | sets up or changes the scheduled check-ins ([Check-ins](/dev-team/checkins/)) |
 | `/dev-team:board` | sets up or refreshes the Owner board ([Owner board](/dev-team/board/)) |
 | `/dev-team:orca [recommended \| "change"]` | sets up or changes the Orca runtime; `recommended` applies the [recommended setup](/dev-team/orca-recommended/) |
+| `/dev-team:audit [days]` | measures what the team's sessions pay to read files and load at start, then trims the bloat you approve ([Get started](/dev-team/getting-started/#check-what-your-project-costs)) |
 
 ## Scripts
 
@@ -49,7 +50,7 @@ Makes heavy jobs take turns on the machine.
 | `slot run <label> [--prio N] [--pool <name>] -- <command>` | waits for a free slot, runs the command, frees the slot when it ends. Lower `--prio` goes first (default 5; the critical path takes 1) |
 | `slot status` | who holds a slot and who waits, in every pool |
 
-### Board and sync
+### Board, sync and audit
 
 | Command | What it does |
 |---|---|
@@ -57,6 +58,7 @@ Makes heavy jobs take turns on the machine.
 | `board-drift --status <ws>/status.md [--config <file>]` | lists `status.md` rows whose PRs (`#123`, `repo#123`, `repo #123`) have all merged or closed. Repo names go through the board config's `repos` map; a row naming a repo it can't place is left alone |
 | `seed-drift [project-dir]` | what the plugin's seeds have that the project's copies lack (used by `/dev-team:sync`) |
 | `migrate-layout [--apply]` | moves a type-first workspace into feature folders; a dry run without `--apply` |
+| `token-audit [--days N] [--top N] [project-dir]` | what the project's sessions spent reading files in the last N days (default 7), by file and by reader, plus what every session loads and the documents over the size limit (used by `/dev-team:audit`) |
 
 ### Check-in triggers
 
@@ -77,4 +79,5 @@ The plugin installs these; there's nothing to set up.
 |---|---|
 | SessionStart | tells Claude the plugin is active and where the workspace is, warns when a role's memory grows large, flags an old layout, and keeps the check-in scripts where Orca can find them |
 | UserPromptSubmit, Stop | the coordinator's guard: unanswered peer questions, unhandled reports, unwatched work, and an Owner board behind `status.md` |
+| PostToolUse (Write, Edit) | tells the agent, once per session, when its edit takes a feature document past the size limit |
 | Stop | commits an uncommitted workspace's own repository whenever it changed |

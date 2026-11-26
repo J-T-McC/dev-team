@@ -29,6 +29,8 @@ One measured peer started at about 35k tokens, and most of that was a memory plu
 
 Run `/context` in a new session in the project to see what every session starts with. Then trim what the roles don't use: keep `CLAUDE.md` to what every session needs, remove skills and plugins the project doesn't use, and turn off MCP servers no role needs (`/mcp`).
 
+That covers what a session starts with. What agents read during the work can cost more. In one measured week, a 95 KB plan was read whole 23 times, and a notes file with one heading for 51 entries could only ever be read whole. Once the team has worked for a week or so, run `/dev-team:audit`. It reads the project's session transcripts with a script and gives the coordinator a summary: the files that cost the most to read, whole and in part, who read them, and what every session loads. The coordinator then lists the bloat it found in one table (rules stated twice, retired rules, history inside rules, documents over the size limit or with no headings) with the expected saving for each. It applies only what you approve, never changes what a rule means, and records the run in the friction log. The orchestrator offers a new audit when the last one is about two weeks old.
+
 The plugin keeps its own share small. Roles run in your conversation unless there's a reason to start an agent, the descriptions it adds to every session are short, the coordinator reads summaries and document headers rather than transcripts, specs point to files instead of pasting them, and waiting on peers or CI spends nothing while it waits.
 
 ## Set up the project
