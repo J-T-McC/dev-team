@@ -16,10 +16,17 @@ Agents re-read these documents many times and people have to skim them; every wo
 - Say it once: if a fact lives in another artifact or section, reference it.
 - Dense ≠ cryptic: names, criteria, and decisions stay explicit and testable.
 
+## Size and reading
+Agents read the live documents many times a day, so their size is paid for on every read.
+- Live briefs, plans and designs stay under about 25 KB. Past that, split the document into part files (`plan.md` plus `plan-<part>.md`, or more task files), each linked from the first.
+- A change replaces the old text in place. No Amendment or Update sections below the old text: git keeps the history.
+- Read by section: list the headings first (`grep -n '^#' <file>`), then read only the sections the task needs.
+- A spec or task names the sections to read (`plan.md` § Data model), not just the file.
+
 ## Placeholders (customize per project)
 
 ### Diagrams
 _TBD — tool and format (e.g. Mermaid in markdown)._
 
 ### Document lifecycle
-_TBD — archival policy for superseded documents._
+Superseded text is deleted, not archived; git history keeps it.

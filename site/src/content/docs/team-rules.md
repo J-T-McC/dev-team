@@ -54,6 +54,6 @@ Every document, note and commit message uses short, plain English: say what was 
 
 Any role that's slowed down or sent the wrong way logs it in `friction-log.md`, in the same turn. That covers wrong or stale instructions, slow or broken tooling, token burns, a mistake that keeps coming back, and any time you have to stop work to correct it. Every report ends with one line: `Friction: none`, or what was logged.
 
-Between features the orchestrator picks the entry that stands out (the one that keeps repeating, or costs the most) and changes the workflow so it stops: a project rule, a template, a helper script. Changes to files everyone's agents load, such as `CLAUDE.md`, come to you first.
+Between features the orchestrator picks the entry that stands out (the one that keeps repeating, or costs the most) and changes the workflow so it stops: a project rule, a template, a helper script. Changes to files everyone's agents load, such as `CLAUDE.md`, come to you first. Token burns are measured with `/dev-team:audit`, which records each run in the log ([what it checks](/dev-team/getting-started/#check-what-your-project-costs)).
 
 Full rules: [handoffs](https://github.com/J-T-McC/dev-team/blob/main/workflow/handoffs.md), [communication](https://github.com/J-T-McC/dev-team/blob/main/workflow/communication.md), [friction](https://github.com/J-T-McC/dev-team/blob/main/workflow/friction.md).

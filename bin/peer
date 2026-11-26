@@ -382,12 +382,50 @@ def short(args):
     return " ".join(os.path.basename(w) if "/" in w else w for w in args.split()[:6])[:90]
 
 
+def cwds(pids):
+    """{pid: working directory} for the processes this machine can tell."""
+    out = {}
+    if Path("/proc/self/cwd").exists():
+        for p in pids:
+            try:
+                out[p] = os.readlink(f"/proc/{p}/cwd")
+            except OSError:
+                pass
+        return out
+    try:
+        lines = subprocess.run(["lsof", "-a", "-d", "cwd", "-Fn", "-p", ",".join(map(str, pids))], capture_output=True,
+                               text=True, timeout=30).stdout.splitlines() if pids else []
+    except (OSError, subprocess.TimeoutExpired):
+        return out
+    pid = None
+    for line in lines:
+        if line[:1] == "p" and line[1:].isdigit():
+            pid = int(line[1:])
+        elif line[:1] == "n" and pid:
+            out[pid] = line[1:]
+    return out
+
+
+def from_worktree(procs, h):
+    """The processes among procs that the peer started for its work: run in its worktree, or naming it. A machine-wide
+    service the session happened to start (Docker Desktop, say) inherits the terminal but runs from its own folder:
+    stopping it would stop it for everyone."""
+    wt = h.get("worktree")
+    if not wt:
+        return []
+    roots = {str(Path(wt)).rstrip("/"), os.path.realpath(wt)}
+    named = re.compile("|".join(re.escape(r) for r in roots) + r"(?=/|\s|$)")
+    where = cwds([p for p, _ in procs])
+    return [(p, a) for p, a in procs if named.match(where.get(p, "")) or named.search(a)]
+
+
 def cleanup(home, h, term):
-    """Stop the MCP servers a closed session left running, name anything else it left, and clear its session caches."""
+    """Stop the MCP servers a closed session left running, name anything else it left, and clear its session caches.
+    Only what the peer started from its worktree counts."""
     if h.get("env"):
         return
     time.sleep(STEP_SEC)
-    left = local_procs(term, fresh=True)
+    left = from_worktree(local_procs(term, fresh=True), h)
     names = mcp_names()
     mcp = [(p, a) for p, a in left if any(n.lower() in a.lower() for n in names)]
     for sig in (signal.SIGTERM, signal.SIGKILL):

@@ -41,6 +41,8 @@ Use `slug` on small projects, `F###-slug` on large ones with many features, and 
 
 Agents re-read the live files constantly, so those stay small. At Done, a feature's row moves from `status.md` to the top of `status-done.md`, and finished backlog items move to `backlog/archive.md`. The archives cost nothing until someone opens them.
 
+A live brief, plan or design stays under about 25 KB (`standards/documentation.md` § Size and reading). A change replaces the old text instead of adding an amendment below it, since git keeps the history, and a document that still outgrows the limit is split into part files. When an edit takes a feature document past the limit, a hook tells the agent that made it. Agents read these documents by section: the headings first, then only what the task needs.
+
 Names sort and never collide: three-digit backlog items and ADRs (`B001`, `adr-001`), two-digit tasks (`T01`), three-digit questions (`q001`), and fixes that start with their date. A feature's handoff lists related features by folder name and the ADRs it made or follows, so agents follow links instead of searching. If the features folder is shared with other people's folders, the team writes only in folders it created.
 
 ## Guest mode
