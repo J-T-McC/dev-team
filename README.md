@@ -6,10 +6,12 @@ A [Claude Code](https://code.claude.com) plugin that runs feature work the way a
 
 ```
 /plugin marketplace add J-T-McC/dev-team
-/plugin install dev-team@dev-team
+/plugin install dev-team@dev-team --scope local
 ```
 
-Then ask Claude to `run the dev-team:bootstrap skill` in your project.
+Run both inside your project: `--scope local` installs it for you, in that project only, where leaving it out loads it into every session in every project. Then ask Claude to `run the dev-team:bootstrap skill` in your project.
+
+Needs macOS or Linux (WSL on Windows) and git. The optional Orca runtime, Owner board, check-ins and audit also need Python 3.9+, and the Orca runtime and Owner board need the GitHub CLI (`gh`) ([Install](https://j-t-mcc.github.io/dev-team/getting-started/#install)).
 
 ## Two ways to run it
 
@@ -19,7 +21,7 @@ On the [Orca runtime](https://j-t-mcc.github.io/dev-team/orca/), every role runs
 
 Either way, the requirements, decisions, plans, task records and reviews are written to your repo, so work survives a context reset and the next session starts from the files.
 
-The plugin brings no stack, skills or tools of its own: roles run on what your project gives a Claude session. Every agent, or Orca peer, starts with your `CLAUDE.md` files, installed skills and plugins, MCP servers and SessionStart hooks, so trim what the roles don't use before running several at once ([what your project costs](https://j-t-mcc.github.io/dev-team/getting-started/#check-what-your-project-costs)).
+The plugin brings no stack, skills or tools of its own: roles run on what your project gives a Claude session. Every agent, or Orca peer, starts with your `CLAUDE.md` files, installed skills and plugins, MCP servers and SessionStart hooks, so trim what the roles don't use before running several at once ([what your project costs](https://j-t-mcc.github.io/dev-team/costs/)).
 
 ## How it works
 
