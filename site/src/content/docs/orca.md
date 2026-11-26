@@ -1,6 +1,6 @@
 ---
 title: Orca runtime
-description: Run every role as its own Claude session, launched and supervised by Orca from your session.
+description: Run every role as its own Claude Code session, several in parallel, launched and supervised by Orca from yours.
 ---
 
 Projects run from Orca can switch to a second runtime. Every role then runs as a top-level **peer session**, never as a subagent. A peer is a plain Claude session with everything the project gives one: all MCP servers, project skills, memory plugins such as claude-mem, Bash. Roles, documents, gates and question docs don't change. Only where a role runs does.
