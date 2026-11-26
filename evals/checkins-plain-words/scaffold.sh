@@ -2,6 +2,12 @@
 # Fixture "set-up": a small project dev-team already set up, not in Orca.
 # Shared by rerun and checkins-plain-words: keep the copies identical (tests/evals.sh).
 set -e
+# macOS: an eval run's shell is a login shell, whose path_helper puts /usr/bin/git first: an xcrun stub that fails in
+# the run's sandbox. This scaffold's HOME is the run's home, so a wrapper there reaches the real git (evals/README.md).
+if d=$(xcode-select -p 2>/dev/null) && [ -x "$d/usr/bin/git" ]; then
+  mkdir -p "$HOME/.eval-bin" && printf '#!/bin/sh\nexec "%s" "$@"\n' "$d/usr/bin/git" > "$HOME/.eval-bin/git" && chmod +x "$HOME/.eval-bin/git"
+  for f in .zshrc .zprofile .bashrc .bash_profile; do echo 'export PATH="$HOME/.eval-bin:$PATH"' >> "$HOME/$f"; done
+fi
 g() { git -c user.name=dev -c user.email=dev@example.com "$@"; }
 git init -q -b main
 mkdir -p dev-team/standards dev-team/stack dev-team/features dev-team/backlog dev-team/architecture dev-team/fixes

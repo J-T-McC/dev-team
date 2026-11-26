@@ -1,6 +1,6 @@
 # Setup evals
 
-Paid evals for dev-team's setup flow, run with [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals.md). Each run is a full Claude session on your own plan, so the suite runs only at the points below, and only the cases that cover what changed. `tests/evals.sh` checks the suite for free on every PR: it loads, its fixtures build what its cases grade, and this README maps every case.
+Paid evals for dev-team's setup flow, run with [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals.md). Each run is a full Claude session on your own plan, so the suite runs only at the points below, and only the cases that cover what changed. `tests/evals.sh` checks the suite for free on every PR: its case files and graders use only documented fields, its fixtures build what its cases grade, and this README maps every case.
 
 The cases describe the **v1 setup flow**: one question about whose project it is, suggested answers from `bin/setup-detect`, and a `dev-team/` workspace. Until v1 lands, most of them fail on today's setup, which is the baseline.
 
@@ -8,7 +8,7 @@ The cases describe the **v1 setup flow**: one question about whose project it is
 
 | When | What | How often |
 |---|---|---|
-| The baseline | every case, on `main`, 3 runs | once, when the suite lands |
+| The baseline | every case, on `main`, 1 run | once, when the suite lands, and again when the suite changes |
 | A PR that changes what setup does | the cases [mapped below](#which-cases-to-run) to the files it changes | once, at the end, before merge |
 | Choosing a model to recommend | a few cases on 2–3 models | once |
 
@@ -19,12 +19,10 @@ Never in CI. Never for a change to docs, to scripts only (their free tests cover
 ## How to run
 
 ```bash
-PATH="$(xcode-select -p)/usr/bin:$PATH" \
 claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit --no-publish \
   --max-cost-usd <cap> --case '<name>' [--runs <n>] [--keep-temp]
 ```
 
-- **`PATH`**: macOS only. `/usr/bin/git` there is a stub that fails inside the eval's sandbox; this puts the real git first. Leave it out on Linux.
 - **`--scaffold`** builds each case's test repository from its `scaffold.sh`.
 - **`--ablation none`**: without it, every case also runs without the plugin, at twice the cost, as a comparison that means nothing for setup.
 - **`--allow-tools Bash Write Edit`**: setup runs scripts and writes files.
@@ -35,6 +33,8 @@ claude plugin eval . --scaffold --ablation none --allow-tools Bash Write Edit --
 ## What a case can check
 
 - **No answers mid-run.** The question tool doesn't exist in eval runs, so setup asks in plain text and ends its turn. Stage-1 cases give no answers and grade the questions in the final message, plus that nothing was written. Stage-2 cases give every answer in the prompt and grade the files setup wrote.
+- **git on macOS.** A run's shell is a login shell, and macOS's `path_helper` puts `/usr/bin/git` first. That's an xcrun stub, and it fails in the run's sandbox. Setting `PATH` before the run doesn't help, since `path_helper` reorders it. So every scaffold writes a `git` wrapper into the run's home folder and puts it first in the shell's startup files. `tests/evals.sh` checks that each scaffold has it and that a login shell finds it.
+- **"Writes nothing"** means no Write or Edit call and no new `.md` file. Setup also writes with `cp` and `sed`, which only the second check catches. A file it changes in place with Bash isn't caught.
 - **No environment per case.** A case can't set `PATH` or variables other than `EVAL_*`, so running inside Orca, the plan sizes and a missing Python are tested by `tests/setup-detect.sh` instead.
 
 ## Cases
@@ -70,8 +70,29 @@ Fixtures are each case's `scaffold.sh`. Cases that share one keep identical copi
 
 ## Cost
 
-From the spike, before this suite: one stage-1 run of today's setup on Opus 5.5 took 5 turns and about 20 seconds, at about $0.15 at API prices. Stage-2 runs write files and take longer; the baseline will measure them. On a subscription, runs count against your usage limits instead of costing money.
+Measured in run 1 on Opus 5.5, at API prices (on a subscription, runs count against your usage limits instead of costing money):
+
+- a run that only asks: $0.13–0.29, 4–10 turns, under a minute;
+- a run that writes the workspace: $0.27–0.55, 7–22 turns, up to about a minute and a half;
+- the `llm` judges: under $0.01 a run.
+
+All 8 cases once: about $2.50. Three runs each: about $7.50.
 
 ## Baseline
 
-Not run yet.
+**Run 1** (2026-11-26, `main` at `16a6c2e`, Opus 5.5, 1 run per case, $1.81): **not valid as a baseline**, kept for its costs.
+
+- git failed in every run. The `PATH` fix it used doesn't survive `path_helper`, so setup worked blind. The guest run chose "committed" because a separate workspace history needs git.
+- `existing-all-answers` didn't load: its `llm` graders used `target`, which only `regex` accepts. `llm` takes `focus`.
+- Three runs wrote files with `cp` and `sed` and still passed "writes nothing".
+
+| Case | Score | Turns | Cost |
+|---|---|---|---|
+| `new-no-answers` | 0.40 | 4 | $0.14 |
+| `existing-no-answers` | 0.40 | 6 | $0.16 |
+| `stack-missing-facts` | 0.50 | 10 | $0.29 |
+| `new-all-answers` | 0.00 | 7 | $0.27 |
+| `existing-all-answers` | didn't load | | |
+| `guest-all-answers` | 0.40 | 22 | $0.55 |
+| `rerun` | 0.67 | 9 | $0.26 |
+| `checkins-plain-words` | 1.00 | 5 | $0.13 |
