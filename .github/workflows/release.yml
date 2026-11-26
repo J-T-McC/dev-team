@@ -1,6 +1,7 @@
 name: release
 
 # Every merge to main: semantic-release reads the squash commit (the PR title) and tags a release when it calls for one.
+# The `due` job skips the release job when no commit since the last tag calls for a release (.github/release-due.sh).
 # feat → minor, fix or perf → patch, `!` or a BREAKING CHANGE footer → major, any other type → no release.
 # It only tags and writes the GitHub release; nothing is committed back to main. Config: .releaserc.json.
 
@@ -16,7 +17,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  due:
+    runs-on: ubuntu-latest
+    outputs:
+      due: ${{ steps.check.outputs.due }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: check
+        run: if bash .github/release-due.sh >&2; then echo due=true; else echo due=false; fi >> "$GITHUB_OUTPUT"
+
   release:
+    needs: due
+    if: needs.due.outputs.due == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
