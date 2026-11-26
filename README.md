@@ -120,7 +120,7 @@ Project-level skills (`.claude/skills/`) work out of the box: every role has you
 /plugin update dev-team@dev-team       # then update the plugin itself
 ```
 
-Every commit to this repo is a new version (no version pinning); [releases](https://github.com/J-T-McC/dev-team/releases) mark stable points and carry the notes. Seeded files (workspace `standards/` and `stack/`, the dev-team section) are project-owned and are **not** touched by updates — use the sync command below to catch up.
+Every commit to this repo is a new version (no version pinning). Each merged feature or fix is also tagged as a [release](https://github.com/J-T-McC/dev-team/releases) with notes, numbered from its PR title: a feature raises the minor version, a fix the patch. Seeded files (workspace `standards/` and `stack/`, the dev-team section) are project-owned and are **not** touched by updates — use the sync command below to catch up.
 
 ## Sync seeds (per project)
 

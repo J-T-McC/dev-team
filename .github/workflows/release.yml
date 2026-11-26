@@ -1,0 +1,31 @@
+name: release
+
+# Every merge to main: semantic-release reads the squash commit (the PR title) and tags a release when it calls for one.
+# feat → minor, fix or perf → patch, `!` or a BREAKING CHANGE footer → major, any other type → no release.
+# It only tags and writes the GitHub release; nothing is committed back to main. Config: .releaserc.json.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: semantic-release
+        run: npx --yes -p semantic-release@25.0.9 -p conventional-changelog-conventionalcommits@9 semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
