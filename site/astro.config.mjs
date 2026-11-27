@@ -1,8 +1,22 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightLlmsTxt from 'starlight-llms-txt';
+import { readdir, rename, rm } from 'node:fs/promises';
 
 const repo = 'https://github.com/J-T-McC/dev-team';
+
+// One sitemap.xml listing every page: these docs never need sitemap-index.xml and its parts.
+const flatSitemap = {
+  name: 'flat-sitemap',
+  hooks: {
+    'astro:build:done': async ({ dir }) => {
+      const parts = (await readdir(dir)).filter((f) => /^sitemap-\d+\.xml$/.test(f));
+      if (parts.length !== 1) throw new Error(`flat-sitemap: expected one sitemap part, found ${parts.length}`);
+      await rename(new URL(parts[0], dir), new URL('sitemap.xml', dir));
+      await rm(new URL('sitemap-index.xml', dir));
+    },
+  },
+};
 
 export default defineConfig({
   site: 'https://j-t-mcc.github.io',
@@ -21,6 +35,8 @@ export default defineConfig({
           tag: 'meta',
           attrs: { name: 'google-site-verification', content: 'nqshZ9Z4f7QQO4C063Afx5z5lAFUKARzlbqOVNDjBEg' },
         },
+        // Replaces Starlight's link to sitemap-index.xml (flatSitemap below).
+        { tag: 'link', attrs: { rel: 'sitemap', href: '/dev-team/sitemap.xml' } },
       ],
       editLink: { baseUrl: `${repo}/edit/main/site/` },
       customCss: ['./src/styles/custom.css'],
@@ -56,5 +72,6 @@ export default defineConfig({
         { label: 'Reference', items: ['reference/settings', 'reference/commands'] },
       ],
     }),
+    flatSitemap,
   ],
 });
