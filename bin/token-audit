@@ -164,12 +164,29 @@ class Audit:
                 cur = []
             else:
                 cur.append(w)
-        found, here = [], cwd
+        found, here, env = [], cwd, {}
+
+        def expand(word):
+            """$NAME and ${NAME} from assignments made earlier in the command; None when one is unknown."""
+            known = {"HOME": HOME, "PWD": here or str(self.top), **env}
+            out = re.sub(r"\$\{?(\w+)\}?", lambda m: known.get(m.group(1), "\0"), word)
+            return None if "\0" in out else out
+
         for argv, piped in simple:
+            if argv and argv[0] == "export":
+                argv = argv[1:]
             while argv and re.match(r"^\w+=", argv[0]):
+                name, _, value = argv[0].partition("=")
+                value = expand(value)
+                if value is None:
+                    env.pop(name, None)
+                else:
+                    env[name] = value
                 argv = argv[1:]
             if not argv:
                 continue
+            argv = [argv[0]] + [expand(a) if "$" in a else a for a in argv[1:]]
+            argv = [a if a is not None else "$?" for a in argv]
             prog = os.path.basename(argv[0])
             if prog == "cd" and len(argv) > 1:
                 here = os.path.normpath(os.path.join(here or str(self.top), os.path.expanduser(argv[1])))

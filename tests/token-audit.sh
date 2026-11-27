@@ -65,6 +65,8 @@ main = [
     use("b4", "Bash", command="npm test 2>&1 | tail -20"), res("b4", 4000),
     use("b5", "Bash", command="sed -i '' 's/a/b/' docs/features/a/brief.md"), res("b5", 40),
     use("b6", "Bash", command="python3 - <<'PY'\nprint(open('docs/features/a/brief.md').read())\ncat x.md\nPY"), res("b6", 40),
+    use("v1", "Bash", command='S=docs/status.md; grep -n foo "$S"'), res("v1", 80),
+    use("v2", "Bash", command='export D="$PWD/docs" && sed -n 1,5p "${D}/status.md" && cat "$UNSET/x.md"'), res("v2", 80),
     use("n1", "Read", file_path=f"{P}/docs/features/a/notes.md"), res("n1", 1200, (1, 1, 1)),
     use("o1", "Read", file_path=f"{P}/docs/features/a/plan.md"), res("o1", 9999, (1, 100, 100), days=30),
 ]
@@ -114,8 +116,9 @@ ok "a big file without headings is flagged"     '[[ $(row "notes.md") == *"notes
 ok "piped grep is partial, a full Read whole"   '[[ $(row "brief.md —") == " 70 2 1 / 50 1 / 20 docs/features/a/brief.md — dt-dev-1 50, principal-engineer 20" ]]'
 ok "a search over many files counts once"       '[[ $(row "(shell searches over more than 5 files)") == " 100 1 0 / 0 1 / 100 "* ]]'
 ok "edits, heredocs and test runs are not reads" '! row " x.md" | grep -q . && [ "$(printf "%s\n" "$OUT" | grep -c "docs/features/a/brief.md —")" = 1 ]'
+ok "reads through shell variables count"     '[[ $(row "docs/status.md —") == " 40 2 0 / 0 2 / 40 docs/status.md — principal-engineer 40" ]] && ! row "x.md —" | grep -q .'
 ok "the peer is named before its task arrived"  '! row "wt-dev" | grep -q .'
-ok "by reader"                                  '[[ $(reader principal-engineer) == " 2.0k 6 1.8k principal-engineer" ]] && [[ $(reader dt-dev-1) == " 1.1k 2 1.1k dt-dev-1" ]] && [[ $(reader "reviewer \(agent\)") == " 200 1 0 reviewer (agent)" ]]'
+ok "by reader"                                  '[[ $(reader principal-engineer) == " 2.1k 8 1.8k principal-engineer" ]] && [[ $(reader dt-dev-1) == " 1.1k 2 1.1k dt-dev-1" ]] && [[ $(reader "reviewer \(agent\)") == " 200 1 0 reviewer (agent)" ]]'
 ok "CLAUDE.md, its dev-team section, imports"   '[[ $(row " CLAUDE.md") == *"CLAUDE.md — dev-team section"* ]] && [[ $(row "docs/extra.md") == *"imported by CLAUDE.md" ]]'
 ok "the memory index"                           '[[ $(row "memory index") == *"(10 lines)" ]]'
 ok "SessionStart output that reached the model" '[[ $(row "SessionStart hook output") == " 2.4 KB ≈ 612 SessionStart hook output, average of 1 session(s): recall 2.0 KB, dev-team 0.4 KB" ]]'
