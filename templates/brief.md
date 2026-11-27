@@ -1,5 +1,4 @@
 # Brief: <Feature Name>
-<!-- Change this document in place, never below the old text; past ~25 KB, split it into part files (`<ws>/standards/documentation.md` § Size and reading). -->
 
 - **Status:** Draft | Approved
 - **Author:** Product Manager

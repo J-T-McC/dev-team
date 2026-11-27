@@ -7,7 +7,7 @@ Work that is real but not now. **Any role files** an item; the **Product Manager
 | ID | Item | Type | Priority | Status |
 |---|---|---|---|---|
 
-<!-- Row shape: | B1 | Bulk CSV import — `B1-bulk-csv-import.md` | feature | medium | open | -->
+A row reads: `| B001 | Bulk CSV import — B001-bulk-csv-import.md | feature | medium | open |`
 
 Types: `feature` (idea or deferred scope) | `debt` (deliberate simplification with an upgrade path) | `bug` (known, not being fixed now)
 Statuses: `open → promoted → done`, or `dropped`. Never delete a row.
