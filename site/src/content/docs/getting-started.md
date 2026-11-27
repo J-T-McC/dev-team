@@ -14,10 +14,10 @@ In Claude Code, inside your project:
 
 ```
 /plugin marketplace add J-T-McC/dev-team
-/plugin install dev-team@dev-team --scope local
+/plugin install dev-team@dev-team
 ```
 
-`--scope local` installs it for you, in this project only. Leave it out and it installs for you in every project, and every Claude Code session you start, anywhere, loads it. The same command is right on someone else's project ([guest mode](/dev-team/workspace/#guest-mode)). To give everyone on your repository the plugin, see [Give your team the plugin](#give-your-team-the-plugin); setup offers to do that.
+The install asks where to put it. Pick **Install for you, in this repo only (local scope)**. The first choice, user scope, installs it for you in every project, and every Claude Code session you start, anywhere, loads it. From a shell in the project folder, `claude plugin install dev-team@dev-team --scope local` does the same without the menu. Local scope is right on someone else's project too ([guest mode](/dev-team/workspace/#guest-mode)). To give everyone on your repository the plugin, see [Give your team the plugin](#give-your-team-the-plugin); setup offers to do that.
 
 ## Set up the project
 

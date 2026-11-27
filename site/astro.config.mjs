@@ -28,7 +28,7 @@ export default defineConfig({
       plugins: [
         starlightLlmsTxt({
           details: [
-            'Install with `/plugin marketplace add J-T-McC/dev-team`, then `/plugin install dev-team@dev-team --scope local` (this project only), and set up a project by asking Claude to set up dev-team (the `dev-team:bootstrap` skill).',
+            'Install with `/plugin marketplace add J-T-McC/dev-team`, then `/plugin install dev-team@dev-team` and pick local scope (this project only; from a shell: `claude plugin install dev-team@dev-team --scope local`), and set up a project by asking Claude to set up dev-team (the `dev-team:bootstrap` skill).',
             "It runs two ways. By default every role runs inline in the user's own Claude Code conversation, one at a time, and a subagent starts only for parallel streams of work, an independent review, or a phase too big for the conversation: the low-token mode. Under the optional Orca runtime every role runs as its own top-level Claude Code session, never a subagent, several at once, and the user's session coordinates them; every task starts a fresh session, so it costs more.",
             "The roles write their documents (briefs or PRDs, designs, plans, ADRs, task files, reviews) into a workspace folder in the project's repo. The plugin brings no stack or tools of its own: every session runs on the project's CLAUDE.md, skills, plugins and MCP servers.",
           ].join('\n\n'),

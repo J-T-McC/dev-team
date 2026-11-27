@@ -219,7 +219,7 @@ tickets: GitHub"
 
 notices=$(
   printf '%s\n' "$scopes" | grep -qx user &&
-    echo "dev-team is installed for every project (user scope), so every Claude Code session loads it. Reinstalling it with --scope local limits it to this project."
+    echo "dev-team is installed for every project (user scope), so every Claude Code session loads it. Reinstalling it for this repo only (local scope) limits it to this project."
   [ -n "$python_ok" ] || echo "Python 3.9 or newer is missing: the Orca runtime, Owner board, check-ins and audit need it (macOS: xcode-select --install; Linux: your package manager)."
   [ -n "$gh_ok" ] || echo "gh isn't installed or logged in: the Orca runtime and Owner board need it (gh auth login)."
   [ "$dev_team_dir" = taken ] && echo "A dev-team/ folder already exists and isn't dev-team's workspace: pick another folder for it."

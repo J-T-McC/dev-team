@@ -33,4 +33,4 @@ Keeping documents from growing is the job of the [size rule and its hook](/dev-t
 
 The plugin keeps its own share small. Roles run in your conversation unless there's a reason to start an agent, the descriptions it adds to every session are short, the coordinator reads summaries and document headers rather than transcripts, specs point to files instead of pasting them, and waiting on peers or CI spends nothing while it waits.
 
-Install it per project (`--scope local`, [Get started](/dev-team/getting-started/#install)), not for every project: a user-scope install loads its descriptions and hooks into every Claude Code session you start, in every project.
+Install it per project (local scope, [Get started](/dev-team/getting-started/#install)), not for every project: a user-scope install loads its descriptions and hooks into every Claude Code session you start, in every project.
