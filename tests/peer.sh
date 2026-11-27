@@ -333,7 +333,7 @@ runtime "Team model: opus. Fallback model: none. Advisor: none. Peer MCP: serena
 run dispatch dt-dev-1 senior-developer "T12" --owner
 CFG="$(git rev-parse --path-format=absolute --git-common-dir)/dev-team/peer-mcp.json"
 ok "Peer MCP: serena keeps only serena"   '[ $RC = 0 ] && [ "$(command)" = "claude --model sonnet --effort medium$DENY --strict-mcp-config --mcp-config $CFG" ] && [ "$(python3 -c "import json; print(list(json.load(open(\"$CFG\"))[\"mcpServers\"]))")" = "['"'"'serena'"'"']" ]'
-ok "its config is private"                '[ "$(stat -f %Lp "$CFG" 2>/dev/null || stat -c %a "$CFG")" = 600 ]'
+ok "its config is private"                '[ "$(python3 -c "import os, sys; print(oct(os.stat(sys.argv[1]).st_mode & 0o777))" "$CFG")" = 0o600 ]'
 state stage '"settled"'
 runtime "Team model: opus. Fallback model: none. Advisor: none. Peer MCP: serena, Claude Docs."
 run dispatch dt-dev-1 senior-developer "T13" --owner
