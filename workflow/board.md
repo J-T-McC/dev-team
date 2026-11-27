@@ -1,6 +1,6 @@
 # Owner Board (optional)
 
-A live page for the Project Owner: what needs them, who is on what, and every piece of work in flight. Once several roles run at once, the coordinator's conversation moves too fast to follow and the workspace documents are written for agents, not people — the board is the Owner's view. `<ws>/status.md` stays the source of truth: the board is derived from it, and no role reads the board for state.
+A live page for the Project Owner: what needs them, who is on what, and every piece of work in flight. Once several roles run at once, the coordinator's conversation moves too fast to follow and the workspace documents are written for agents, not people — the board is the Owner's view. `<ws>/status.md` stays the source of truth: the board is derived from it (and from the task indexes and PRs, § Work rows), and no role reads the board for state.
 
 Works under either runtime. It needs Claude Code's claude.ai artifacts (the `Artifact` and `ArtifactData` tools). Set up with `/dev-team:board`; it is on when the project's dev-team section has an `**Owner board:** <url>` line. This file is the canonical home of the rules below.
 
@@ -12,11 +12,21 @@ A private claude.ai artifact with its own database. The page (`${CLAUDE_PLUGIN_R
 |---|---|---|
 | `asks/<id>` | question or approval waiting on the Owner | `ticket`, `question` — one plain sentence: the decision needed and why — `order` |
 | `peers/<id>` | role session: an Orca home, or under the default runtime the role now running | `name` (an Orca home's name, `workflow/orca.md` § Topology), `role`, `doing` (current task, or `Idle`), `order` — under Orca, `peer list --board-json <dir>` writes one file per home, for `ArtifactData` `file_path` |
-| `work/<id>` | feature or ticket in flight; id = feature folder or ticket ID | `ticket`, `title`, `group`, `group_order`, `peer`, `pr`, `repo` (only when not the config's), `state`, `next` |
+| `work/<id>` | piece of work in flight with one owner and at most one PR (§ Work rows); id = ticket ID, feature folder, or `<feature folder>/<task ID>` | `ticket`, `title`, `group`, `group_order`, `peer` (the home or role on it now), `pr`, `repo` (only when not the config's), `state`, `next` |
 | `meta/board` | — | `updated` (ISO time of the last write) |
 | `meta/config` | — | `owner` (how the board names the Owner; default "you"), `ticketUrl` (the ticket ID is appended), `repo` (`owner/name`), `repos` (short names a row's `repo` may use, e.g. `{"mobile": "acme/mobile-app"}`) |
 
 `state` is one of: `planning` (Requirements through Technical Design), `building`, `review`, `fixing` (review findings or a failed check), `ready` (reviewed, checks green), `owner` (waiting on the Owner — it also has an `asks` row), `blocked`, `queued`, `held` (the Owner's hold — no `asks` row, shown muted), `done`.
+
+## Work rows
+
+A row is what one owner is doing, so the Owner can see who has which PR and where it stands.
+
+- **Before tasks exist** (planning, or a ticket with no plan), the feature or ticket is one row.
+- **From the task list on**, each task that has started, or has a PR, is a row of its own: the developer or reviewer on it, its PR, its state. Tasks not started get no row. The feature's own row is dropped while any of its tasks has one, and comes back when none does: a whole-feature review, or tasks waiting for a developer.
+- **A stack** of PRs for one task or ticket is one row per PR, its `next` naming the stack.
+- **`group`** is the feature's name for task rows, so a feature's tasks sit together; ticket work uses the project's own grouping (area, epic or milestone). `group_order` follows the backlog index order.
+- **Sources.** `<ws>/status.md` for features and phases, the feature's `tasks/index.md` for tasks, the PR records (`peer prs`, `gh`) for PR state.
 
 ## Rules
 
