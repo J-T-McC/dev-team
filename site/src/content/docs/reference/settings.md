@@ -64,6 +64,7 @@ Set these in your own environment. Most are timers you'll rarely need to touch.
 | `DEV_TEAM_SLOTS_<POOL>` | `2` | the size of a named pool, such as `DEV_TEAM_SLOTS_CONTAINERS` |
 | `DEV_TEAM_SLOT_WAIT` | `60` | the longest wait for a slot, in minutes; past it, `slot` exits with 75 |
 | `DEV_TEAM_SLOT_POLL` | `2` | seconds between checks for a free slot |
+| `DEV_TEAM_SLOT_GRACE` | `5` | seconds a stopped `slot run` gives its command and that command's children to exit before killing them |
 | `DEV_TEAM_SLOT_DIR` | `~/.cache/dev-team/slots` | where slots are kept |
 | `DEV_TEAM_LOCK_TTL_MIN` | `30` | minutes before a forgotten coordinator lock expires |
 | `DEV_TEAM_STUCK_MIN` | `2` | minutes a peer sits on an error before `STUCK` |
@@ -73,3 +74,4 @@ Set these in your own environment. Most are timers you'll rarely need to touch.
 | `DEV_TEAM_RECHECK_SEC` | `5` | seconds before `peer dispatch` reads a new dispatch back |
 | `DEV_TEAM_STEP_SEC` | `2` | seconds `peer` waits before reading a screen back or looking for a closed session's leftovers |
 | `DEV_TEAM_CLOSE_SEC` | `10` | seconds `peer` waits for a session's terminal to close before giving up |
+| `DEV_TEAM_CLOSE_RESEND_SEC` | `3` | seconds between the closes `peer` sends while it waits, since one sent as the session exits can be lost |

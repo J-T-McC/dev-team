@@ -306,7 +306,21 @@ state orphan_on_close false; state close_lag 2
 setreg 'r["homes"]["dt-dev-1"].update(terminal="term_x", asleep=False)'; fake 's["terminals"]["term_x"]={"open": True, "path": "/wt/x"}'
 run sleep dt-dev-1
 ok "a terminal slow to close is waited for"  '[[ $OUT == *"dt-dev-1: asleep"* ]] && [[ $OUT != *"did not close"* ]]'
-state close_lag 0
+state close_lag 0; state close_disconnects true
+setreg 'r["homes"]["dt-dev-1"].update(terminal="term_y", asleep=False)'; fake 's["terminals"]["term_y"]={"open": True, "path": "/wt/y"}'
+run sleep dt-dev-1
+ok "a closed terminal Orca still lists, disconnected, counts as closed" '[[ $OUT == *"dt-dev-1: asleep"* ]] && [[ $OUT != *"did not close"* ]]'
+state close_disconnects false; state close_drops 1
+setreg 'r["homes"]["dt-dev-1"].update(terminal="term_z", asleep=False)'; fake 's["terminals"]["term_z"]={"open": True, "path": "/wt/z"}'
+DEV_TEAM_CLOSE_RESEND_SEC=0 run sleep dt-dev-1
+ok "a close that was lost is sent again"   '[[ $OUT == *"dt-dev-1: asleep"* ]] && [ "$(grep -c "\"close\", \"--terminal\", \"term_z\"" "$T/orca/calls.log")" = 2 ]'
+state close_drops 0
+setreg 'r["homes"]["dt-dev-1"].update(terminal="term_peer", asleep=False)'; fake 's["terminals"]["term_peer"]={"open": True, "path": "/wt/p"}'
+ORCA_TERMINAL_HANDLE=term_peer run tell dt-reviewer "Shared files" "Agree T20's files"
+ok "a peer can't run the coordinator's commands" '[ $RC = 2 ] && [[ $OUT == *"dt-dev-1'"'"'s terminal"*"send the coordinator"* ]] && ! called run-use && ! called send'
+ORCA_TERMINAL_HANDLE=term_peer run list
+ok "a peer can still read the team"        '[ $RC = 0 ] && [[ $OUT == *"dt-dev-1 "* ]]'
+setreg 'r["homes"]["dt-dev-1"].update(terminal=None, asleep=True)'
 state orphan_on_close false
 run dispatch dt-dev-1 senior-developer "T04"
 state stage '"settled"'; fake "s['orphaned'] = ['$(home dt-dev-1 terminal)']"

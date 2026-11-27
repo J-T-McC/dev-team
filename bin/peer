@@ -21,6 +21,8 @@
   peer board-stamp [--rows <dir>]  record that the Owner board matches <ws>/status.md now (workflow/board.md)
   peer hook prompt|stop  the coordinator's guard hooks (hooks/coordinator.sh)
 
+Run from a peer's own terminal, only sizes, limits, list, prs and hook work: the rest are the coordinator's.
+
 Homes, the team's Run, and its PRs are machine-local state: <git common dir>/dev-team/peers.json.
 """
 import copy, fcntl, hashlib, json, os, random, re, shlex, shutil, signal, subprocess, sys, time
@@ -32,6 +34,7 @@ STUCK_MIN = float(os.environ.get("DEV_TEAM_STUCK_MIN", "2"))
 POLL_SEC = float(os.environ.get("DEV_TEAM_WATCH_POLL", "30"))
 STEP_SEC = float(os.environ.get("DEV_TEAM_STEP_SEC", "2"))
 CLOSE_SEC = float(os.environ.get("DEV_TEAM_CLOSE_SEC", "10"))  # a session just past its last turn takes a moment to exit
+CLOSE_RESEND_SEC = float(os.environ.get("DEV_TEAM_CLOSE_RESEND_SEC", "3"))  # a close sent as the session exits can be dropped
 RECHECK_SEC = float(os.environ.get("DEV_TEAM_RECHECK_SEC", "5"))
 PR_POLL_MIN = float(os.environ.get("DEV_TEAM_PR_POLL", "5"))
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
@@ -276,7 +279,7 @@ def bind(reg):
         if not m:
             die("run-create failed:\n" + raw[:800])
         reg["run"] = m.group(0)
-    else:
+    elif me["terminal"] not in peers:  # a peer's terminal taking the Run would unbind the coordinator's
         orca("orchestration", "run-use", "--id", reg["run"])
     save(reg)
     return reg["run"]
@@ -588,12 +591,18 @@ def close_session(home, h):
         return f"{home} is busy ('{b}' on its screen): wait for it to finish, or ask it to stop that first"
     if h.get("dispatch"):
         orca("orchestration", "worker-release", "--dispatch", h["dispatch"])
-    if term_info(h):
-        orca("terminal", "close", "--terminal", term, *on(h))
-    deadline = time.time() + CLOSE_SEC
-    while term_info(h):
+    # Orca can keep a closed terminal listed, disconnected, with no PTY; and a close sent as the session exits can
+    # be dropped, so it is sent again while waiting.
+    deadline, resend = time.time() + CLOSE_SEC, 0.0
+    while True:
+        t = term_info(h)
+        if not t or (resend and t.get("connected") is False):
+            break
         if time.time() >= deadline:
             return f"{home}'s terminal did not close in {CLOSE_SEC:g}s: look at it"
+        if time.time() >= resend:
+            orca("terminal", "close", "--terminal", term, *on(h))
+            resend = time.time() + CLOSE_RESEND_SEC
         time.sleep(0.5)
     h["terminal"] = None
     cleanup(home, h, term)
@@ -1541,7 +1550,20 @@ CMDS = {"dispatch": cmd_dispatch, "tell": cmd_tell, "nudge": cmd_nudge, "switch"
         "sizes": cmd_sizes, "limits": cmd_limits, "list": cmd_list, "team": cmd_team, "board-stamp": cmd_board_stamp,
         "hook": cmd_hook}
 
+# What a peer may run itself: reading the team's state, and the hooks every session runs. The rest act for the coordinator.
+PEER_OK = {"sizes", "limits", "list", "prs", "hook", "nudge"}
+
+
+def peer_home():
+    """The home whose terminal this is, when a peer runs peer."""
+    me = os.environ.get("ORCA_TERMINAL_HANDLE")
+    return next((n for n, h in load()["homes"].items() if me and h.get("terminal") == me), None) if REG.exists() else None
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in CMDS:
         die(__doc__)
+    if sys.argv[1] not in PEER_OK and (home := peer_home()):
+        die(f"this is {home}'s terminal: `peer {sys.argv[1]}` is the coordinator's. To reach another peer, send the "
+            "coordinator a status message saying who it is for and what to tell them; it passes it on.")
     CMDS[sys.argv[1]](sys.argv[2:])

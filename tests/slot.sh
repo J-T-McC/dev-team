@@ -43,5 +43,10 @@ sleep 0.3
 DEV_TEAM_SLOT_WAIT=0.005 "$SLOT" run late -- true 2>/dev/null
 ok "gives up past the longest wait"   '[ $? = 75 ]'
 wait
+"$SLOT" run server -- sh -c 'sleep 30 & echo $! > grandchild; sleep 30' 2>/dev/null & WRAP=$!
+sleep 0.5
+kill -TERM "$WRAP"; wait "$WRAP" 2>/dev/null
+sleep 0.3
+ok "stopping slot stops its command and children" '! kill -0 "$(cat grandchild)" 2>/dev/null && [[ $("$SLOT" status) == "slot 1: free"* ]]'
 kill -9 "$HOLD" 2>/dev/null
 exit $fail
