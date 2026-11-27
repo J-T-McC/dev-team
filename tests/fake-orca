@@ -3,7 +3,8 @@
 
 state.json: stage (running|settled) of the current dispatch, inbox batches, terminals (open, worktree, command),
             each terminal's screen (screens, else screen), what a plain `terminal send` prints, the Orca version,
-            orphaned terminals, start_fail (worker-start fails at agent readiness), and recheck_fail (the dispatch
+            orphaned terminals, close_drops (closes lost) and close_disconnects (a closed terminal stays listed,
+            disconnected), start_fail (worker-start fails at agent readiness), and recheck_fail (the dispatch
             reads failed after a ready start). worker-start --on starts a remote terminal itself (rterm_N).
 calls.log:  one JSON argv array per call.
 """
@@ -91,9 +92,13 @@ if cmd == ["terminal", "show"]:
     if not t.get("open") and not s.get("stay_open"):
         out({"error": "terminal_not_found"}, ok=False)
     out({"terminal": {"handle": term, "agentIdentity": "claude", "worktreePath": t.get("path"),
-                      "orphaned": term in s.get("orphaned", [])}})
+                      "orphaned": term in s.get("orphaned", []), **({"connected": False} if t.get("dead") else {})}})
 if cmd == ["terminal", "close"]:
-    if term in s["terminals"] and s.get("orphan_on_close"):
+    if term in s["terminals"] and s.get("close_drops"):  # a close sent as the session exits, lost
+        s["close_drops"] -= 1
+    elif term in s["terminals"] and s.get("close_disconnects"):  # Orca keeps listing it, disconnected, no PTY
+        s["terminals"][term]["dead"] = True
+    elif term in s["terminals"] and s.get("orphan_on_close"):
         s.setdefault("orphaned", []).append(term)  # Orca keeps showing it, as orphaned
     elif term in s["terminals"] and s.get("close_lag"):
         s["terminals"][term]["lag"] = s["close_lag"]

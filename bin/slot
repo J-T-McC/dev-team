@@ -7,14 +7,15 @@
 
 Lower --prio goes first (default 5; the critical path takes 1); the same prio is first come, first served.
 DEV_TEAM_SLOTS sets the number of slots (default 2), DEV_TEAM_SLOT_WAIT the longest wait in minutes (default 60;
-past it, exit 75). A slot frees itself when its holder exits, however it exits.
+past it, exit 75). A slot frees itself when its holder exits, however it exits. Stopping `slot` (SIGTERM, SIGINT,
+SIGHUP) stops the command it runs and that command's children too, so a server never outlives its slot.
 
 A pool is a separate set of slots, so long-lived jobs never block test runs: --pool containers holds a slot while a
 container runs — `slot run db --pool containers -- docker compose up db` (run it in the background), or for one
 already started detached, `slot run db --pool containers -- docker wait <container>`. DEV_TEAM_SLOTS_<POOL> sets a
 pool's size (default 2).
 """
-import fcntl, os, re, subprocess, sys, time
+import fcntl, os, re, signal, subprocess, sys, time
 from pathlib import Path
 
 BASE = Path(os.environ.get("DEV_TEAM_SLOT_DIR") or Path.home() / ".cache" / "dev-team" / "slots")
@@ -101,11 +102,61 @@ def run(argv):
         me.unlink(missing_ok=True)
     (DIR / f"slot-{i}.info").write_text(f"{label}\t{os.getpid()}\t{time.strftime('%H:%M:%S')}\n")
     print(f"slot: {label} has slot {i + 1} of {SLOTS}{where}", file=sys.stderr)
-    try:
-        rc = subprocess.run(cmd).returncode
-    except KeyboardInterrupt:
-        rc = 130
-    sys.exit(rc)
+    sys.exit(supervise(cmd))
+
+
+def tree(pid):
+    """pid and every process below it, parents first."""
+    kids = {}
+    out = subprocess.run(["ps", "-A", "-o", "pid=,ppid="], capture_output=True, text=True).stdout
+    for row in out.splitlines():
+        c, _, p = row.strip().partition(" ")
+        kids.setdefault(int(p), []).append(int(c))
+    found, todo = [], [pid]
+    while todo:
+        n = todo.pop()
+        found.append(n)
+        todo += kids.get(n, [])
+    return found
+
+
+def supervise(cmd):
+    """Run cmd; a signal to slot goes to cmd and everything under it (a pkill that matches slot's own command line,
+    or a stopped background task), and anything still running a few seconds later is killed. The wait polls, so the
+    handler never meets a wait already in progress."""
+    child = subprocess.Popen(cmd)
+    stopping = {}
+
+    def stop(sig, _frame):
+        if not stopping:
+            stopping.update(sig=sig, procs=tree(child.pid),
+                            deadline=time.time() + float(os.environ.get("DEV_TEAM_SLOT_GRACE", "5")))
+        for pid in stopping["procs"]:
+            try:
+                os.kill(pid, sig)
+            except ProcessLookupError:
+                pass
+
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(sig, stop)
+    while True:
+        rc = child.poll()
+        if not stopping:
+            if rc is not None:
+                return rc
+        else:
+            rest = [p for p in stopping["procs"][1:] if alive(p)]
+            if rc is not None and not rest:
+                return 128 + stopping["sig"]
+            if time.time() >= stopping["deadline"]:
+                for pid in ([child.pid] if rc is None else []) + rest:
+                    try:
+                        os.kill(pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                child.wait()
+                return 128 + stopping["sig"]
+        time.sleep(0.1)
 
 
 def status():
