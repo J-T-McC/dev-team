@@ -7,14 +7,14 @@ import { Image } from 'astro:assets';
 import boardLight from '../../../../examples/board/board-light.png';
 import boardDark from '../../../../examples/board/board-dark.png';
 
-Once several roles run at once, the orchestrator's conversation moves too fast to follow, and the workspace documents are written for agents. The Owner board is your view instead: a private claude.ai page that shows the questions and approvals waiting on you first, then who's on what, then every piece of work in flight with its ticket, PR, state and next step.
+Once several roles run at once, the orchestrator's conversation moves too fast to follow. The Owner board is your view instead: a private claude.ai page showing what's waiting on you, who's on what, and every piece of work in flight.
 
 <div class="screenshot">
   <Image class="only-light" src={boardLight} alt="Owner board with sample data: two questions waiting on the Owner, seven roles and their current tasks, and work grouped as Reporting, Mobile and Platform with ticket, PR, state and next step." />
   <Image class="only-dark" src={boardDark} alt="The same Owner board in dark mode." />
 </div>
 
-It works under either runtime. The team still works from `status.md`: the board is built from it, and no role reads the board to learn the state of anything.
+It works under either runtime. The team still works from `status.md`, and the board is built from it.
 
 ## Set it up
 
@@ -22,9 +22,9 @@ It works under either runtime. The team still works from `status.md`: the board 
 /dev-team:board
 ```
 
-The board needs Claude Code's claude.ai artifacts (the `Artifact` and `ArtifactData` tools). The command asks for a project name, what the board should call you, a ticket link base and the repository (plus short names for other repos your work touches). It publishes the page, checks `status.md` for rows whose PRs have all merged or closed so the board doesn't start stale, and seeds the rows. It then adds an `**Owner board:** <url>` line to the dev-team section, which is what turns the board on. Running the command again republishes the latest page to the same link and keeps its data.
+It needs Claude Code's claude.ai artifacts (the `Artifact` and `ArtifactData` tools). The command asks for a project name, what to call you, a ticket link base and the repository. Then it publishes the page, seeds it from `status.md`, and adds the `**Owner board:** <url>` line that turns it on. Running it again republishes to the same link and keeps the data.
 
-The page is private unless you share it. Anyone you share it with can read it, but only you can change its data, and the orchestrator writes it acting as you. Nothing secret goes on it.
+The page is private unless you share it. People you share it with can read it, but only you can change its data (the orchestrator writes it as you). Nothing secret goes on it.
 
 ## What the states mean
 
@@ -41,14 +41,12 @@ The page is private unless you share it. Anyone you share it with can read it, b
 | `held` | you said to wait. Shown muted, and nobody asks again |
 | `done` | finished. It stays until you've seen it, then goes |
 
-A question or approval appears at the top the moment it's routed to you, and disappears in the turn your answer arrives. Use `held` when you want something left alone ("leave it until I've looked") or to park an old gate. Only you take a row out of `held`.
+A question or approval appears at the top the moment it's routed to you and disappears in the turn your answer arrives. Say "leave it until I've looked" and the row goes to `held`. Only you take it out.
 
 ## How it stays current
 
-The orchestrator updates the board in the same turn as `status.md`: every status change, dispatch and question routed to you. A board that lags is worse than none, so keeping it current doesn't depend on anyone remembering.
+The orchestrator updates the board in the same turn as `status.md`. If it forgets, the plugin's Stop hook sends its turn back to do it.
 
-After each board update the orchestrator records a stamp (`peer board-stamp`). If `status.md` or `status-done.md` changes after the stamp, the plugin's Stop hook sends the orchestrator's turn back to update the board first.
-
-PRs move on their own too: they merge, fail a check, go ready. `board-drift` reads the board's rows as files, which costs almost no tokens, and lists the rows whose PR has moved on. Under the Orca runtime the watcher runs it every time it wakes. `board-drift --status` does the same for `status.md`, listing rows whose PRs have all merged or closed.
+PRs also move on their own. When one merges, fails a check or goes ready, `board-drift` finds its row for almost no tokens. Under Orca the watcher runs it every time it wakes.
 
 Full rules: [workflow/board.md](https://github.com/J-T-McC/dev-team/blob/main/workflow/board.md).

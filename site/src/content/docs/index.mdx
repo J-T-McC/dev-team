@@ -22,22 +22,22 @@ import boardDark from '../../../../examples/board/board-dark.png';
 
 ## Two ways to run it
 
-The roles, documents and gates are the same either way. What changes is where each role runs.
+The roles and their documents are the same either way; only where they run changes.
 
 | | Default | [Orca runtime](/dev-team/orca/) |
 |---|---|---|
 | Where roles run | in your Claude Code conversation, one at a time | each in its own Claude Code session, several at once |
 | Your session | works through each phase with you | coordinates: hands out tasks, answers the peers' questions, takes your approvals |
 | Parallel work | a subagent for each independent stream, only when it pays | developers building at once, each in their own worktree |
-| Token use | low: most work never starts an agent | higher: every task starts a fresh session, about 35k tokens in one measurement, most of it your project's own context |
+| Token use | low: most work never starts an agent | higher: every task starts a fresh session (about 35k tokens, mostly your project's own context) |
 | While you're away | waits for you | [check-ins](/dev-team/checkins/) keep work moving on a schedule |
 | Needs | Claude Code | Claude Code run from Orca, and `/dev-team:orca` |
 
-If you don't run Claude from Orca, the default is all you need. If you do, the [recommended setup](/dev-team/orca-recommended/) configures a full team in one step.
+Not using Orca? The default is all you need. Using it? The [recommended setup](/dev-team/orca-recommended/) configures a full team in one step.
 
 ## How a feature moves
 
-You bring a request: a feature, a ticket, a bug. The orchestrator routes it, and each role hands the next one a document.
+You bring a request. The orchestrator routes it, and each role hands the next one a document.
 
 | Role | Writes | Who signs it off |
 |---|---|---|
@@ -47,13 +47,13 @@ You bring a request: a feature, a ticket, a bug. The orchestrator routes it, and
 | senior-developer | code and tests, one task at a time | (every task done) |
 | reviewer | a review against the acceptance criteria | you approve the release |
 
-Bugs and chores skip all of that. The senior-developer fixes them with tests and writes a short record. [Paths and gates](/dev-team/pipeline/) explains how the team decides how much process a piece of work needs.
+Bugs and chores skip all of that and go straight to a developer. [Pipeline](/dev-team/pipeline/) explains how the team sizes the process to the work.
 
 ## Why it works this way
 
-Nothing lives only in a chat. A role's decisions go into the workspace, so the next role, or a fresh session next week, starts from the file and not from memory. The plugin brings no stack or tools of its own, so [your project's setup](/dev-team/costs/) decides most of what each session costs. And every role assumes mistakes, its own included: it checks its output against the source documents before handing off, and questions an input that looks wrong instead of quietly working around it.
+Nothing lives only in a chat: every decision is written to the workspace, so the next role, or next week's session, starts from the file. Every role checks its work against those documents before handing off.
 
-How much you're asked is your call. At one end you sign every gate. At the other the roles sign everything except the floor: irreversible changes, security, spending, and anything that leaves the repository. A second setting decides whether the team starts new work on its own, from what you described, your tickets, or the product manager's pick. [Autonomy](/dev-team/autonomy/) has both.
+You choose how much you're asked, from every step to only what's irreversible, risky or costly, and whether the team starts new work on its own ([Autonomy](/dev-team/autonomy/)).
 
 ## Optional extras
 

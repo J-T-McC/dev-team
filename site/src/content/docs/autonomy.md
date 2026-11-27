@@ -9,52 +9,52 @@ One line in the project's `CLAUDE.md` sets how much the team decides without you
 - **Autonomy:** standard
 ```
 
-No line means `standard`. You can change it whenever you like. A change applies from the next gate and never reopens one already approved.
+No line means `standard`. A change applies from the next gate and never reopens one already approved.
 
 | Gate | supervised | standard | autonomous |
 |---|---|---|---|
-| PRD, or a brief that changes scope | ✋ you | ✋ you | ✅ product-manager, listing the gaps it filled under Assumptions |
+| PRD, or a brief that changes scope | ✋ you | ✋ you | ✅ product-manager, listing what it assumed |
 | Design spec | ✋ you | ✅ product-manager | ✅ product-manager |
-| Plan and task breakdown | ✋ you | ✅ principal-engineer | ✅ principal-engineer |
+| Plan and tasks | ✋ you | ✅ principal-engineer | ✅ principal-engineer |
 | Major decision | ✋ you | ✋ you | ✅ the role that owns it, except the floor |
 | Each finished task | ✋ you, before the next starts | | |
-| Requirement question | ✋ you (the product-manager drafts the answer) | ✅ product-manager | ✅ product-manager |
-| A standard or stack choice a plan or design proposes | ✋ you | ✋ you | ✅ whoever signs that plan or design |
-| Release | ✋ you | ✋ you | ✅ orchestrator, on an approving review |
+| Requirement question | ✋ you, on the product-manager's draft | ✅ product-manager | ✅ product-manager |
+| A standard or stack choice in a plan or design | ✋ you | ✋ you | ✅ whoever signs that plan or design |
+| Release | ✋ you | ✋ you | ✅ orchestrator, after an approving review |
+
+To keep some gates anyway, name them: `Autonomy: autonomous; Owner keeps: PRD, release`.
 
 ## The floor
 
 Some decisions stay with you at every level:
 
-- Irreversible or destructive changes, including data-model changes that affect existing data.
-- Security-sensitive surfaces: auth, permissions, secrets, personal data.
-- Spending money.
-- Whatever leaves the repository, such as a deploy, a publish, or a message to someone.
-- Recording you or your surroundings through a microphone, camera or screen. Roles use fake devices by default, and a real recording needs your go for that one recording (what, where, and for how long).
+- irreversible or destructive changes, including data-model changes that affect existing data
+- security-sensitive surfaces: auth, permissions, secrets, personal data
+- spending money
+- anything that leaves the repository, such as a deploy, a publish, or a message to someone
+- recording you or your surroundings by microphone, camera or screen (roles use fake devices, and each real recording needs your go)
 
-A release means Done in `status.md`. It never means a deploy. Writes to a ticket system that your config allows, and writes to the Owner board, were approved when you turned those on, so they don't count as floor actions.
-
-## Holding or handing over gates
-
-Add the gates you want to keep: `Autonomy: autonomous; Owner keeps: PRD, release`. Handing over the floor too takes `Owner waives: floor`, written out in full. Nothing else implies it.
+A release means Done in `status.md`, not a deploy. Ticket and Owner board writes you've turned on aren't floor actions. Handing over the floor itself takes `Owner waives: floor`, written out in full. Nothing else implies it.
 
 ## Auditing what was decided
 
-An approval made because of the level is recorded as `Approved by: <role> (autonomy: <level>)` in the artifact and in `status.md`. When a feature reaches Done at any level below `supervised`, the orchestrator's report lists every decision you didn't sign for that feature: the assumptions a brief or PRD filled in, major decisions a role made, and the gates the level delegated.
+An approval the level hands to a role is recorded as `Approved by: <role> (autonomy: <level>)`. When a feature is done, the orchestrator's report lists every decision in it you didn't sign.
 
-Autonomy never removes a gate, the independent review or a role boundary. It only changes who signs, and with fewer checkpoints the roles check their own work harder ([Team rules](/dev-team/team-rules/#assume-mistakes)).
+Autonomy only changes who signs. Every gate, the independent review and the role boundaries stay, and with fewer checkpoints the roles [check their own work](/dev-team/team-rules/#assume-mistakes) harder.
 
 ## What the team works on
 
-Autonomy decides who signs. A second line, `Next work`, decides whether the team starts something new without being asked, and where it comes from. Setup asks it.
+A second line, `Next work`, decides whether the team starts new work without being asked. Setup asks it.
 
 | Setting | The team starts next | It stops |
 |---|---|---|
 | `owner` (the default) | only what you hand it | after each piece of work |
-| `product` ("build it for me") | the next feature of the product you described, in the order the product manager set when it split your description | when every one of those features is done; then you get what was built and what the team would do next |
-| `tickets` | the next ticket your ticket search returns, in your ticket system's order | when there's nothing new; a new ticket starts it again |
-| `steered` | what the product manager picks from your tickets and the backlog, mixing new features with cleanup and bugs | when nothing above low priority is left, or you say stop |
+| `product` ("build it for me") | the next feature of the product you described | when all are done, and tells you what it built and would do next |
+| `tickets` | the next ticket your ticket search returns | when nothing is new; a new ticket starts it again |
+| `steered` | the product manager's pick from your tickets and backlog: features, cleanup and bugs | when nothing above low priority is left, or you say stop |
 
-The team never takes a ticket your search doesn't return, so the search is how much it may choose: assigned to the team, a label, or a whole team's queue. "Build it for me" builds only what you described: ideas the team has on the way go to the backlog and don't make the run longer. The product manager's mix for `steered` is in `standards/planning.md` under Steering, yours to tune: bugs that hurt users first, then about one cleanup item for every two features.
+The team never takes a ticket your search doesn't return, so the search sets how much it may choose: tickets assigned to the team, a label, or a whole team's queue. "Build it for me" builds only what you described; ideas on the way go to the backlog. The `steered` mix is yours to tune in `standards/planning.md` under Steering: by default, bugs that hurt users first, then about one cleanup item for every two features.
 
-Each item still passes every approval your autonomy level keeps, and the [floor](#the-floor) stays yours. With [check-ins](/dev-team/checkins/) under Orca, new tickets are picked up on their own; without them, the team keeps going while its conversation runs. To stop, say so, or set `Next work: owner`: what's in flight finishes, and nothing new starts. The rules are in [`workflow/handoffs.md`](https://github.com/J-T-McC/dev-team/blob/main/workflow/handoffs.md#next-work).
+Each item still passes every gate your level keeps, and the [floor](#the-floor) stays yours. Under Orca, [check-ins](/dev-team/checkins/) pick up new tickets on their own; otherwise the team keeps going while its conversation runs. To stop, say so or set `Next work: owner`: work in flight finishes and nothing new starts.
+
+Full rules: [workflow/handoffs.md](https://github.com/J-T-McC/dev-team/blob/main/workflow/handoffs.md#next-work).
