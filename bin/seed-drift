@@ -30,6 +30,14 @@ if grep -qs -e '^# Development Organization' -e '\*\*Workspace:\*\*' "$section";
               backlog-index.md:backlog/index.md backlog-archive.md:backlog/archive.md friction-log.md:friction-log.md; do
     [ -e "$P/$WS/${pair#*:}" ] || say "$WS/${pair#*:}: missing file (seed ${pair%%:*})"
   done
+  # status.md as the seed now keeps it: a Next column, so the Phase cell holds only the phase; no approvals history.
+  st="$P/$WS/status.md"
+  if grep -qs '^| *Feature *|' "$st"; then
+    grep -qs '^| *Feature *|.*| *Next *|' "$st" ||
+      say "$WS/status.md: no Next column (seed status.md): the next step goes there, and the Phase cell holds only the phase"
+    grep -qs '^## Approvals' "$st" &&
+      say "$WS/status.md: an approvals history — each approval's record is the Approved by line in its artifact; the Approvals cell names only the gates passed (seed status.md)"
+  fi
   orca=$(grep -s 'Runtime: Orca' "$section")
   label() { sed -n 's/^- \*\*\([^*:.]*\)[:.].*/\1/p' | sed 's/ *(.*) *$//'; }  # a note in brackets is not drift
   have=$(label < "$section")
