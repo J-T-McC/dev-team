@@ -6,10 +6,10 @@ A [Claude Code](https://code.claude.com) plugin that runs feature work the way a
 
 ```
 /plugin marketplace add J-T-McC/dev-team
-/plugin install dev-team@dev-team --scope local
+/plugin install dev-team@dev-team
 ```
 
-Run both inside your project: `--scope local` installs it for you, in that project only, where leaving it out loads it into every session in every project. Then ask Claude to `set up dev-team in this project`.
+Run both inside your project, and pick **Install for you, in this repo only (local scope)**: the first choice, user scope, loads it into every session in every project. From a shell in the project folder, `claude plugin install dev-team@dev-team --scope local` does the same without the menu. Then ask Claude to `set up dev-team in this project`.
 
 Needs macOS or Linux (WSL on Windows) and git. The optional Orca runtime, Owner board, check-ins and audit also need Python 3.9+, and the Orca runtime and Owner board need the GitHub CLI (`gh`) ([Install](https://j-t-mcc.github.io/dev-team/getting-started/#install)).
 
