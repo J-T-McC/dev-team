@@ -25,6 +25,8 @@ You decide how much you're asked, from every step to only what's irreversible, r
 
 By default every role runs in your own Claude Code conversation, one at a time, and an agent starts only when it pays for itself. On the [Orca runtime](https://j-t-mcc.github.io/dev-team/orca/), every role is its own session and several developers build at once; your session coordinates. That costs more, since every task starts a fresh session. Either way, each session loads your project's own setup, so trim what the roles don't use ([What your project costs](https://j-t-mcc.github.io/dev-team/costs/)).
 
+![Orca running a dev-team project: the sidebar lists the coordinator and nine peers by name and role, each in its own worktree on a branch or the default branch; the conversation and the project name are blurred, and the file tree shows the dev-team workspace folders](examples/orca/orca-team.png)
+
 ## Extras
 
 Off until you set them up.
@@ -69,5 +71,5 @@ Validate with `claude plugin validate .` and run `tests/*.sh`.
 | `bin/` | Check-in triggers and the coordinator lock; `peer` and `slot` for the Orca runtime; `board-drift` for the Owner board; `seed-drift` and `migrate-layout` for sync; `token-audit` for the audit | yes |
 | `hooks/` | Session start; the coordinator's guard hooks; the Stop hook that commits an uncommitted workspace; the edit hook that flags a feature document past the size limit | yes |
 | `seeds/` | Files setup and sync copy into a project | no: the project owns its copy |
-| `examples/` | A worked workspace, and the Owner board's sample data and screenshots | yes |
+| `examples/` | A worked workspace, the Owner board's sample data and screenshots, and an Orca screenshot | yes |
 | `site/` | The docs site, built with Astro Starlight and published to GitHub Pages | not used by projects |
