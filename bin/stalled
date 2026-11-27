@@ -5,8 +5,10 @@ source "$(dirname "$0")/_common.sh"
 lock_held && exit 1
 name=$1; hours=${2:-4}
 
-# New worker problems since the last run.
-new=$(orca orchestration worker-list --json 2>/dev/null | python3 -I -c '
+# New worker problems since the last run, in this project's team Run only: one Orca serves every project on the
+# machine. No Run yet means no peer has been dispatched here.
+run=$(python3 -I -c 'import json, sys; print(json.load(open(sys.argv[1])).get("run") or "")' "$STATE_DIR/peers.json" 2>/dev/null)
+[ -n "$run" ] && new=$(orca orchestration worker-list --run "$run" --json 2>/dev/null | python3 -I -c '
 import json, sys
 seen = set(open(sys.argv[1]).read().split()) if __import__("os").path.exists(sys.argv[1]) else set()
 rows = json.load(sys.stdin).get("result", {}).get("workers", [])
