@@ -72,6 +72,15 @@ Whether the team starts something new without being asked, and where it comes fr
 - **Waking up.** Under Orca with check-ins, `groom` notices new tickets and `advance` starts the next item (`workflow/orca.md` § Check-ins). Otherwise the team keeps going while the coordinator's conversation runs, and picks up what arrived when the Owner next speaks.
 - **Stopping:** the Owner says stop, or sets `owner`. Work in flight finishes; nothing new starts.
 
+## Working hours
+
+When the team works on its own, so the Owner can spread usage across the week: one line in the dev-team section, `Hours: <windows>`, in the machine's local time, e.g. `Hours: Mon–Fri 09:00–17:00`. Windows are separated by `;`, each `[<days>] <start>–<end>`: days like `Mon–Fri`, `Sat,Sun`, `weekdays` or `daily` (the default), and an end at or before its start runs past midnight. No line, or `any`, means any time. `${CLAUDE_PLUGIN_ROOT}/bin/hours` says whether the team is open now, and until when.
+
+- **Outside hours the team starts nothing on its own:** no new item from Next work, no next task, review or follow-up, no check-in run.
+- **The Owner's own asks still run.** Something the Owner asks for directly, at any hour, runs to its end, review included: it is spending they chose. Then the team stops again.
+- **At closing, work in flight wraps up:** each role finishes at its next clean point with a hand-over note (§ Assume mistakes), as at the size limit, and stops. The next opening picks up from `<ws>/status.md` and those notes.
+- Under Orca the plugin holds this (`workflow/orca.md` § Coordinator loop); in the conversation, the Orchestrator does.
+
 ## Assume mistakes
 
 Every agent — you included — makes mistakes, and long sessions drift from their task. Treat your own output and every input as possibly wrong.

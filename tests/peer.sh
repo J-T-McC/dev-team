@@ -292,6 +292,31 @@ ok "SIZE fires once per session"           '[[ $OUT == "nothing after 0.02 min" 
 DEV_TEAM_STALL_MIN=0 run watch 0.02
 ok "watch reports STALL"                   '[[ $OUT == "STALL | "* ]]'
 
+# working hours: nothing starts on its own outside them; the watch says when they end and start
+LATER=$(python3 -c 'import datetime; print((datetime.date.today() + datetime.timedelta(days=2)).strftime("%a"))')
+cp CLAUDE.md CLAUDE.open; printf -- '- **Hours: %s 09:00–17:00.**\n' "$LATER" >> CLAUDE.md; cp CLAUDE.md CLAUDE.closed
+state stage '"settled"'; state batches '[]'
+run dispatch dt-dev-1 senior-developer "T09"
+ok "outside working hours, dispatch refuses" '[ $RC = 2 ] && [[ $OUT == *"outside working hours ($LATER 09:00–17:00; open again $LATER 09:00)"*"--owner"* ]] && ! launched'
+run dispatch dt-dev-1 senior-developer "T09" --owner
+ok "--owner: the Owner's ask runs anyway"  '[ $RC = 0 ] && launched >/dev/null'
+state stage '"settled"'
+hook prompt '{"session_id":"s1"}'
+ok "hook: outside hours, a note"           '[[ $OUT == *"Outside working hours ($LATER 09:00"*"open again $LATER 09:00"* ]]'
+hook stop '{"session_id":"s1"}'
+ok "hook: the note never sends the turn back" '[[ $OUT != *"Outside working hours"* ]]'
+( sleep 1; printf -- '- **Hours: daily 00:00–24:00.**\n' >> CLAUDE.open; cp CLAUDE.open CLAUDE.md ) &
+run watch 0.001
+ok "closed: the time limit never wakes the watch, opening does" '[[ $OUT == "OPEN | working hours have started (daily 00:00–24:00)"* ]]'
+wait
+( sleep 1; cp CLAUDE.closed CLAUDE.md ) &
+run watch 0.2
+ok "closing wakes it, saying what to do"   '[[ $OUT == "CLOSED | working hours are over ($LATER 09:00–17:00; open again $LATER 09:00): no peer is working."* ]]'
+wait
+run wrap-up
+ok "wrap-up with nobody working"           '[ $RC = 0 ] && [[ $OUT == "no peer is working" ]]'
+grep -v '^- \*\*Hours:' CLAUDE.open > CLAUDE.md; rm CLAUDE.open CLAUDE.closed
+
 # --- a second project: one-task models, re-check after start, stale shells, orphaned and dead sessions -----------
 mkdir -p "$T/p2" && cd "$T/p2" && git init -q && rm -f "$T/orca/state.json"
 runtime "Team model: opus. Fallback model: sonnet. Advisor: none."

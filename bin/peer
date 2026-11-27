@@ -3,13 +3,15 @@
 
   peer dispatch [--keep] <home> <role> <spec text or file> [--model <model>] [--effort <effort>]
                 [--worktree <selector> [--name <name>] [--base-branch <ref>]] [--on <environment> [--repo <selector>]]
-                [--title <text>]
+                [--title <text>] [--owner]   --owner: the Owner asked for it, so it runs outside working hours too
+  peer wrap-up           working hours are over: tell every working peer to finish at its next clean point
   peer tell <home> <subject> <body> [--reply <message-id>] [--wait]   send, then nudge in the background (--wait: here)
   peer switch [<home>...]          give live peers the project's current model and effort now (default: all)
   peer sleep <home>... | --idle    close idle peers' sessions to free the machine; the next dispatch wakes them
   peer adopt <home> <role> <terminal> [--on <environment>]   make a terminal started outside peer a home
   peer watch [minutes]   wait, at no token cost, for a peer message, STUCK, LIMIT, SIZE, STALL, NUDGE, a PR change, or the
-                         time limit (default 15); then report status.md drift and Owner-board drift
+                         time limit (default 15), or working hours starting or ending (CLOSED, OPEN; while
+                         closed, the time limit never wakes you); then report status.md drift and Owner-board drift
   peer pending [--full]  the unacknowledged batch: peer reports not handled yet (exit 1 if any); --full: uncut
   peer ack <delivery>    acknowledge that batch, unless messages joined it after you read it (then shows them, exit 1)
   peer pr <home> <PR number or URL>... [--repo <owner/name>] | peer pr --drop <PR>...   who owns which PR
@@ -695,13 +697,61 @@ def opts(argv, flags, switches=()):
     return pos, val, on
 
 
+# --- working hours (workflow/handoffs.md § Working hours) -----------------------------------------------------------
+
+def _hours():
+    import importlib.util
+    from importlib.machinery import SourceFileLoader
+    loader = SourceFileLoader("dt_hours", str(PLUGIN / "bin" / "hours"))
+    mod = importlib.util.module_from_spec(importlib.util.spec_from_loader("dt_hours", loader))
+    loader.exec_module(mod)
+    return mod
+
+
+HOURS = _hours()
+
+
+def hours_now():
+    """(open, the Hours value, when it flips, as text); a line that doesn't parse counts as open, as in bin/hours."""
+    from datetime import datetime
+    try:
+        is_open, value, flip = HOURS.state(str(ROOT))
+    except ValueError:
+        return True, "", ""
+    return is_open, value, HOURS.when(flip, datetime.now()) if flip else ""
+
+
+WRAP_SUBJECT = "Working hours are over"
+WRAP_BODY = ("Working hours are over. Finish at your next clean point: commit and push what is done, write a hand-over "
+             "note (workflow/handoffs.md § Assume mistakes), then send worker_done. Start nothing new.")
+
+
+def cmd_wrap_up(argv):
+    reg = load()
+    homes = [home for home, h in sorted(reg["homes"].items())
+             if h.get("dispatch") and not h.get("asleep") and working(h)]
+    if not homes:
+        return print("no peer is working")
+    for home in homes:
+        try:
+            cmd_tell([home, WRAP_SUBJECT, WRAP_BODY])
+        except SystemExit as e:
+            if e.code not in (None, 0):
+                print(f"{home}: not told ({e.code if isinstance(e.code, str) else 'see above'})")
+    print("As each one reports, `peer sleep --idle`; start nothing new until working hours start again.")
+
+
 # --- dispatch -------------------------------------------------------------------------------------------------------
 
 def cmd_dispatch(argv):
     pos, val, on_ = opts(argv, ("--worktree", "--name", "--base-branch", "--title", "--on", "--repo", "--model",
-                                "--effort"), ("--keep", "--restart"))
-    if len(pos) != 3 or on_ == {"--keep", "--restart"}:
+                                "--effort"), ("--keep", "--restart", "--owner"))
+    if len(pos) != 3 or {"--keep", "--restart"} <= on_:
         die(__doc__)
+    is_open, value, flip = hours_now()
+    if not is_open and "--owner" not in on_:
+        die(f"outside working hours ({value}; open again {flip}): the team starts nothing on its own. If the Owner "
+            "asked for this task, add --owner.")
     home, role, spec = pos
     if os.path.isfile(spec):
         spec = Path(spec).read_text()
@@ -1437,8 +1487,12 @@ def watch(minutes):
     flagged_file = STATE / "size-flagged.txt"
     last, since, active = {}, {}, {}
     next_active = next_size = next_pr = 0
-    while time.time() < end:
+    was_open = hours_now()[0]
+    while time.time() < end or not was_open:  # while closed, the time limit never wakes the coordinator
         hold_lock()
+        is_open, value, flip = hours_now()
+        if is_open != was_open:
+            return print(hours_event(is_open, value, flip, active))
         delivery, msgs = pending_batch(run)
         if delivery:
             return show_batch(reg, run, delivery, msgs)
@@ -1463,13 +1517,23 @@ def watch(minutes):
         found = watch_screens(active, last, since, now)
         if found:
             return print(found)
-        if now >= next_pr:
+        if now >= next_pr and is_open:  # PR alerts wait for working hours
             next_pr = now + PR_POLL_MIN * 60
             events = pr_events(board)
             if events:
                 return print("\n".join(events))
         time.sleep(POLL_SEC)
     print(f"nothing after {minutes:g} min")
+
+
+def hours_event(is_open, value, flip, active):
+    if is_open:
+        span = f" ({value}{f', until {flip}' if flip else ''})" if value else ""
+        return f"OPEN | working hours have started{span}: pick up from <ws>/status.md and each hand-over note"
+    who = (f"run `peer wrap-up`: it tells {', '.join(sorted(active))} to finish at the next clean point with a "
+           "hand-over note" if active else "no peer is working")
+    return (f"CLOSED | working hours are over ({value}; open again {flip}): {who}. Start nothing new; `peer sleep "
+            "--idle` as each one finishes, then run `peer watch` again: it waits for opening at no cost.")
 
 
 def cmd_limits(argv):
@@ -1514,6 +1578,10 @@ def cmd_hook(argv):
     lines = [g for g in [board_guard()] if g]
     if peers and coordinator and reg.get("run"):
         lines += peer_lines(reg)
+        is_open, value, flip = hours_now()
+        if not is_open and mode == "prompt":  # a note, never a reason to send the turn back
+            lines.append(f"Outside working hours ({value}; open again {flip}): the team starts nothing on its own. "
+                         "The Owner's own asks still run (`peer dispatch --owner`).")
     if not lines:
         return
     text = "\n".join(lines)
@@ -1638,7 +1706,7 @@ def cmd_team(argv):
 CMDS = {"dispatch": cmd_dispatch, "tell": cmd_tell, "nudge": cmd_nudge, "switch": cmd_switch, "sleep": cmd_sleep, "release": cmd_sleep,
         "adopt": cmd_adopt, "watch": cmd_watch, "pending": cmd_pending, "ack": cmd_ack, "pr": cmd_pr, "prs": cmd_prs,
         "sizes": cmd_sizes, "limits": cmd_limits, "list": cmd_list, "team": cmd_team, "board-stamp": cmd_board_stamp,
-        "hook": cmd_hook}
+        "hook": cmd_hook, "wrap-up": cmd_wrap_up}
 
 # What a peer may run itself: reading the team's state, and the hooks every session runs. The rest act for the coordinator.
 PEER_OK = {"sizes", "limits", "list", "prs", "hook", "nudge"}

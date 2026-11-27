@@ -14,6 +14,12 @@ lock_held() {
   [ $(( $(date +%s) - $(mtime "$LOCK") )) -lt $(( ${DEV_TEAM_LOCK_TTL_MIN:-30} * 60 )) ]
 }
 
+# Outside the project's working hours (bin/hours): check-ins skip, so the team starts nothing on its own.
+off_hours() {
+  command -v python3 >/dev/null 2>&1 || return 1
+  ! "$(dirname "${BASH_SOURCE[0]}")/hours" >/dev/null 2>&1
+}
+
 # Hash of the documents whose change means there is work to route.
 docs_fingerprint() {
   cat "$WS/status.md" "$WS/backlog/index.md" "$FEATURES"/*/questions/*.md "$FEATURES"/*/tasks/index.md "$FEATURES"/*/review.md 2>/dev/null \

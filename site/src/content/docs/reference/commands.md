@@ -26,13 +26,14 @@ The coordinator's helper under the [Orca runtime](/dev-team/orca/). It keeps the
 
 | Command | What it does |
 |---|---|
-| `peer dispatch [--keep] <home> <role> <spec>` | starts a task in a fresh session (or the same one, with `--keep`). Options: `--model` and `--effort` for this task only; `--worktree <selector>` with `--name` and `--base-branch` for a new worktree; `--on <environment>` (and `--repo`) for a remote server; `--title` |
+| `peer dispatch [--keep] <home> <role> <spec>` | starts a task in a fresh session (or the same one, with `--keep`). Options: `--model` and `--effort` for this task only; `--worktree <selector>` with `--name` and `--base-branch` for a new worktree; `--on <environment>` (and `--repo`) for a remote server; `--title`; `--owner` for a task you asked for, which runs outside working hours too |
 | `peer tell <home> <subject> <body> [--reply <id>] [--wait]` | sends a message and nudges the peer in the background to read it; `--wait` nudges in the foreground |
 | `peer nudge <home> <subject>` | the background nudge `peer tell` starts; not run by hand |
 | `peer switch [<home>...]` | gives live peers the Runtime line's current model and effort now |
 | `peer sleep <home>... \| --idle` | closes idle peers' sessions and keeps their worktrees (`peer release` is the old name) |
 | `peer adopt <home> <role> <terminal> [--on <environment>]` | makes a home of a terminal started outside `peer` |
-| `peer watch [minutes]` | waits, at no token cost, for a peer message, trouble, or a nudge that didn't land (default 15 minutes) |
+| `peer watch [minutes]` | waits, at no token cost, for a peer message, trouble, a nudge that didn't land, or working hours ending or starting (default 15 minutes; outside working hours it waits for opening) |
+| `peer wrap-up` | at closing time, tells every working peer to finish at its next clean point with a hand-over note |
 | `peer pending [--full]` | the peer reports not handled yet (exit 1 if any); `--full` shows long ones uncut |
 | `peer ack <delivery>` | marks a batch of reports handled, unless messages joined it after it was read: then it shows them instead |
 | `peer pr <home> <PR>... \| peer pr --drop <PR>...` | records or drops which home owns a PR |
@@ -59,6 +60,7 @@ Makes heavy jobs take turns on the machine.
 |---|---|
 | `board-drift <dir> [owner/repo] [--config <file>]` | lists Owner-board rows whose PR has moved on (exit 1 if any) |
 | `board-drift --status <ws>/status.md [--config <file>] [--features <dir>] [--no-prs]` | lists `status.md` rows whose PRs (`#123`, `repo#123`, `repo #123`) have all merged or closed, whose task count disagrees with the feature's task index, or whose cells have grown into a log; `--no-prs` skips the PR lookups. Repo names go through the board config's `repos` map; a row naming a repo it can't place is left alone |
+| `hours [--spec]` | whether the team is inside its working hours now, and until when (exit 1 when closed); `--spec` prints the Hours line's value |
 | `setup-detect [--other-projects <dir>] [project-dir]` | what setup can tell before asking anything, as JSON: the project's state, remote and your access to it, its commit style and ticket prefix, what its code runs and what is configured but never run, the tools on the machine, the Claude plan and whether it's running inside Orca, your open PRs, and a suggestion with a reason for each setup question. `--other-projects` also summarizes what the git repos in that folder are built with, for stack suggestions; setup asks before using it |
 | `seed-drift [project-dir]` | what the plugin's seeds have that the project's copies lack (used by `/dev-team:sync`) |
 | `migrate-layout [--apply]` | moves a type-first workspace into feature folders; a dry run without `--apply` |

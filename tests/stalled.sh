@@ -31,4 +31,10 @@ ok "a worker in this project's Run that needs action fires" '[ $RC = 0 ] && grep
 run
 ok "the same worker fires once"                        '[ $RC = 1 ]'
 ok "other projects' workers never counted"             '! grep -q run_other .git/dev-team/stalled.seen'
+rm .git/dev-team/stalled.seen
+LATER=$(python3 -c 'import datetime; print((datetime.date.today() + datetime.timedelta(days=2)).strftime("%a"))')
+printf -- '- **Hours: %s 00:00–00:01.** When the team works on its own.\n' "$LATER" > CLAUDE.md
+run
+ok "outside working hours, a check-in never starts"    '[ $RC = 1 ] && ! grep -q worker-list "$CALLS"'
+rm CLAUDE.md
 exit $fail

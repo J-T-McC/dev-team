@@ -4,7 +4,7 @@
 #   github                                 GitHub issues in this repo assigned to you, via gh
 #   github-project <owner> <n> [query]     items on a GitHub Project (default query: assignee:@me)
 source "$(dirname "$0")/_common.sh"
-lock_held && exit 1
+{ lock_held || off_hours; } && exit 1
 name=$1; src=${2:-linear}
 team=""
 case "$src" in

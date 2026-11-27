@@ -21,7 +21,7 @@ It copies the seed config to `standards/checkins.md`, lets you keep, change or t
 
 ## Cost and limits
 
-A trigger check runs first and exits without starting a session when nothing has changed, so an idle project costs nothing. Any shell command can be a trigger. Each check-in reuses its session, though, and each run sends that whole session again, uncached when runs are further apart than the prompt cache lasts. Keep check-in sessions small.
+A trigger check runs first and exits without starting a session when nothing has changed, or outside the project's [working hours](/dev-team/autonomy/#working-hours), so an idle project costs nothing. Any shell command can be a trigger. Each check-in reuses its session, though, and each run sends that whole session again, uncached when runs are further apart than the prompt cache lasts. Keep check-in sessions small.
 
 Check-ins and your own session share a lock, so only one coordinator acts at a time. While your coordinator's `peer watch` runs it holds the lock, so check-ins wait until that session ends. A forgotten lock expires after 30 minutes. A check-in never goes beyond your [autonomy level](/dev-team/autonomy/): below `autonomous` it acts only where a gate is delegated, and flags the rest for you. It reports a session that isn't responding but never restarts it.
 
