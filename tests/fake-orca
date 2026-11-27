@@ -63,6 +63,9 @@ if cmd == ["orchestration", "worker-start"]:
 if cmd == ["orchestration", "worker-show"]:
     d = s["dispatches"].get(arg("--dispatch"), {})
     failed = s.get("recheck_fail")
+    if s.get("ready_fail"):
+        out({"worker": {"stage": "agent_readiness", "state": "running", "agentTerminalHandle": d.get("terminal")},
+             "projection": {"stage": {"detail": "agent_readiness"}, "worker": "failed"}})
     out({"worker": {"stage": "settled" if failed else s["stage"], "state": "failed" if failed else "running",
                     "agentTerminalHandle": d.get("terminal"), "worktreeId": "repo1::" + d.get("path", "")},
          "dispatch": {"status": "failed" if failed else "dispatched",
@@ -81,6 +84,10 @@ if cmd == ["terminal", "create"]:
     out({"terminal": {"handle": h}})
 t = s["terminals"].get(term) or {}
 if cmd == ["terminal", "show"]:
+    if t.get("lag"):  # a session just past its last turn: still open for a few more looks after close
+        t["lag"] -= 1
+        t["open"] = t["lag"] > 0
+        out({"terminal": {"handle": term, "agentIdentity": "claude", "worktreePath": t.get("path")}})
     if not t.get("open") and not s.get("stay_open"):
         out({"error": "terminal_not_found"}, ok=False)
     out({"terminal": {"handle": term, "agentIdentity": "claude", "worktreePath": t.get("path"),
@@ -88,6 +95,8 @@ if cmd == ["terminal", "show"]:
 if cmd == ["terminal", "close"]:
     if term in s["terminals"] and s.get("orphan_on_close"):
         s.setdefault("orphaned", []).append(term)  # Orca keeps showing it, as orphaned
+    elif term in s["terminals"] and s.get("close_lag"):
+        s["terminals"][term]["lag"] = s["close_lag"]
     elif term in s["terminals"] and not s.get("stay_open"):
         s["terminals"][term]["open"] = False
     out()

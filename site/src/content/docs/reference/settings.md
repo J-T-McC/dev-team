@@ -72,3 +72,4 @@ Set these in your own environment. Most are timers you'll rarely need to touch.
 | `DEV_TEAM_PR_POLL` | `5` | minutes between the watcher's PR checks |
 | `DEV_TEAM_RECHECK_SEC` | `5` | seconds before `peer dispatch` reads a new dispatch back |
 | `DEV_TEAM_STEP_SEC` | `2` | seconds `peer` waits before reading a screen back or looking for a closed session's leftovers |
+| `DEV_TEAM_CLOSE_SEC` | `10` | seconds `peer` waits for a session's terminal to close before giving up |

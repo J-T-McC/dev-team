@@ -31,6 +31,7 @@ STALL_MIN = float(os.environ.get("DEV_TEAM_STALL_MIN", "20"))
 STUCK_MIN = float(os.environ.get("DEV_TEAM_STUCK_MIN", "2"))
 POLL_SEC = float(os.environ.get("DEV_TEAM_WATCH_POLL", "30"))
 STEP_SEC = float(os.environ.get("DEV_TEAM_STEP_SEC", "2"))
+CLOSE_SEC = float(os.environ.get("DEV_TEAM_CLOSE_SEC", "10"))  # a session just past its last turn takes a moment to exit
 RECHECK_SEC = float(os.environ.get("DEV_TEAM_RECHECK_SEC", "5"))
 PR_POLL_MIN = float(os.environ.get("DEV_TEAM_PR_POLL", "5"))
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
@@ -253,9 +254,19 @@ def worker(dispatch):
     return (orca("orchestration", "worker-show", "--dispatch", dispatch)[0].get("result") or {}) if dispatch else {}
 
 
+ENDED = ("settled", "failed", "abandoned", "cancelled", "canceled")
+
+
 def settled(w):
-    return (w.get("worker") or {}).get("stage") == "settled" or \
-        ((w.get("projection") or {}).get("stage") or {}).get("detail") == "settled"
+    """The dispatch is over: settled, or failed or abandoned at any stage (a start that fails at agent readiness never
+    reaches settled, and would otherwise count as working forever)."""
+    p = w.get("projection") or {}
+    seen = [(w.get("worker") or {}).get("stage"), (w.get("worker") or {}).get("state"),
+            (w.get("dispatch") or {}).get("status"), (p.get("stage") or {}).get("detail")]
+    for k in ("worker", "dispatch"):
+        v = p.get(k)
+        seen.append((v.get("state") or v.get("status")) if isinstance(v, dict) else v)
+    return any(isinstance(v, str) and v.lower() in ENDED for v in seen)
 
 
 def working(h):
@@ -463,13 +474,15 @@ def cleanup(home, h, term):
         print(f"{home}: cleared {path}")
 
 
-DOC_ROLES = ("product-manager", "designer", "principal-engineer")
+# Roles whose own worktree sits on the default branch between tasks: document roles never branch, and a reviewer
+# that tested a PR head detached would otherwise start its next session on that commit's older CLAUDE.md.
+BASE_ROLES = ("product-manager", "designer", "principal-engineer", "reviewer")
 
 
 def refresh_worktree(home, path):
-    """Before a document role's task, its own worktree (named after the home, as Team setup makes them) moves to the
-    default branch's latest commit, so the new session loads the current CLAUDE.md and reads current code. Document
-    roles never branch (workflow/orca-recommended.md § Roles and git). Left alone with uncommitted changes, or with
+    """Before a BASE_ROLES task, the home's own worktree (named after the home, as Team setup makes them) moves to the
+    default branch's latest commit, so the new session loads the current CLAUDE.md and reads current code
+    (workflow/orca-recommended.md § Roles and git). Left alone with uncommitted changes, or with
     commits that are on no remote branch and not in the default branch."""
     if Path(path).name != home or not Path(path).is_dir():
         return None
@@ -493,6 +506,41 @@ def refresh_worktree(home, path):
     return f"{home}'s worktree moved to the latest {base} ({tip[:7]})"
 
 
+def plugin_records():
+    return Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude") / "plugins" / "installed_plugins.json"
+
+
+def sync_plugin(home, path):
+    """Claude Code keeps a plugin install record per project path, so each home's worktree has its own, and a plugin
+    update in the main checkout never reaches it: the home's peers keep loading the old role rules. Point the home's
+    record at the main checkout's version before its session starts. Only this plugin's record for this one path."""
+    f = plugin_records()
+    try:
+        d = json.loads(f.read_text())
+        name = json.loads((PLUGIN / ".claude-plugin" / "plugin.json").read_text())["name"]
+    except (OSError, ValueError, KeyError):
+        return None
+    for key, entries in (d.get("plugins") or {}).items():
+        if key.split("@")[0] != name or not isinstance(entries, list):
+            continue
+        at = lambda e, p: os.path.realpath(e.get("projectPath") or "/nonexistent") == os.path.realpath(p)
+        main = next((e for e in entries if at(e, ROOT)), None)
+        mine = next((e for e in entries if at(e, path)), None)
+        if not (main and mine) or mine.get("installPath") == main.get("installPath") or \
+                not Path(main.get("installPath") or "").is_dir():
+            return None
+        old = mine.get("version") or "?"
+        for k in ("installPath", "version", "gitCommitSha"):
+            if k in main:
+                mine[k] = main[k]
+        mine["lastUpdated"] = time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime())
+        tmp = f.with_name(f.name + ".dev-team.tmp")
+        tmp.write_text(json.dumps(d, indent=2) + "\n")
+        os.replace(tmp, f)
+        return f"{home}'s plugin moved from {old} to the main checkout's {main.get('version') or '?'}"
+    return None
+
+
 def close_session(home, h):
     """End the peer's session, close its terminal, and clean up after it; the worktree stays.
     None when done, else why not. The home's terminal is cleared once it is gone."""
@@ -510,8 +558,11 @@ def close_session(home, h):
         orca("orchestration", "worker-release", "--dispatch", h["dispatch"])
     if term_info(h):
         orca("terminal", "close", "--terminal", term, *on(h))
-    if term_info(h):
-        return f"{home}'s terminal did not close: look at it"
+    deadline = time.time() + CLOSE_SEC
+    while term_info(h):
+        if time.time() >= deadline:
+            return f"{home}'s terminal did not close in {CLOSE_SEC:g}s: look at it"
+        time.sleep(0.5)
     h["terminal"] = None
     cleanup(home, h, term)
     return None
@@ -667,8 +718,10 @@ def cmd_dispatch(argv):
         if why:
             save(reg)
             die(why)
-        if role in DOC_ROLES and not env and h and h.get("worktree") and wt in (None, "path:" + h["worktree"]):
-            notes.append(refresh_worktree(home, h["worktree"]))
+        if not env and h and h.get("worktree") and wt in (None, "path:" + h["worktree"]):
+            if role in BASE_ROLES:
+                notes.append(refresh_worktree(home, h["worktree"]))
+            notes.append(sync_plugin(home, h["worktree"]))
         for n in filter(None, notes):
             print(n)
         if env:
@@ -816,7 +869,7 @@ def cmd_adopt(argv):
 def nudge(h, subject):
     """Type a one-line nudge into the peer's terminal: an idle peer never reads its mailbox on its own."""
     term = h["terminal"]
-    text = f"From coordinator: {subject} — check your orchestration messages."
+    text = f"From coordinator: {subject} — check your orchestration messages, and --ack each batch until check is empty."
     send_ = ["orca", "terminal", "send", "--terminal", term, "--text", text, "--enter", *on(h)]
     out = subprocess.run(send_, capture_output=True, text=True, timeout=120)
     req = re.search(r"--retry-request\s+([0-9a-f-]+)", out.stdout + out.stderr)

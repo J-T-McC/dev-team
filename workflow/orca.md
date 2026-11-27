@@ -61,13 +61,14 @@ Every peer follows these on top of Orca's worker contract; the role line points 
 
 - **A request for a decision or a go is an `ask`** — it blocks until answered. Never put one in a `status` message: nobody may act on it, and the Owner finds out from you that you were waiting.
 - **One task per dispatch.** After `worker_done`, idle; the next task arrives as a new dispatch.
+- **Read every message.** `orca orchestration check` returns the oldest unacknowledged batch, the same one each time, until you acknowledge it: after handling a batch, `check --ack <deliveryId>`, then `check` again until it is empty. A nudge that names a message `check` doesn't show: `orca orchestration inbox --limit 10 --full`, and look for your dispatch.
 - **Every report ends with one line:** `Friction: none`, or what you logged (`workflow/friction.md`).
 - **Heavy jobs take turns** (§ Machine resources), and you close what you start as soon as the step that needed it is done (`workflow/handoffs.md` § Assume mistakes).
 - **Told you are over the size limit:** finish at the next clean point with a hand-over note (`workflow/handoffs.md` § Assume mistakes), then send `worker_done`.
 
 ## Peer lifetime — a fresh session per task
 
-A peer starts cheaply next to a subagent (~35k measured), and old context and old inbox messages mislead the next task. So every new task starts clean; specs are self-contained and the work lives in the workspace, so nothing is lost.
+A peer starts cheaply next to a subagent (~35k measured), and old context and old inbox messages mislead the next task. So every new task starts clean; specs are self-contained and the work lives in the workspace, so nothing is lost. Claude Code keeps a plugin install per project path, so each home's worktree has its own, which a plugin update in the main checkout doesn't reach: `peer dispatch` points the home's record at the main checkout's version before the session starts.
 
 - **Fresh (default)** — `peer dispatch` closes the peer's session and launches a new one in a new terminal, with the settings pinned (§ Launch settings), so new MCP servers, settings, and plugin updates load too. It refuses while the peer is busy: its dispatch still running, its working line on screen, or a background shell, monitor, or other job that closing would kill. The status bar's `← 1 agent` shows at an idle prompt too, so it does not count, and a session that has already exited is not busy, whatever its last screen says.
 - **Clean up** — closing a session, on a fresh dispatch or `peer sleep`, stops the MCP server processes it left running and names anything else it left (a dev server, say) for you to close. Only processes started from the peer's worktree count: a machine-wide service the session happened to start, such as Docker Desktop, runs from its own folder and is left alone. Add `Session caches: <path>[, <path>]` to the Runtime line — paths inside the peer's worktree, globs allowed — to clear per-session caches too.
