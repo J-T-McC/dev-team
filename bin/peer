@@ -4,11 +4,11 @@
   peer dispatch [--keep] <home> <role> <spec text or file> [--model <model>] [--effort <effort>]
                 [--worktree <selector> [--name <name>] [--base-branch <ref>]] [--on <environment> [--repo <selector>]]
                 [--title <text>]
-  peer tell <home> <subject> <body> [--reply <message-id>]
+  peer tell <home> <subject> <body> [--reply <message-id>] [--wait]   send, then nudge in the background (--wait: here)
   peer switch [<home>...]          give live peers the project's current model and effort now (default: all)
   peer sleep <home>... | --idle    close idle peers' sessions to free the machine; the next dispatch wakes them
   peer adopt <home> <role> <terminal> [--on <environment>]   make a terminal started outside peer a home
-  peer watch [minutes]   wait, at no token cost, for a peer message, STUCK, LIMIT, SIZE, STALL, a PR change, or the
+  peer watch [minutes]   wait, at no token cost, for a peer message, STUCK, LIMIT, SIZE, STALL, NUDGE, a PR change, or the
                          time limit (default 15); then report Owner-board drift
   peer pending           the unacknowledged batch: peer reports not handled yet (exit 1 if any)
   peer pr <home> <PR number or URL>... [--repo <owner/name>] | peer pr --drop <PR>...   who owns which PR
@@ -23,7 +23,7 @@
 
 Homes, the team's Run, and its PRs are machine-local state: <git common dir>/dev-team/peers.json.
 """
-import hashlib, json, os, random, re, shlex, shutil, signal, subprocess, sys, time
+import copy, fcntl, hashlib, json, os, random, re, shlex, shutil, signal, subprocess, sys, time
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -115,13 +115,42 @@ def find(o, key):
     return None
 
 
+SEEN = {}  # id(registry) -> the registry as this process last read or wrote it
+
+
 def load():
-    return json.loads(REG.read_text()) if REG.exists() else {"run": None, "homes": {}}
+    reg = json.loads(REG.read_text()) if REG.exists() else {"run": None, "homes": {}}
+    SEEN[id(reg)] = copy.deepcopy(reg)
+    return reg
 
 
 def save(reg):
+    """Write back only what this process changed, under a lock. The coordinator runs peer commands side by side
+    (dispatches in the background), and a whole-file write would undo another command's change to another home."""
     STATE.mkdir(parents=True, exist_ok=True)
-    REG.write_text(json.dumps(reg, indent=2) + "\n")
+    was = SEEN.get(id(reg)) or {}
+    with open(STATE / "peers.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        cur = json.loads(REG.read_text()) if REG.exists() else {"run": None, "homes": {}}
+        for k in set(reg) | set(was):
+            if k not in reg:
+                cur.pop(k, None)
+                continue
+            new, old = reg[k], was.get(k)
+            if new == old:
+                continue
+            if isinstance(new, dict) and isinstance(old, dict) and isinstance(cur.get(k), dict):
+                for n in set(new) | set(old):  # one level down: one home, one PR record
+                    if n not in new:
+                        cur[k].pop(n, None)
+                    elif new[n] != old.get(n):
+                        cur[k][n] = new[n]
+            else:
+                cur[k] = new
+        tmp = REG.with_name(REG.name + ".tmp")
+        tmp.write_text(json.dumps(cur, indent=2) + "\n")
+        os.replace(tmp, REG)
+    SEEN[id(reg)] = copy.deepcopy(reg)
 
 
 def project_text():
@@ -888,8 +917,37 @@ def nudge(h, subject):
     die(f"NUDGE NOT CONFIRMED for {term}: look at the peer's terminal")
 
 
+NUDGES = STATE / "nudges-unconfirmed.txt"
+
+
+def cmd_nudge(argv):
+    """peer tell's background nudge. One that is never confirmed is left for peer watch to report as NUDGE."""
+    home, subject = argv[0], argv[1]
+    h = load()["homes"].get(home) or {}
+    if not h.get("terminal"):
+        return
+    try:
+        nudge(h, subject)
+    except SystemExit as e:
+        if e.code:
+            with NUDGES.open("a") as f:
+                f.write(f"{home}\t{subject}\n")
+
+
+def unconfirmed_nudges():
+    """Nudges the background nudger gave up on, once each."""
+    try:
+        taken = NUDGES.with_name(NUDGES.name + f".{os.getpid()}")
+        os.replace(NUDGES, taken)
+    except OSError:
+        return []
+    lines = [line.split("\t", 1) for line in taken.read_text().splitlines() if "\t" in line]
+    taken.unlink(missing_ok=True)
+    return [f"NUDGE | {home} | not confirmed for '{subject}': look at its terminal" for home, subject in lines]
+
+
 def cmd_tell(argv):
-    pos, val, _ = opts(argv, ("--reply",))
+    pos, val, on_ = opts(argv, ("--reply",), ("--wait",))
     if len(pos) != 3:
         die(__doc__)
     home, subject, body = pos
@@ -908,7 +966,14 @@ def cmd_tell(argv):
         die("message not sent:\n" + raw[:800], 1)
     if not h.get("terminal"):
         return print(f"sent; {home} on {h.get('env')} has no terminal to nudge, so it reads the message at its next turn")
-    nudge(h, subject)
+    if "--wait" in on_:
+        return nudge(h, subject)
+    # The nudge can take a minute against a busy peer: it runs on its own, so the coordinator's turn stays free.
+    STATE.mkdir(parents=True, exist_ok=True)
+    subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "nudge", home, subject], cwd=str(ROOT),
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                     start_new_session=True)
+    print(f"sent; nudging {home} in the background (peer watch reports a nudge that doesn't land)")
 
 
 # --- pending and watch ----------------------------------------------------------------------------------------------
@@ -1254,6 +1319,9 @@ def watch(minutes):
         delivery, msgs = pending_batch(run)
         if delivery:
             return show_batch(reg, run, delivery, msgs)
+        missed = unconfirmed_nudges()
+        if missed:
+            return print("\n".join(missed))
         now = time.time()
         if now >= next_active:
             reg = load()
@@ -1443,7 +1511,7 @@ def cmd_team(argv):
     save(reg)
 
 
-CMDS = {"dispatch": cmd_dispatch, "tell": cmd_tell, "switch": cmd_switch, "sleep": cmd_sleep, "release": cmd_sleep,
+CMDS = {"dispatch": cmd_dispatch, "tell": cmd_tell, "nudge": cmd_nudge, "switch": cmd_switch, "sleep": cmd_sleep, "release": cmd_sleep,
         "adopt": cmd_adopt, "watch": cmd_watch, "pending": cmd_pending, "pr": cmd_pr, "prs": cmd_prs,
         "sizes": cmd_sizes, "limits": cmd_limits, "list": cmd_list, "team": cmd_team, "board-stamp": cmd_board_stamp,
         "hook": cmd_hook}
