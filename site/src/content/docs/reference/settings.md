@@ -32,8 +32,10 @@ The settings come after the line's first sentence, each ending with a full stop:
 | `Team model:` | an alias or exact id, optionally with an effort: `opus`, `opus/high`, `claude-opus-5-5` | none, and peers won't launch without it |
 | `Fallback model:` | a model, or `none` | none |
 | `Advisor:` | `none`, a model, or `<model> for <roles>` | none; the roles default to the product-manager and principal-engineer |
-| `Peer size limit:` | a token count such as `400k` | `400k` (about `120k` suits a 200k-window model) |
+| `Peer size limit:` | a token count such as `400k`; keep it under where Claude Code compacts on its own (about 92% of `autoCompactWindow`), or it never fires | `400k` (about `120k` suits a 200k-window model) |
 | `Worktree cards:` | `on`, `off` (formerly `Board:`, still read) | `off` |
+| `Peer tools:` | `all` keeps the tools peers launch without: questions to you, plan mode, artifacts, workflows, scheduled wake-ups | left out |
+| `Peer MCP:` | `all`, `none`, or the servers to keep: `serena, playwright` | `all` |
 | `Session caches:` | paths inside the peer's worktree, globs allowed: `` `.cache/mcp-*` `` | none |
 
 `/dev-team:sync` reports a setting that was renamed or added since the line was written.

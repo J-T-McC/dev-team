@@ -9,6 +9,7 @@ fail=0
 ok() { if eval "$2"; then echo "ok   $1"; else echo "FAIL $1"; fail=1; fi; }
 row() { printf '%s\n' "$OUT" | tr -s ' ' | grep -F -- "$1"; }  # the lines that name $1, spaces collapsed
 reader() { printf '%s\n' "$OUT" | sed -n '/^By reader/,/^$/p' | tr -s ' ' | grep -E -- " $1\$"; }
+server() { printf '%s\n' "$OUT" | sed -n '/^MCP servers/,/^$/p' | tr -s ' ' | grep -E -- " $1\$"; }
 
 g() { git -c user.name=t -c user.email=t@example.com "$@"; }
 mkdir -p "$T/p/docs/features/a" "$T/p/docs/many" "$T/p/docs/standards" "$T/p/docs/old"
@@ -20,7 +21,7 @@ import json, os, re, sys, time
 from datetime import datetime, timedelta, timezone
 P, W, C = sys.argv[1:]
 open(f"{P}/CLAUDE.md", "w").write("# App\n\nSee @docs/extra.md for more.\n\n# Development Organization\n\n"
-                                  "- **Workspace:** `docs` · committed\n\n## Rules\n- one\n")
+                                  "- **Workspace:** `docs` · committed\n- **Runtime: Orca.** Peer size limit: 400k.\n\n## Rules\n- one\n")
 open(f"{P}/docs/extra.md", "w").write("extra\n" * 100)
 open(f"{P}/docs/status.md", "w").write("# Status\n")
 open(f"{P}/docs/standards/documentation.md", "w").write("# Docs\n\n## Size and reading\n- Stay under about 20 KB.\n")
@@ -64,6 +65,8 @@ main = [
     use("b4", "Bash", command="npm test 2>&1 | tail -20"), res("b4", 4000),
     use("b5", "Bash", command="sed -i '' 's/a/b/' docs/features/a/brief.md"), res("b5", 40),
     use("b6", "Bash", command="python3 - <<'PY'\nprint(open('docs/features/a/brief.md').read())\ncat x.md\nPY"), res("b6", 40),
+    use("v1", "Bash", command='S=docs/status.md; grep -n foo "$S"'), res("v1", 80),
+    use("v2", "Bash", command='export D="$PWD/docs" && sed -n 1,5p "${D}/status.md" && cat "$UNSET/x.md"'), res("v2", 80),
     use("n1", "Read", file_path=f"{P}/docs/features/a/notes.md"), res("n1", 1200, (1, 1, 1)),
     use("o1", "Read", file_path=f"{P}/docs/features/a/plan.md"), res("o1", 9999, (1, 100, 100), days=30),
 ]
@@ -83,6 +86,23 @@ write(f"{d}/w1.jsonl", [
     use("t1", "Bash", command="orca orchestration check"),
     res("t1", 120, text="=== TASK === You are the dev-team senior-developer peer [dev-team home dt-dev-1]. Go. "),
     use("w2", "Read", file_path=f"{W}/docs/features/a/plan.md"), res("w2", 4000, (1, 100, 100)),
+    # what each call carries, and each call's usage
+    {"type": "api-request-shape", "shape": {"tools": [{"name": "Bash", "d": "b" * 380}, {"name": "Artifact", "d": "a" * 3980},
+                                                      {"name": "mcp__db__query", "d": "q" * 360}]}},
+    {"type": "attachment", "cwd": W, "timestamp": ts(), "attachment": {"type": "deferred_tools_delta",
+     "addedNames": ["mcp__rea__a", "mcp__rea__b", "Monitor"], "addedLines": ["mcp__rea__a", "mcp__rea__b", "Monitor"]}},
+    {"type": "attachment", "cwd": W, "timestamp": ts(), "attachment": {"type": "mcp_instructions_delta",
+     "addedNames": ["rea", "claude.ai Docs"], "addedBlocks": ["i" * 400, "d" * 800]}},
+    *[{"type": "assistant", "cwd": W, "timestamp": ts(), "message": {"id": "m1", "content": [], "usage": {
+        "input_tokens": 10, "cache_creation_input_tokens": 1000, "cache_read_input_tokens": 0, "output_tokens": 100,
+        "cache_creation": {"ephemeral_1h_input_tokens": 1000}}}}] * 2,  # streamed: one call, two lines
+    {"type": "assistant", "cwd": W, "timestamp": ts(), "message": {"id": "m2", "usage": {
+        "input_tokens": 10, "cache_creation_input_tokens": 990, "cache_read_input_tokens": 3000, "output_tokens": 50},
+        "content": [{"type": "tool_use", "id": "q1", "name": "mcp__db__query", "input": {}}]}},
+    {"type": "system", "subtype": "compact_boundary", "cwd": W, "timestamp": ts(),
+     "compactMetadata": {"trigger": "auto", "preTokens": 368000}},
+    {"type": "assistant", "cwd": W, "timestamp": ts(days=30), "message": {"id": "m0", "content": [], "usage": {
+        "input_tokens": 99999, "output_tokens": 1}}},
 ])
 PY
 OUT=$(CLAUDE_CONFIG_DIR="$T/claude" bin/token-audit "$T/p" --days 7 2>&1); RC=$?
@@ -96,14 +116,21 @@ ok "a big file without headings is flagged"     '[[ $(row "notes.md") == *"notes
 ok "piped grep is partial, a full Read whole"   '[[ $(row "brief.md —") == " 70 2 1 / 50 1 / 20 docs/features/a/brief.md — dt-dev-1 50, principal-engineer 20" ]]'
 ok "a search over many files counts once"       '[[ $(row "(shell searches over more than 5 files)") == " 100 1 0 / 0 1 / 100 "* ]]'
 ok "edits, heredocs and test runs are not reads" '! row " x.md" | grep -q . && [ "$(printf "%s\n" "$OUT" | grep -c "docs/features/a/brief.md —")" = 1 ]'
+ok "reads through shell variables count"     '[[ $(row "docs/status.md —") == " 40 2 0 / 0 2 / 40 docs/status.md — principal-engineer 40" ]] && ! row "x.md —" | grep -q .'
 ok "the peer is named before its task arrived"  '! row "wt-dev" | grep -q .'
-ok "by reader"                                  '[[ $(reader principal-engineer) == " 2.0k 6 1.8k principal-engineer" ]] && [[ $(reader dt-dev-1) == " 1.1k 2 1.1k dt-dev-1" ]] && [[ $(reader "reviewer \(agent\)") == " 200 1 0 reviewer (agent)" ]]'
+ok "by reader"                                  '[[ $(reader principal-engineer) == " 2.1k 8 1.8k principal-engineer" ]] && [[ $(reader dt-dev-1) == " 1.1k 2 1.1k dt-dev-1" ]] && [[ $(reader "reviewer \(agent\)") == " 200 1 0 reviewer (agent)" ]]'
 ok "CLAUDE.md, its dev-team section, imports"   '[[ $(row " CLAUDE.md") == *"CLAUDE.md — dev-team section"* ]] && [[ $(row "docs/extra.md") == *"imported by CLAUDE.md" ]]'
 ok "the memory index"                           '[[ $(row "memory index") == *"(10 lines)" ]]'
 ok "SessionStart output that reached the model" '[[ $(row "SessionStart hook output") == " 2.4 KB ≈ 612 SessionStart hook output, average of 1 session(s): recall 2.0 KB, dev-team 0.4 KB" ]]'
 ok "the project's size limit"                   '[[ $OUT == *"Workspace docs over 20 KB, read or changed"* ]]'
 ok "a live doc over it, with its reads"         '[[ $(row "KB docs/features/a/plan.md") == *"read 5× for 2.8k (3 whole)" ]]'
 ok "history over it is only counted"            '[[ $OUT == *"and 1 more, neither read nor changed"* ]] && ! row "history.md" | grep -q .'
+
+# m1: context 1,010, 10 + 1,000 × 2 + 100 × 5 = 2,510; m2: context 4,000, 10 + 990 × 1.25 + 3,000 × 0.1 + 50 × 5 = 1,797.5
+ok "calls from usage, each once, in the window"  '[[ $(row "dt-dev-1" | grep "at ~") == " 4.3k 2 2.5k 1.0k 1 at ~368k dt-dev-1" ]]'
+ok "a size limit compaction always beats"       '[[ $OUT == *"compacted 1 time(s), at a median 368k: the Peer size limit (400k) is above that"* ]]'
+ok "the tool schemas every call carries"        '[[ $OUT == *"tool schemas of ~1.1k (median session); the largest: Artifact 1.0k, Bash 101"* ]]'
+ok "MCP servers: size, loaded, used"            '[[ $(server rea) == " 116 1 0 23 rea" ]] && [[ $(server claude_ai_Docs) == " 200 1 0 40 claude_ai_Docs" ]] && [[ $(server db) == " 98 1 1 19 db" ]]'
 
 OUT=$(CLAUDE_CONFIG_DIR="$T/empty" bin/token-audit "$T/p" 2>&1); RC=$?
 ok "no transcripts: says so, still sizes"       '[ $RC = 0 ] && [[ $OUT == *"no file reads found"* ]] && [[ $OUT == *"Always loaded"* ]]'

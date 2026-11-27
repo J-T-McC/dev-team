@@ -14,7 +14,7 @@ description: The slash commands, the skills, and the scripts the roles and the c
 | `/dev-team:checkins ["change"]` | sets up or changes the scheduled check-ins ([Check-ins](/dev-team/checkins/)) |
 | `/dev-team:board` | sets up or refreshes the Owner board ([Owner board](/dev-team/board/)) |
 | `/dev-team:orca [recommended \| "change"]` | sets up or changes the Orca runtime; `recommended` applies the [recommended setup](/dev-team/orca-recommended/) |
-| `/dev-team:audit [days]` | looks back over the team's sessions from the last N days (default 7) to measure what reading files and loading them at start cost, then trims the bloat you approve ([What it costs](/dev-team/costs/#the-audit)) |
+| `/dev-team:audit [days]` | looks back over the team's sessions from the last N days (default 7) to measure what each role's calls, reading files, and loading them at start cost, then trims the bloat you approve ([What it costs](/dev-team/costs/#the-audit)) |
 
 ## Scripts
 
@@ -38,7 +38,7 @@ The coordinator's helper under the [Orca runtime](/dev-team/orca/). It keeps the
 | `peer ack <delivery>` | marks a batch of reports handled, unless messages joined it after it was read: then it shows them instead |
 | `peer pr <home> <PR>... \| peer pr --drop <PR>...` | records or drops which home owns a PR |
 | `peer prs [--sweep]` | the team's PRs and owners; `--sweep` lists open ones with a failing check or a conflict |
-| `peer sizes` | each peer's context size against the Peer size limit |
+| `peer sizes` | each peer's context size against the Peer size limit, with a note when Claude Code compacts before the limit |
 | `peer limits [--clear [<model>]]` | models out of usage, as the watcher saw them |
 | `peer list [--board-json <dir>]` | homes, names, roles, models, worktrees and tasks; or the board's peers rows as files |
 | `peer team [--create \| --rename <home> <name>]` | who is who in the team; `--create` makes every home's worktree now, with no session until its first task; `--rename` gives a home a new name |
@@ -64,7 +64,7 @@ Makes heavy jobs take turns on the machine.
 | `setup-detect [--other-projects <dir>] [project-dir]` | what setup can tell before asking anything, as JSON: the project's state, remote and your access to it, its commit style and ticket prefix, what its code runs and what is configured but never run, the tools on the machine, the Claude plan and whether it's running inside Orca, your open PRs, and a suggestion with a reason for each setup question. `--other-projects` also summarizes what the git repos in that folder are built with, for stack suggestions; setup asks before using it |
 | `seed-drift [project-dir]` | what the plugin's seeds have that the project's copies lack (used by `/dev-team:sync`) |
 | `migrate-layout [--apply]` | moves a type-first workspace into feature folders; a dry run without `--apply` |
-| `token-audit [--days N] [--top N] [project-dir]` | what the project's sessions spent reading files in the last N days (default 7), by file and by reader, plus what every session loads and the documents over the size limit (used by `/dev-team:audit`) |
+| `token-audit [--days N] [--top N] [project-dir]` | what the project's sessions spent in the last N days (default 7): calls, context, and compactions by reader; the tool schemas and MCP servers every call carries; reading files, by file and by reader; plus what every session loads and the documents over the size limit (used by `/dev-team:audit`) |
 
 ### Check-in triggers
 
