@@ -86,7 +86,7 @@ The Reviewer never reviews a change it implemented. The coordinator stays lean t
 Several peers share one machine, so it runs out of memory and slows down long before it runs out of work.
 
 - **Sleep idle peers** whose role has no work coming (§ Peer lifetime). Waking and sleeping is the coordinator's call, never a question for the Owner.
-- **Heavy jobs take turns.** Multi-file test runs, builds, UI stacks, browser runs, and fresh clones run through `${CLAUDE_PLUGIN_ROOT}/bin/slot run <label> [--prio N] -- <command>`: two machine-wide slots (`DEV_TEAM_SLOTS`), lower `--prio` first. The coordinator's spec names the critical path, which runs with `--prio 1`. `slot status` shows who holds and who waits.
+- **Heavy jobs take turns.** Multi-file test runs (a full suite, a race-detector run), timing and load tests, builds, UI stacks, browser runs, and fresh clones run through `${CLAUDE_PLUGIN_ROOT}/bin/slot run <label> [--prio N] -- <command>`: two machine-wide slots (`DEV_TEAM_SLOTS`), lower `--prio` first. The coordinator's spec names the critical path, which runs with `--prio 1`. `slot status` shows who holds and who waits. A timing measured outside a slot doesn't count: another job's load makes it meaningless.
 - **Long-lived containers take a slot of their own**, in a separate pool so they never block test runs: `slot run <label> --pool containers -- docker compose up <service>` in the background holds it while the container runs, and `-- docker wait <container>` does the same for one already started detached. `DEV_TEAM_SLOTS_CONTAINERS` sets the pool's size (default 2).
 - **Close what you start** — emulators, dev servers, containers, browser windows — as soon as the step that needed it is done (`workflow/handoffs.md` § Assume mistakes).
 
@@ -119,7 +119,7 @@ Scheduled Orca automations that keep work moving without the Owner prompting: de
 
 - **Free when idle.** Orca runs the trigger check first; it exits non-zero — no session, no tokens — when nothing changed or another coordinator holds the lock. The plugin ships `has-work`, `stalled`, and `new-tickets` (`${CLAUDE_PLUGIN_ROOT}/bin/`); any shell command works.
 - **Always reuse the session.** A run keeps its orientation instead of re-reading the project. It is not free: each run re-sends the whole session, and check-ins spaced further apart than the prompt cache lasts (minutes to an hour) pay it uncached — about the session's size. Keep check-in sessions small (§ Peer lifetime, size limit).
-- **One coordinator at a time.** Whoever dispatches holds `${CLAUDE_PLUGIN_ROOT}/bin/dev-team-lock` — check-ins take it at the start of a run; an interactive coordinator takes it (`acquire owner`) before dispatching and releases it when its turn ends. A forgotten lock expires after 30 minutes.
+- **One coordinator at a time.** Whoever dispatches holds `${CLAUDE_PLUGIN_ROOT}/bin/dev-team-lock` — check-ins take it at the start of a run; an interactive coordinator holds it as `owner` while it runs: `peer watch` takes it and keeps it fresh, and the coordinator runs `acquire owner` itself before dispatching with no watch running. A forgotten lock expires after 30 minutes.
 - **Limits.** A check-in never exceeds the project's autonomy level: below *autonomous* it acts only where a gate is delegated, and flags anything that needs the Owner (on the board, when enabled).
 - **Never restart sessions.** A check-in that finds a peer not responding reports it; restarting is the Owner's call.
 

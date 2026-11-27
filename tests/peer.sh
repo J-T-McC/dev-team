@@ -151,6 +151,17 @@ ok "tell returns at once; the nudge runs in the background" '[ $RC = 0 ] && [[ $
 waitfor '[ -s .git/dev-team/nudges-unconfirmed.txt ]'
 run watch 0.02
 ok "watch reports a nudge that didn't land"  '[[ $OUT == *"NUDGE | dt-dev-1 | not confirmed for '"'Install'"'"* ]]'
+ok "a running watch holds the coordinator lock" '[ "$(cat .git/dev-team/coordinator.lock)" = owner ]'
+echo advance > .git/dev-team/coordinator.lock
+run watch 0.01
+ok "but leaves a check-in's lock alone"        '[ "$(cat .git/dev-team/coordinator.lock)" = advance ]'
+rm .git/dev-team/coordinator.lock
+shows "$(home dt-dev-1 terminal)" "✻ Tinkering… (12s · esc to interrupt)"
+run tell dt-dev-1 "Busy" "Yes"
+sleep 1; waitfor '! pgrep -f "peer nudge dt-dev-1 Busy" >/dev/null'
+run watch 0.01
+ok "a busy peer's nudge isn't reported as missed" '[[ $OUT != *"NUDGE | dt-dev-1 | not confirmed for '"'Busy'"'"* ]]'
+shows "$(home dt-dev-1 terminal)" ""
 run watch 0.01
 ok "and reports it once"                     '[[ $OUT != *NUDGE* ]]'
 state send_reply '"sent"'; shows "$(home dt-dev-1 terminal)" "❯ "
@@ -447,6 +458,11 @@ printf '%s' '{"data": {"pr": 7, "repo": "acme/mobile", "state": "review"}}' > "$
 run board-stamp
 DEV_TEAM_STALL_MIN=999 run watch 0.02
 ok "watch reports drift on the listed rows" '[[ $OUT == *"BOARD | r1: board says review, should be done (PR merged)"* ]]'
+DEV_TEAM_STALL_MIN=999 run watch 0.02
+ok "the same drift wakes it once"          '[[ $OUT != *"BOARD | r1"* ]]'
+run board-stamp --rows "$T/rows"
+DEV_TEAM_STALL_MIN=999 run watch 0.02
+ok "a new snapshot reports drift afresh"   '[[ $OUT == *"BOARD | r1"* ]]'
 run list --board-json "$T/bj"
 ok "board json: one peers row per home"    'python3 -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(not (d[\"name\"]==sys.argv[2] and d[\"role\"]==\"senior-developer\" and d[\"doing\"].startswith(\"Idle · last: \") and d[\"order\"]==1))" "$T/bj/peers/dt-dev-1.json" "$(home dt-dev-1 name)"'
 ok "board json: a sleeping home says so"   'grep -q "\"doing\": \"Asleep · last: T09\"" "$T/bj/peers/dt-dev-2.json"'
