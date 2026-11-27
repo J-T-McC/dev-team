@@ -10,7 +10,7 @@ Trigger checks shipped with the plugin: `has-work` (docs changed since its last 
 - **Schedule:** `*/30 * * * *` (every 30 minutes) *(hourly, daily, weekdays, weekly, a cron expression, or an RRULE; daily/weekdays/weekly take a time `HH:MM`)*
 - **Role:** orchestrator
 - **Runs when:** has-work
-- **Job:** For each feature in flight, answer "what's next?" and dispatch what is ready.
+- **Job:** For each feature in flight, answer "what's next?" and dispatch what is ready. With Next work other than `owner` and room on the team, start the next item (`workflow/handoffs.md` § Next work).
 - **May:** act within the project's autonomy level
 
 ## stalled (active)
@@ -21,7 +21,7 @@ Trigger checks shipped with the plugin: `has-work` (docs changed since its last 
 - **May:** act within the project's autonomy level
 
 ## groom (off)
-- **Schedule:** weekdays 09:00
+- **Schedule:** weekdays 09:00 *(hourly when Next work is `tickets` or `steered`)*
 - **Role:** product-manager
 - **Runs when:** always *(work comes through the project's ticket MCP server; with `Via: orca`, `new-tickets linear <team key>` makes idle days free)*
 - **Job:** Triage new tickets assigned to the Owner: decide agent, split, or human first (`<ws>/standards/planning.md` § Agent limits); log human-only ones in `<ws>/triage.md`; route the rest per `<ws>/standards/tickets.md`, file backlog items, set priority.
