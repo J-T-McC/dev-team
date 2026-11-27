@@ -4,142 +4,57 @@ A [Claude Code](https://code.claude.com) plugin that runs feature work the way a
 
 **Docs: [j-t-mcc.github.io/dev-team](https://j-t-mcc.github.io/dev-team/)**
 
+## Install
+
 ```
 /plugin marketplace add J-T-McC/dev-team
 /plugin install dev-team@dev-team
 ```
 
-Run both inside your project, and pick **Install for you, in this repo only (local scope)**: the first choice, user scope, loads it into every session in every project. From a shell in the project folder, `claude plugin install dev-team@dev-team --scope local` does the same without the menu. Then ask Claude to `set up dev-team in this project`.
+Run both inside your project and pick **Install for you, in this repo only (local scope)**. The first choice, user scope, loads the plugin into every session in every project. From a shell in the project folder, `claude plugin install dev-team@dev-team --scope local` skips the menu.
 
-Needs macOS or Linux (WSL on Windows) and git. The optional Orca runtime, Owner board, check-ins and audit also need Python 3.9+, and the Orca runtime and Owner board need the GitHub CLI (`gh`) ([Install](https://j-t-mcc.github.io/dev-team/getting-started/#install)).
+Then ask Claude to `set up dev-team in this project`. Setup reads the project before it asks anything, and asks at most three rounds of questions, each with a suggested answer ([Get started](https://j-t-mcc.github.io/dev-team/getting-started/)).
 
-## Two ways to run it
-
-By default every role runs inside your own Claude Code conversation, one at a time. Claude loads the role's rules, does the phase and hands off through a document, so most work never pays for an agent's startup. An agent starts only when it earns its cost: independent streams of work running at once, a review by fresh eyes, or a phase too big for the conversation. If you don't use Orca, this is all you need.
-
-On the [Orca runtime](https://j-t-mcc.github.io/dev-team/orca/), every role runs as its own top-level Claude Code session (never a subagent) with your project's full tools, and several developers build at once in their own worktrees. Your session becomes the coordinator. It hands out tasks, answers the peers and takes your approvals, and waiting on peers or CI costs it nothing. Every task starts a fresh session, so this mode spends more; it pays when parallel work is worth that.
-
-Either way, the requirements, decisions, plans, task records and reviews are written to your repo, so work survives a context reset and the next session starts from the files.
-
-The plugin brings no stack, skills or tools of its own: roles run on what your project gives a Claude session. Every agent, or Orca peer, starts with your `CLAUDE.md` files, installed skills and plugins, MCP servers and SessionStart hooks, so trim what the roles don't use before running several at once ([what your project costs](https://j-t-mcc.github.io/dev-team/costs/)).
+You need macOS or Linux (WSL on Windows) and git. The Orca runtime, the Owner board, check-ins and the audit also need Python 3.9+, and the Orca runtime and Owner board need the GitHub CLI (`gh`).
 
 ## How it works
 
-The rest of this file is the whole plugin on one page, for agents and for anyone who prefers it that way; the docs site explains each part at more length.
+A request moves through the roles in order: product manager, designer (UI work only), principal engineer, senior developer, reviewer. The orchestrator routes it between them. Each role hands off through a document in the workspace folder, so the requirements, decisions, plans, task records and reviews end up in your repo, and the next session starts from the files rather than from memory.
 
-Six specialized roles move feature work from requirements to reviewed code:
+Most work takes a shorter path. A clear request gets a short brief instead of a PRD, each role decides whether its own phase is needed, and bugs and chores go straight to a developer ([Pipeline](https://j-t-mcc.github.io/dev-team/pipeline/)). The roles follow shared rules: write plainly, check your own work against the documents, prove a requirement before adding it, and log what slowed you down so the workflow gets fixed ([Team rules](https://j-t-mcc.github.io/dev-team/team-rules/)).
 
-**Product Owner → product-manager → designer** *(UI features only)* **→ principal-engineer** *(plan + ADRs + task breakdown)* **→ senior-developer → reviewer → Owner approval**, coordinated by an in-conversation **orchestrator**.
+Two lines in the project's `CLAUDE.md` decide how much happens without you. `Autonomy` sets who signs each step: `supervised`, `standard` (you approve requirements, releases and major decisions) or `autonomous`. At every level, anything irreversible, security-sensitive, paid, or leaving the repo waits for you. `Next work` sets whether the team starts work on its own: only what you hand it, the product you described, your tickets as they arrive, or what the product manager picks from tickets and the backlog ([Autonomy](https://j-t-mcc.github.io/dev-team/autonomy/)).
 
-Owner attention is reserved for what matters — approving PRDs, releases, and **major decisions** (new dependencies, stack/data-model changes, security-sensitive or irreversible choices). All other gates are delegated: design specs → product-manager, plans and task breakdowns → principal-engineer self-certified; the product-manager answers requirement questions as the Owner's proxy.
+## Two ways to run it
 
-**Choose how involved you are** with one line in the project `CLAUDE.md`: `Autonomy: supervised` (you sign every gate, down to each finished task), `standard` (the default above), or `autonomous` (roles sign everything; you keep only the floor — irreversible or destructive changes, security-sensitive surfaces, spending, and anything leaving the repo). Hold specific gates with `; Owner keeps: PRD, release`. Every decision made without you is recorded as `Approved by: <role> (autonomy: <level>)` for audit. Rules: [`workflow/handoffs.md`](workflow/handoffs.md) § Autonomy.
+By default every role runs inside your own Claude Code conversation, one at a time. Claude loads the role's rules, does the phase and hands off through a document, so most work never pays for an agent's startup. An agent starts only when it earns its cost: streams of work running at once, a review by fresh eyes, or a phase too big for the conversation.
 
-**Choose what the team works on** with a second line, `Next work`: `owner` (only what you hand it, the default), `product` (build what you described, feature after feature, then report back), `tickets` (your tickets as they arrive, only those your search returns), or `steered` (the product manager picks from your tickets and the backlog, mixing new features with cleanup and bugs). Rules: [`workflow/handoffs.md`](workflow/handoffs.md) § Next work.
+On the [Orca runtime](https://j-t-mcc.github.io/dev-team/orca/), every role runs as its own top-level Claude Code session with your project's full tools, and several developers build at once in their own worktrees. Your session becomes the coordinator: it hands out tasks, answers the team and takes your approvals, and waiting costs it nothing. Every task starts a fresh session, so this mode spends more. It pays when parallel work is worth that.
 
-**Agents write plainly** — short, plain English in every doc and note, and code comments only where the *why* is not obvious ([`workflow/communication.md`](workflow/communication.md) § Plain language). No narrated code, no history comments, no commented-out code.
+The plugin brings no stack, skills or tools of its own. Every role, agent or Orca session starts with your `CLAUDE.md` files, installed skills and plugins, MCP servers and SessionStart hooks, so trim what the roles don't use before running several at once ([What your project costs](https://j-t-mcc.github.io/dev-team/costs/)).
 
-**Agents assume mistakes** — their own and each other's. Each self-reviews its output against the source documents (not its memory of them) before handing off, and questions an assignment or upstream artifact that smells wrong instead of silently complying or silently fixing it. Claims about code cite the file and line they came from, and nothing goes into scope without proof it happens in a real flow ([`workflow/handoffs.md`](workflow/handoffs.md) § Evidence).
+## Extras
 
-**The team learns from its friction.** Any role logs what slowed it down or sent it the wrong way — a wrong instruction, a slow step, a token burn, a repeated mistake, a course correction — in the workspace's `friction-log.md`, and every report ends with a `Friction:` line. As maintenance, the orchestrator picks the entry that stands out and changes the workflow so it stops ([`workflow/friction.md`](workflow/friction.md)). Token burns are measured, not guessed: `/dev-team:audit` summarizes the project's session transcripts from the last week, or the days you give it, as a sample of real use (which files cost the most to read, whole or in part, and who read them, plus what every session loads), then trims the bloat you approve without changing what any rule means.
+Each is off until you set it up, and each has a command that does it.
 
-**Work is sized by the team.** The pipeline above is the longest path. For most ticket work the product-manager writes a short **brief** (what's wanted, testable acceptance criteria, the planned path) instead of a PRD, and each role decides whether its own phase is needed — design, a technical plan, an ADR, or time-boxed **discovery** when unknowns block a decision. Large features still get the full pipeline; a brief that outgrows itself becomes a PRD. Acceptance criteria and review are never skipped (review has a **light** tier for small changes). Before any of that, the product-manager checks whether agents can take the work at all, against the project's **Agent limits** list: work that needs a person or access agents don't have becomes **split** (human steps listed as Owner tasks) or **human** (logged in `triage.md`, never started).
-
-Small work skips the pipeline entirely (**fast path**): bugs and chores go straight to the senior-developer (fix + tests + a record in the workspace's `fixes/`), doc corrections to the role owning the doc — no gates, as long as the work is truth-preserving.
-
-**Roles run inline by default.** All work — questions, fast-path fixes, and full pipeline phases in linear sequence — runs in the main conversation by invoking the owning role's skill, at a fraction of a subagent spawn's token cost. Agents spawn only when it pays for itself: **concurrency**, **independent review** (pipeline reviews always run in the reviewer agent — fresh eyes), or **context relief** (handing a big phase to a fresh context).
-
-Tasks are token-frugal by design: each feature's breakdown is a `tasks/` folder with a status index and one file per task, so an implementing session loads the tiny index plus only the task it is working on — never the whole plan. The **backlog** follows the same shape (`backlog/index.md` + one file per item): any role files deferred work — scope cuts, tech debt, known bugs — and the product-manager prioritizes and promotes it into the pipeline or the fast path. Live briefs, plans and designs stay under about 25 KB, change in place instead of growing amendments, and are read by section (`standards/documentation.md` § Size and reading); a hook tells the agent whose edit takes one past the limit.
-
-## Workspace
-
-One folder per feature holds everything it produces; shared material sits in the workspace root. Built for large projects, light for small ones ([`workflow/workspace.md`](workflow/workspace.md)):
-
-```
-docs/                    workspace root
-  status.md              in flight
-  status-done.md         finished, newest first
-  architecture/          ADRs, shared: adr-001-session-storage.md
-  backlog/               index.md (open), archive.md (closed), B001-….md
-  fixes/                 2026-10-18-login-timeout.md
-  standards/  stack/
-  features/              (can live anywhere)
-    user-auth/           prd.md  design.md  mockups/  plan.md  tasks/  questions/  review.md
-```
-
-One `Workspace:` line records the **root** (`dev-team`; projects with no line use `docs`), the **features folder** (anywhere — e.g. next to a team's own feature folders), and **folder naming** (`slug` for small projects, `F###-slug` or `<ticket>-slug` for large ones). Setup uses the defaults and shows them, instead of asking. Live indexes stay small — finished features and closed backlog items move to archives — so agents never pay for history. Projects on the older type-first layout are moved by `/dev-team:sync` (dry run first, `git mv`, links rewritten).
-
-Setup's first question is whose project it is. **Shared:** the section goes in `CLAUDE.md` and the workspace is committed with the code. **Just me for now:** the section goes in `CLAUDE.local.md` and the workspace is excluded locally, as its own git repository committed automatically by a Stop hook, until you share it. **Guest mode** is for someone else's project whose team does not use dev-team: like "just me", with the workspace in a hidden `.dev-team/` folder, the plugin at local scope, their conventions winning for code, commits, and PRs, and nothing outside the workspace mentioning dev-team.
-
-## Orca runtime (optional)
-
-Projects driven from Orca can opt into a second runtime ([`workflow/orca.md`](workflow/orca.md)): every role runs as a **top-level peer session** launched and supervised by Orca orchestration — never a subagent. Peers are plain sessions with full project tools (MCP servers, skills, claude-mem), each in a named home (`dt-dev-1`, `dt-reviewer`, …); the dispatch spec gives each its role. Every task starts a **fresh session** — peer startup is cheap next to a subagent's — kept only for follow-ups on the same change. Every launch pins the peer's model and effort from the project's Runtime line — a team model, per-role overrides, a fallback for when a model runs out, and an advisor model for the product-manager and principal-engineer — so a `/model` in some other session never moves the team; one task can run on another model with `peer dispatch --model` without touching the line. `bin/peer` runs the coordinator's side: dispatch (here or on a connected Orca server), model switches for live peers, sleeping idle peers and cleaning up after them, messages that wake idle peers, and a token-free wait for reports, for peers in trouble — stopped on an API error or a usage limit, oversized, or stalled — and for failing checks and conflicts on the PRs each peer owns. Guard hooks keep the coordinator from ending a turn with a peer's question unanswered, work in flight unwatched, or the Owner board behind `status.md`, and `bin/slot` makes heavy jobs and long-lived containers take turns on the machine. Opt in with one line in the project `CLAUDE.md` plus a settings deny for the `Agent` tool — without it, nothing changes. `/dev-team:orca` sets that up, and offers a **recommended setup** that held up through weeks of daily use: models and advisor, one home and worktree per role, git and PR flow, test and safety rules ([`workflow/orca-recommended.md`](workflow/orca-recommended.md)).
-
-**Check-ins** (`/dev-team:checkins`) are scheduled Orca automations defined in the workspace's `standards/checkins.md` — e.g. keep work moving every 30 minutes, catch stalled or failed work hourly, have the product-manager groom tickets assigned to you each weekday. Each starts with a free trigger check, so an idle project costs nothing; each reuses its session so it keeps its bearings (a run still re-sends that session, so check-in sessions are kept small). Optional extras: mirror `status.md` onto Orca's worktree cards (with an unread flag when you're needed), and Orca's built-in browser for UI checks in place of Playwright.
-
-## Owner board (optional)
-
-With several roles running at once, the orchestrator's conversation moves too fast to follow, and the workspace documents are written for agents. The **Owner board** ([`workflow/board.md`](workflow/board.md)) is a live, private claude.ai page for you: questions and approvals waiting on you first, then who is on what, then every piece of work in flight with its PR, state, and next step. The orchestrator updates it in the same turn as `status.md` — a Stop hook sends its turn back while the board is behind — and removes a question the moment you answer it; work you've put on hold shows muted and is never asked about again. A token-free script (`bin/board-drift`) catches PRs that merged, failed, or went ready on their own, and `status.md` rows whose PRs are all done. Works with either runtime. Set it up with `/dev-team:board`.
+- [Orca runtime](https://j-t-mcc.github.io/dev-team/orca/) (`/dev-team:orca`), with a [recommended setup](https://j-t-mcc.github.io/dev-team/orca-recommended/) sized for your Claude plan.
+- [Owner board](https://j-t-mcc.github.io/dev-team/board/) (`/dev-team:board`): a live, private claude.ai page with what's waiting on you first, then who's on what, then the work in flight. It works with either runtime.
+- [Check-ins](https://j-t-mcc.github.io/dev-team/checkins/) (`/dev-team:checkins`): Orca automations that keep work moving on a schedule. An idle project costs nothing.
+- [Ticket systems](https://j-t-mcc.github.io/dev-team/tickets/) (`/dev-team:tickets`): Linear, Jira, GitHub Issues or Projects as the source of work. Only what you allow goes back to the tracker.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="examples/board/board-dark.png">
   <img alt="Owner board with sample data: two questions waiting on the Owner, seven roles and their current tasks, and work grouped as Reporting, Mobile and Platform with ticket, PR, state and next step." src="examples/board/board-light.png">
 </picture>
 
-## Ticket systems (optional)
-
-Work can come from Linear, Jira, GitHub Issues and Projects, or any tracker enabled through MCP — or through Orca's built-in Linear client or the `gh` CLI, which need no MCP server — configured per project in the workspace's `standards/tickets.md` (off by default; rules in [`workflow/tickets.md`](workflow/tickets.md)). The tracker is the **source of work and the record of outcomes**; agents still work and talk through the workspace, which is cheaper than MCP round-trips. A ticket is read once at intake and its ID carried in the PRD, fix record, and status row; phase changes sync its status; and only what the config's **Elevation** allowlist names goes back out — a release comment, high-priority bugs — never findings, questions, or task notes. Only the orchestrator and product-manager write to the tracker.
-
-Bootstrap asks whether to connect one. Set up or fine-tune any time with `/dev-team:tickets "<change>"` (e.g. "also open tickets for review follow-ups") — it edits only the affected section, verifies the work query read-only, logs the change in the config's Tuning log, and writes on your approval.
-
-## Install (per project)
+## Update
 
 ```
-/plugin marketplace add J-T-McC/dev-team
-/plugin install dev-team@dev-team
+/plugin marketplace update dev-team
+/plugin update dev-team@dev-team
 ```
 
-Then set the project up. Ask Claude:
-
-```
-set up dev-team in this project
-```
-
-The `bootstrap` skill reads the project and machine first (`bin/setup-detect`), then asks at most three rounds of questions, each with a suggested answer: whose project it is, how involved you want to be, the commit style, and, for a new project, what you're building and who picks the stack; then where the team runs and any extras. It writes the dev-team section, the workspace and the seeds, checks them, and ends with the first thing to ask the team for. Standards it can't fill yet are marked _open_ and set by the first plan that needs them, not left as homework. Nothing from your project ever flows back into this repo.
-
-**Adopting into an existing project?** Bootstrap takes a second path ([`workflow/adoption.md`](workflow/adoption.md)): it surveys for collisions with your existing folders and `CLAUDE.md` first, then has the principal-engineer **harvest** the standards and stack from your codebase — manifests, CI, lint config, test layout, commit history — citing the file behind every line. What the scripts and CI run is the standard; config nothing runs becomes a backlog item instead of a question. Gaps get a labelled suggestion, and you approve it all in one summary. In-flight features enter at their true phase marked `pre-adoption` (upstream gates waived, downstream gates apply). Shipped work is **never** documented backwards — no retro PRDs, no retro ADRs. Documents are written forward, for the next change.
-
-Keep the project `CLAUDE.md` lean — it is loaded every session, while skills and the workspace load on demand. The seed [`seeds/CLAUDE.project.md`](seeds/CLAUDE.project.md) is the recommended shape.
-
-**Models per role:** the plugin pins no model — every role runs on your own default (the session's model, your default subagent model for agents, or the project's Team model for Orca peers). Thinking roles default to `xhigh` effort and the senior-developer to `high`. Override per project with one `CLAUDE.md` line — `Role models: designer: opus/high; senior-developer: sonnet; reviewer: high` — applied whenever a role's agent or Orca peer is started ([`workflow/overview.md`](workflow/overview.md) § Models per role).
-
-**Design tools:** if the project designs in Figma, Penpot, or another tool with an MCP server, name it in the workspace's `standards/design.md` § Design tool — the designer builds its mockups there on your existing components, links the frames, and keeps a snapshot in the workspace for the roles that check UI against it. Otherwise mockups are self-contained HTML in `docs/design/`.
-
-Project-level skills (`.claude/skills/`) work out of the box: every role has your full toolset (agents pin no tools) and its skill tells it to consult relevant domain skills (e.g. a `laravel` skill) before deciding or implementing — no plugin changes needed.
-
-## Update (per project)
-
-```
-/plugin marketplace update dev-team    # refresh marketplace metadata from GitHub
-/plugin update dev-team@dev-team       # then update the plugin itself
-```
-
-Every commit to this repo is a new version (no version pinning). Each merged feature or fix is also tagged as a [release](https://github.com/J-T-McC/dev-team/releases) with notes, numbered from its PR title: a feature raises the minor version, a fix the patch. Seeded files (workspace `standards/` and `stack/`, the dev-team section) are project-owned and are **not** touched by updates — use the sync command below to catch up.
-
-## Sync seeds (per project)
-
-```
-/dev-team:sync
-```
-
-Plugin updates never touch project-owned files, so a project bootstrapped before a seed was added (or extended) silently lacks it — and agents have no fallback to the plugin's copies. Run sync after updating; it is safe to run any time:
-
-- **Moves** an older type-first workspace to feature folders (dry run first, then `git mv` with links rewritten)
-- **Copies** any seed file the project is missing (standards, `stack/stack.md`, `status.md`, `status-done.md`, `triage.md`, `friction-log.md`, the backlog index and archive) and creates any missing folders
-- **Reports drift** (`bin/seed-drift`): seed sections (`##` headings) absent from your standards, workspace files and seed rules absent from the project, Orca Runtime-line settings renamed or added since, and links inside the workspace to a folder that contains them — names only, so your customizations never show up as drift
-- **Appends only what you approve** — never overwrites, rewrites, or deletes project content
-
-After a sync, commit newly copied files to your project repo.
+Every commit is a new version, and each merged feature or fix is also tagged as a [release](https://github.com/J-T-McC/dev-team/releases): a feature raises the minor version, a fix the patch. Updates never touch what setup copied into your project, such as the dev-team section, `standards/` and `stack/`. Run `/dev-team:sync` afterwards. It copies seed files you're missing, reports sections and rules the plugin has added since, moves an older workspace layout, and changes nothing without your yes ([Updating](https://j-t-mcc.github.io/dev-team/updating/)).
 
 ## Develop the framework locally
 
@@ -150,18 +65,17 @@ After a sync, commit newly copied files to your project repo.
 /reload-plugins
 ```
 
-Validate with `claude plugin validate .`
+Validate with `claude plugin validate .` and run `tests/*.sh`.
 
 ## Layout
 
-| Path | What | Updatable |
+| Path | What | Updated by the plugin |
 |---|---|---|
-| `agents/`, `skills/` | The six roles (orchestrator is skill-only) + bootstrap skill | ✅ via plugin update |
-| `commands/` | `/dev-team:sync` — pull missing/updated seeds into a project; `/dev-team:tickets` — ticket-system setup/tuning; `/dev-team:checkins` — Orca check-ins; `/dev-team:board` — Owner board; `/dev-team:orca` — Orca runtime and its recommended setup; `/dev-team:audit` — token audit | ✅ via plugin update |
-| `templates/`, `workflow/` | Document templates, pipeline/handoff/communication rules | ✅ via plugin update |
-| `bin/` | Check-in trigger scripts, the coordinator lock, `peer` and `slot` (Orca runtime; `peer board-stamp` serves the Owner board under either runtime); `board-drift` (Owner board); `seed-drift` and `migrate-layout` (sync); `token-audit` (the token audit's transcript summary) | ✅ via plugin update |
-| `hooks/` | Session-start announcement + agent-memory size sentinel; the coordinator's guard hooks (Orca peers, Owner board); the Stop hook that commits an uncommitted workspace and pushes it once it has an upstream; the edit hook that flags a feature document past the size limit | ✅ via plugin update |
-| `seeds/` | Copied into projects by bootstrap/sync (`orca-recommended.md` by `/dev-team:orca`) | ❌ project-owned after copy |
-| `examples/workspace/` | Worked example of the full pipeline, in the workspace layout | ✅ via plugin update |
-| `examples/board/` | Owner board sample data and screenshots | ✅ via plugin update |
-| `site/` | The docs site ([j-t-mcc.github.io/dev-team](https://j-t-mcc.github.io/dev-team/)), built with Astro Starlight and published to GitHub Pages | not used by projects |
+| `agents/`, `skills/` | The six roles (the orchestrator is skill-only) and the setup skill | yes |
+| `commands/` | `/dev-team:sync`, `tickets`, `checkins`, `board`, `orca` and `audit` | yes |
+| `templates/`, `workflow/` | Document templates; the pipeline, handoff and communication rules | yes |
+| `bin/` | Check-in triggers and the coordinator lock; `peer` and `slot` for the Orca runtime; `board-drift` for the Owner board; `seed-drift` and `migrate-layout` for sync; `token-audit` for the audit | yes |
+| `hooks/` | Session start; the coordinator's guard hooks; the Stop hook that commits an uncommitted workspace; the edit hook that flags a feature document past the size limit | yes |
+| `seeds/` | Files setup and sync copy into a project | no: the project owns its copy |
+| `examples/` | A worked workspace, and the Owner board's sample data and screenshots | yes |
+| `site/` | The docs site, built with Astro Starlight and published to GitHub Pages | not used by projects |
