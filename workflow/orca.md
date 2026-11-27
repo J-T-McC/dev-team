@@ -16,8 +16,10 @@ and deny the subagent tool in `.claude/settings.json` (`"permissions": { "deny":
 
 - **Coordinator** — the Project Owner's own session: orchestrator skill plus this file. Routes, verifies gates, keeps `<ws>/status.md`, takes the Owner's ✋ approvals. It does no role work — not even inline fast-path fixes — and no hands-on work: test runs, preview syncs, investigations, CI digging, and long waits go to a peer (usually as part of its task, or a `--keep` follow-up), so the coordinator stays free to answer the Owner and the peers.
 - **Homes** — named peer slots: `dt-product`, `dt-designer`, `dt-architect`, `dt-reviewer`, and `dt-dev-1`, `dt-dev-2`, … for senior developers. Each holds one plain `claude` peer, started on the home's first dispatch. A peer has everything the project gives a normal session: all MCP servers, project skills, claude-mem, Bash. Its role comes from the spec's role line.
+- **Names** — each home gets a first name, at random, the first time it is used: Bob the developer, Sandra the reviewer. The name shows beside the role on its terminal tab, on its own worktree in Orca's sidebar, in `peer list` and `peer team`, and on the Owner board, and the peer is told it. Talking to the Owner, call each peer by name and role ("Sandra, the reviewer, approved PR 12"). `peer team --rename <home> <name>` changes one.
+- **Making the homes** — on its first dispatch by default. `peer team --create` makes every home Team setup names at once instead (`workflow/orca-recommended.md`), so the whole team is in Orca's sidebar from the start: worktrees only, since each task starts a fresh session (§ Peer lifetime) and a session started early would only be replaced. The first dispatch to a home made that way uses its worktree.
 - **Worktrees** — chosen per dispatch, not per home: sequential roles work in the feature worktree, each parallel stream in its own child worktree. Only one peer edits a worktree at a time.
-- **One Run for the team.** The first dispatch creates it. Homes and the Run are machine-local state in the git dir (`peer list`), never in the workspace.
+- **One Run for the team.** The first dispatch creates it. Homes, their names, and the Run are machine-local state in the git dir (`peer list`), never in the workspace.
 
 ## Launch settings
 

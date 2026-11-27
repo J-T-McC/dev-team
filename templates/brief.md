@@ -7,7 +7,7 @@
 - **Approved by / date:** *(PM when it restates the request; the Owner, per autonomy, when it adds, cuts, or reinterprets scope)*
 
 ## Ask
-<What is wanted and why, in a few lines — the request in the team's words. Link the ticket rather than copy it.>
+<What is wanted and why, in a few lines — the request in the team's words. Link the ticket rather than copy it. An Owner's request given in chat is quoted word for word.>
 
 ## UX Direction *(UI work only — delete otherwise)*
 <Key experience decisions only. Its presence puts the Designer on the path.>

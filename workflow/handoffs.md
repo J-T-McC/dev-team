@@ -53,6 +53,24 @@ How involved the Project Owner is, set per project by one line in the project `C
 - **Surface what was decided without the Owner.** When a feature reaches Done at any level below *supervised*, the Orchestrator's report lists, in a few lines, every decision the Owner did not sign for that feature: brief or PRD Assumptions, major decisions made by a role, and gates the level delegated. The audit trail is useless if nobody reads it.
 - Autonomy never removes a gate, the independent review, or a role boundary — it only changes who signs. Fewer Owner checkpoints raise the bar on **Assume mistakes** below.
 
+## Next work
+
+Whether the team starts something new without being asked, and where it comes from: one line in the dev-team section, `Next work: owner | product | tickets | steered`. No line means **owner**. It is separate from the autonomy level, which decides who signs each gate; change either any time.
+
+| Value | What the team starts next | When it stops |
+|---|---|---|
+| `owner` | only what the Owner hands it | after each piece of work |
+| `product` | the next feature of the product the Owner described: the backlog items the PM filed from that description (`Source: the Owner's product description`, quoted in the first PRD), in the index's order | when all of them are Done; the Orchestrator then reports what was built and what the PM would do next |
+| `tickets` | the next ticket the work query returns, in the ticket system's own order (`workflow/tickets.md`) | when the query has nothing new; a new ticket starts it again |
+| `steered` | what the PM picks from the work query's tickets, if there's a ticket system, and the backlog, the team's own ideas included, balancing new features against cleanup and bugs by `<ws>/standards/planning.md` § Steering | when nothing above low priority is left, or the Owner says stop |
+
+- **The Orchestrator asks for the next item** when a feature reaches Done, or when the team has room: no more items in flight than the team has developers (one, running in this conversation). The PM names it with one line of why; the Orchestrator routes it like any request.
+- **The fence stays the Owner's.** `tickets` and `steered` take only what the work query returns, never a ticket outside it: the query's breadth is how much the team may choose. `product` builds only what was filed from the description; ideas the team files on the way wait in the backlog and never extend the run.
+- **The backlog index's order is the queue** (`<ws>/standards/planning.md` § Backlog): an item at the top is ready whatever its promotion trigger says, since a trigger like "the Owner asks" can't fire while the Owner is away. Items parked on the Owner sit last and hold nothing up.
+- **Gates and the floor still apply.** Every item passes the gates the autonomy level holds. An item waiting on the Owner holds only itself: the team carries on with the others.
+- **Waking up.** Under Orca with check-ins, `groom` notices new tickets and `advance` starts the next item (`workflow/orca.md` § Check-ins). Otherwise the team keeps going while the coordinator's conversation runs, and picks up what arrived when the Owner next speaks.
+- **Stopping:** the Owner says stop, or sets `owner`. Work in flight finishes; nothing new starts.
+
 ## Assume mistakes
 
 Every agent — you included — makes mistakes, and long sessions drift from their task. Treat your own output and every input as possibly wrong.
