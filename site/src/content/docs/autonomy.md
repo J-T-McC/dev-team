@@ -58,3 +58,17 @@ The team never takes a ticket your search doesn't return, so the search sets how
 Each item still passes every gate your level keeps, and the [floor](#the-floor) stays yours. Under Orca, [check-ins](/dev-team/checkins/) pick up new tickets on their own; otherwise the team keeps going while its conversation runs. To stop, say so or set `Next work: owner`: work in flight finishes and nothing new starts.
 
 Full rules: [workflow/handoffs.md](https://github.com/J-T-McC/dev-team/blob/main/workflow/handoffs.md#next-work).
+
+## Working hours
+
+To spread your usage across the week, give the team working hours in your machine's local time:
+
+```
+- **Hours: Mon–Fri 09:00–17:00.**
+```
+
+Several windows go on one line, separated by `;`: `weekdays 9–12; weekdays 13–17`. An end at or before its start runs past midnight (`daily 22:00–06:00`). With no line, or `any`, the team works any time.
+
+Outside those hours the team starts nothing on its own: no next item, task or review, and check-ins don't run. At closing, work in flight wraps up at the next clean point with a hand-over note, and the next opening picks up from there. Anything you ask for yourself still runs, whatever the hour. `bin/hours` tells you whether the team is open now.
+
+Full rules: [workflow/handoffs.md](https://github.com/J-T-McC/dev-team/blob/main/workflow/handoffs.md#working-hours).

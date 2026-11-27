@@ -2,7 +2,7 @@
 # stalled <check-in> [hours] — a supervised worker needs attention (failed, exited without
 # finishing), or features are in flight and no document has changed for [hours] (default 4).
 source "$(dirname "$0")/_common.sh"
-lock_held && exit 1
+{ lock_held || off_hours; } && exit 1
 name=$1; hours=${2:-4}
 
 # New worker problems since the last run, in this project's team Run only: one Orca serves every project on the

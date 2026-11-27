@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""Working hours (workflow/handoffs.md § Working hours): when the team starts work on its own.
+
+  hours            open (exit 0) or closed (exit 1) now, and until when; no Hours line, or `any`: open
+  hours --spec     the project's Hours value, as written
+
+The value is the project's `**Hours: <windows>.**` line in CLAUDE.local.md or CLAUDE.md, in this machine's local
+time: windows separated by `;`, each `[<days>] <start>–<end>`. Days: `Mon–Fri`, `Sat,Sun`, `weekdays`, `weekends`,
+`daily` (the default). Times: `9`, `09:30`, `17:00`, `5pm`. An end at or before its start runs past midnight.
+e.g. `Mon–Fri 09:00–17:00`, `weekdays 9–12; weekdays 13–17`, `daily 22:00–06:00`.
+"""
+import os, re, subprocess, sys
+from datetime import datetime, timedelta
+
+DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+NAMED = {"weekdays": set(range(5)), "weekends": {5, 6}, "daily": set(range(7)), "everyday": set(range(7))}
+DASH = r"\s*(?:–|—|-|to)\s*"
+
+
+def root():
+    try:
+        top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, timeout=10)
+        return top.stdout.strip() or os.getcwd()
+    except (OSError, subprocess.TimeoutExpired):
+        return os.getcwd()
+
+
+def spec(where=None):
+    """The Hours value from the project's dev-team section; "" when there is none."""
+    for name in ("CLAUDE.local.md", "CLAUDE.md"):
+        try:
+            text = open(os.path.join(where or root(), name)).read()
+        except OSError:
+            continue
+        m = re.search(r"\*\*Hours:\s*([^*]+?)\.?\s*\*\*", text)
+        if m:
+            return m.group(1).strip().strip("`")
+    return ""
+
+
+def minute(t):
+    m = re.fullmatch(r"(\d{1,2})(?::(\d\d))?\s*(am|pm)?", t.strip().lower())
+    if not m:
+        raise ValueError(f"not a time: {t!r}")
+    h, mm = int(m.group(1)), int(m.group(2) or 0)
+    if m.group(3) == "pm" and h < 12:
+        h += 12
+    if m.group(3) == "am" and h == 12:
+        h = 0
+    if h > 24 or mm > 59 or (h == 24 and mm):
+        raise ValueError(f"not a time: {t!r}")
+    return h * 60 + mm
+
+
+def days(text):
+    text = text.strip().lower()
+    if not text:
+        return set(range(7))
+    out = set()
+    for part in re.split(r"\s*,\s*", text):
+        if part in NAMED:
+            out |= NAMED[part]
+            continue
+        m = re.fullmatch(rf"([a-z]+){DASH}([a-z]+)", part) or re.fullmatch(r"([a-z]+)()", part)
+        a, b = (m.group(1)[:3], (m.group(2) or m.group(1))[:3]) if m else ("", "")
+        if a not in DAYS or b not in DAYS:
+            raise ValueError(f"not a day: {part!r}")
+        i, j = DAYS.index(a), DAYS.index(b)
+        out |= {d % 7 for d in range(i, j + 1 if j >= i else j + 8)}
+    return out
+
+
+def windows(value):
+    """[(days, start minute, end minute)], or None for any time."""
+    if not value or value.lower() in ("any", "any time", "anytime", "none", "off"):
+        return None
+    out = []
+    for w in re.split(r"\s*;\s*", value.strip()):
+        m = re.fullmatch(rf"(.*?)\s*(\d{{1,2}}(?::\d\d)?\s*(?:am|pm)?){DASH}(\d{{1,2}}(?::\d\d)?\s*(?:am|pm)?)", w, re.I)
+        if not m:
+            raise ValueError(f"not a window: {w!r} (e.g. Mon–Fri 09:00–17:00)")
+        out.append((days(m.group(1)), minute(m.group(2)), minute(m.group(3))))
+    return out
+
+
+def open_at(ws, t):
+    if ws is None:
+        return True
+    d, m = t.weekday(), t.hour * 60 + t.minute
+    for ds, a, b in ws:
+        if a < b and d in ds and a <= m < b:
+            return True
+        if a >= b and ((d in ds and m >= a) or ((d - 1) % 7 in ds and m < b)):
+            return True
+    return False
+
+
+def change(ws, t):
+    """The next minute the state flips, within a week; None if it never does."""
+    now = open_at(ws, t)
+    t = t.replace(second=0, microsecond=0)
+    for i in range(1, 7 * 24 * 60 + 1):
+        u = t + timedelta(minutes=i)
+        if open_at(ws, u) != now:
+            return u
+    return None
+
+
+def when(t, now):
+    return t.strftime("%H:%M") if t.date() == now.date() else t.strftime("%a %H:%M")
+
+
+def state(where=None, now=None):
+    """(open, value, the time it flips or None)."""
+    value, now = spec(where), now or datetime.now()
+    ws = windows(value)
+    return open_at(ws, now), value, (change(ws, now) if ws else None)
+
+
+def describe(where=None, now=None):
+    now = now or datetime.now()
+    is_open, value, flip = state(where, now)
+    if not value or windows(value) is None:
+        return True, "open: no working hours set"
+    if is_open:
+        return True, f"open ({value}) until {when(flip, now)}" if flip else f"open ({value})"
+    return False, f"closed ({value}) until {when(flip, now)}" if flip else f"closed ({value})"
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] == ["--spec"]:
+        print(spec())
+        sys.exit(0)
+    if sys.argv[1:]:
+        sys.exit(__doc__)
+    try:
+        ok, line = describe()
+    except ValueError as e:
+        print(f"hours: the Hours line doesn't parse, so the team works any time: {e}", file=sys.stderr)
+        sys.exit(0)
+    print(line)
+    sys.exit(0 if ok else 1)

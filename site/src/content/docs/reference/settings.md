@@ -5,13 +5,14 @@ description: Every line, file and environment variable a project uses to configu
 
 ## Lines in CLAUDE.md
 
-All of these go in the project's dev-team section: `CLAUDE.md`, or `CLAUDE.local.md` for "just me" and guest mode. Setup writes the first three.
+All of these go in the project's dev-team section: `CLAUDE.md`, or `CLAUDE.local.md` for "just me" and guest mode. Setup writes the first four.
 
 | Line | Example | Sets |
 |---|---|---|
 | [`**Workspace:**`](/dev-team/workspace/#the-workspace-line) | `` `dev-team` · features `dev-team/features` · folders `slug` · committed `` | where documents go and how folders are named |
 | [`**Autonomy:**`](/dev-team/autonomy/) | `standard`, or `autonomous; Owner keeps: PRD, release` | who signs each gate |
 | [`**Next work:**`](/dev-team/autonomy/#what-the-team-works-on) | `owner`, `product`, `tickets` or `steered` | whether the team starts new work without being asked, and where it comes from |
+| [`**Hours:**`](/dev-team/autonomy/#working-hours) | `Mon–Fri 09:00–17:00`, or `any` (the default) | when the team starts work on its own |
 | [`**Role models:**`](/dev-team/roles/#models-and-effort) | `designer: opus/high; senior-developer: sonnet` | the model and effort per role |
 | [`**Runtime: Orca.**`](/dev-team/orca/) | see below | the Orca runtime and its launch settings |
 | [`**Owner board:**`](/dev-team/board/) | `<artifact url>` | turns the Owner board on |
