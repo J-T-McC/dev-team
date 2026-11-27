@@ -33,7 +33,8 @@ The coordinator's helper under the [Orca runtime](/dev-team/orca/). It keeps the
 | `peer sleep <home>... \| --idle` | closes idle peers' sessions and keeps their worktrees (`peer release` is the old name) |
 | `peer adopt <home> <role> <terminal> [--on <environment>]` | makes a home of a terminal started outside `peer` |
 | `peer watch [minutes]` | waits, at no token cost, for a peer message, trouble, or a nudge that didn't land (default 15 minutes) |
-| `peer pending` | the peer reports not handled yet (exit 1 if any) |
+| `peer pending [--full]` | the peer reports not handled yet (exit 1 if any); `--full` shows long ones uncut |
+| `peer ack <delivery>` | marks a batch of reports handled, unless messages joined it after it was read: then it shows them instead |
 | `peer pr <home> <PR>... \| peer pr --drop <PR>...` | records or drops which home owns a PR |
 | `peer prs [--sweep]` | the team's PRs and owners; `--sweep` lists open ones with a failing check or a conflict |
 | `peer sizes` | each peer's context size against the Peer size limit |
@@ -57,7 +58,7 @@ Makes heavy jobs take turns on the machine.
 | Command | What it does |
 |---|---|
 | `board-drift <dir> [owner/repo] [--config <file>]` | lists Owner-board rows whose PR has moved on (exit 1 if any) |
-| `board-drift --status <ws>/status.md [--config <file>]` | lists `status.md` rows whose PRs (`#123`, `repo#123`, `repo #123`) have all merged or closed. Repo names go through the board config's `repos` map; a row naming a repo it can't place is left alone |
+| `board-drift --status <ws>/status.md [--config <file>] [--features <dir>] [--no-prs]` | lists `status.md` rows whose PRs (`#123`, `repo#123`, `repo #123`) have all merged or closed, whose task count disagrees with the feature's task index, or whose cells have grown into a log; `--no-prs` skips the PR lookups. Repo names go through the board config's `repos` map; a row naming a repo it can't place is left alone |
 | `setup-detect [--other-projects <dir>] [project-dir]` | what setup can tell before asking anything, as JSON: the project's state, remote and your access to it, its commit style and ticket prefix, what its code runs and what is configured but never run, the tools on the machine, the Claude plan and whether it's running inside Orca, your open PRs, and a suggestion with a reason for each setup question. `--other-projects` also summarizes what the git repos in that folder are built with, for stack suggestions; setup asks before using it |
 | `seed-drift [project-dir]` | what the plugin's seeds have that the project's copies lack (used by `/dev-team:sync`) |
 | `migrate-layout [--apply]` | moves a type-first workspace into feature folders; a dry run without `--apply` |

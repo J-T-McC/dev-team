@@ -1,6 +1,11 @@
-# Finished Features
+# Finished Work
 
-Newest first. Written by the **Orchestrator** when a feature reaches Done; agents rarely read this file, so it can grow.
+Newest first. Written by the **Orchestrator**: a feature when it reaches Done, a fast-path fix when it merges. Agents rarely read this file, so it can grow.
 
 | Feature | Done | Outcome | Folder |
+|---|---|---|---|
+
+## Fixes
+
+| Date | Fix | PR | Record |
 |---|---|---|---|

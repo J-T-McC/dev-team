@@ -42,6 +42,8 @@ if grep -qs -e '^# Development Organization' -e '\*\*Workspace:\*\*' "$section";
     grep -qs '^## Approvals' "$st" &&
       say "$WS/status.md: an approvals history — each approval's record is the Approved by line in its artifact; the Approvals cell names only the gates passed (seed status.md)"
   fi
+  [ -e "$P/$WS/status-done.md" ] && ! grep -qs '^## Fixes' "$P/$WS/status-done.md" &&
+    say "$WS/status-done.md: no Fixes section (seed status-done.md): each fast-path fix gets a row there when it merges"
   orca=$(grep -s 'Runtime: Orca' "$section")
   label() { sed -n 's/^- \*\*\([^*:.]*\)[:.].*/\1/p' | sed 's/ *(.*) *$//'; }  # a note in brackets is not drift
   have=$(label < "$section")
