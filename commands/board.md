@@ -23,9 +23,9 @@ Request: $ARGUMENTS
 
 5. **Status first.** `"${CLAUDE_PLUGIN_ROOT}/bin/board-drift" --status <ws>/status.md` lists the rows whose PRs have all merged or closed; when rows name other repos, pass the step-3 map as `--config <file>` (`{"repos": {"mobile": "acme/mobile-app"}}`). Bring those rows up to date — or move them to `status-done.md` — before seeding, so the board does not start from stale rows; a row whose outcome the workspace logged elsewhere gets the same fix.
 
-6. **Seed** with one `ArtifactData` `batch`: `meta/config` (`owner`, `ticketUrl`, `repo`, `repos` — omit empty ones), `meta/board.updated`, one `work` row per `<ws>/status.md` row, one `asks` row per pending ✋ gate or feature blocked on the Owner (a gate the Owner has parked is a `held` row, with no ask), and `peers` rows (under Orca, `peer list --board-json <dir>` writes them as files for `file_path`). A new board with nothing in flight starts empty.
+6. **Seed** with one `ArtifactData` `batch`: `meta/config` (`owner`, `ticketUrl`, `repo`, `repos` — omit empty ones), `meta/board.updated`, `work` rows per `workflow/board.md` § Work rows (a feature in build is one row per started task, not one row), one `asks` row per pending ✋ gate or feature blocked on the Owner (a gate the Owner has parked is a `held` row, with no ask), and `peers` rows (under Orca, `peer list --board-json <dir>` writes them as files for `file_path`). A new board with nothing in flight starts empty.
 
-7. **Verify and stamp.** `ArtifactData` `list` each collection with `out_dir` and confirm the rows match `<ws>/status.md`, then `"${CLAUDE_PLUGIN_ROOT}/bin/peer" board-stamp --rows <the work rows' dir>`.
+7. **Verify and stamp.** `ArtifactData` `list` each collection with `out_dir` and confirm the rows match `<ws>/status.md` and the task indexes, then `"${CLAUDE_PLUGIN_ROOT}/bin/peer" board-stamp --rows <the work rows' dir>`.
 
 8. **Record.** New board: add `- **Owner board:** <url> — the orchestrator keeps it current (dev-team workflow/board.md).` to the dev-team section. Show the diff; write on approval.
 

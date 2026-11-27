@@ -117,6 +117,12 @@ function ticket(id) {
   if (!id) return "—";
   return data.config.ticketUrl ? link(data.config.ticketUrl + encodeURIComponent(id), id) : id;
 }
+// A row's peer is an Orca home or a role: show the person's name when the home has a peers row.
+function who(peer) {
+  if (!peer) return "—";
+  const p = data.peers.find(x => x.id === peer);
+  return p && p.name && p.name !== peer ? p.name : peer;
+}
 function pr(d) {
   if (!d.pr) return "—";
   // A row's repo may be a short name, mapped to owner/name by the config's repos.
@@ -169,7 +175,7 @@ function render() {
       tbody.append(el("tr", r.state === "held" ? { class: "held" } : {},
         el("td", { class: "t mono" }, ticket(r.ticket)),
         el("td", {}, r.title || ""),
-        el("td", { class: "mono" }, r.peer || "—"),
+        el("td", { class: "mono" }, who(r.peer)),
         el("td", { class: "mono t" }, pr(r)),
         el("td", {}, pill(r.state)),
         el("td", { class: "next" }, r.next || "")));
