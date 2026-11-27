@@ -26,7 +26,7 @@ A row is what one owner is doing, so the Owner can see who has which PR and wher
 - **From the task list on**, each task that has started, or has a PR, is a row of its own: the developer or reviewer on it, its PR, its state. Tasks not started get no row. The feature's own row is dropped while any of its tasks has one, and comes back when none does: a whole-feature review, or tasks waiting for a developer.
 - **A stack** of PRs for one task or ticket is one row per PR, its `next` naming the stack.
 - **`group`** is the feature's name for task rows, so a feature's tasks sit together; ticket work uses the project's own grouping (area, epic or milestone). `group_order` follows the backlog index order.
-- **Sources.** `<ws>/status.md` for features and phases, the feature's `tasks/index.md` for tasks, the PR records (`peer prs`, `gh`) for PR state.
+- **Sources.** `<ws>/status.md` for features, phases and a feature row's `next`, the feature's `tasks/index.md` for tasks, the PR records (`peer prs`, `gh`) for PR state.
 
 ## Rules
 

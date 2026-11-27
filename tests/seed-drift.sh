@@ -83,6 +83,15 @@ drop "$T/p/CLAUDE.md" "- **Run roles in this conversation.**" "- Run roles here:
 run
 ok "no Orca: in-conversation rule required"  '[[ $OUT == *"missing rule \"Run roles in this conversation\""* ]]'
 
+fresh CLAUDE.md
+run
+ok "status.md from today's seed: no drift"   '[[ $OUT != *"status.md:"* ]]'
+W=$(ls -d "$T/p"/*/status.md | head -1)
+printf '# Project Status\n\n| Feature | Phase | Current Role | Blockers | Approvals | Path |\n|---|---|---|---|---|---|\n\n## Approvals\n\n- PRD: PM\n' > "$W"
+run
+ok "status.md without Next: reported"         '[[ $OUT == *"status.md: no Next column"* ]]'
+ok "status.md approvals history: reported"    '[[ $OUT == *"status.md: an approvals history"* ]]'
+
 fresh CLAUDE.local.md .dev-team
 printf '# Their project\n\n- **Their own rule.** Something.\n' > "$T/p/CLAUDE.md"
 drop "$T/p/.dev-team/standards/planning.md" "## Agent limits (active)" "## Limits"
