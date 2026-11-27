@@ -53,7 +53,10 @@ Only the questions that apply; skip the round when none do.
   - **Decide at the first feature:** the team proposes a stack with the first plan, for your yes.
 
   **Let the team pick** needs the facts in `${CLAUDE_PLUGIN_ROOT}/workflow/stack-pick.md` § Facts first. Ask for each one the description left out, each with a suggested answer and room for their own, and pick nothing until they're answered.
-- **Where the team runs** (only when `machine.tools` has `orca`, or `claude.in_orca` is true): recommend `suggest.runtime`, with its reason. The answers: **here, in this conversation** (one role at a time), or **Orca, sized for your plan** (each role its own session, side by side; sizes in `${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md` § Team shape), or Orca at another size. In the same round, **when to make the team**, if they pick Orca: **as work needs it (Recommended)**, or **all now**, so the whole team, each with a name, is in Orca's sidebar from the start, with no session or usage until its first task.
+- **Where the team runs** (only when `machine.tools` has `orca`, or `claude.in_orca` is true): recommend `suggest.runtime`, with its reason. The answers: **here, in this conversation** (one role at a time); **Orca, sized for your plan** (each role its own session, side by side; sizes in `${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md` § Team shape), each role made the first time work needs it; or **Orca, with the whole team made now**, so every role, each with a name, is in Orca's sidebar from the start, with no session or usage until its first task. Another size is their own answer.
+- **Once it's set up** (new projects only):
+  - **Start on what I described (Recommended):** the product manager splits it into features, writes the requirements for the first one, and files the rest for later. The team carries on from there, coming back to you as often as your answer on how involved you want to be says.
+  - **I'll give the team its first task.**
 - **Anything else to set up now?** Several answers allowed. Offer the board and check-ins only when `suggest.extras.available` lists them, and say in one line why one can't be offered yet:
   - **A live board of what needs you** (the Owner board): one page showing what's waiting on you, who's working on what, and the work in flight.
   - **Scheduled check-ins:** Orca checks on the team on a timer, for new tickets and stalled work.
@@ -89,7 +92,9 @@ Only the questions that apply; skip the round when none do.
 1. **Harvest:** invoke the `dev-team:principal-engineer` skill's adoption harvest to write `<ws>/stack/stack.md`, `<ws>/standards/coding.md` and `<ws>/standards/testing.md` (`workflow/adoption.md` § Harvesting). What runs is the standard (`code.runs`, `code.tools_run`). Each line cites its file. A section the code doesn't answer gets a suggestion, marked `(suggested at setup)`. Guest: only what the repository doesn't already document.
 2. **Mismatches go to the backlog,** one `debt` item each: config nothing runs (`code.config_not_run`), a tool only the docs name. Use the plugin's `templates/backlog-item.md` and add a row to `<ws>/backlog/index.md`. Never ask the Owner to sort them out at setup.
 3. **Work in flight:** one `<ws>/status.md` row per feature already under way, `Approvals: pre-adoption` (`workflow/adoption.md` § In-flight work). Propose the Owner's open pull requests (`open_prs`) as candidates in the digest, and write their rows only once the Owner confirms them.
-4. **The digest** is the finish message, with one question. It lists the stack and standards found, each with the file it came from; the suggestions for what the code didn't show; any rule pairs from their `CLAUDE.md`; the backlog items filed; and the in-flight candidates. Then ask: **use these (Recommended)** / **show me the files first** / **change something**.
+4. **The digest** is the finish message. It lists the stack and standards found, each with the file it came from; the suggestions for what the code didn't show; any rule pairs from their `CLAUDE.md`; the backlog items filed; and the in-flight candidates. Then ask, in one dialog:
+   - **Use these (Recommended)** / **show me the files first** / **change something**.
+   - **What should the team start on?** Only with something concrete to offer: up to three tickets from the work query, when a ticket system is set up (`workflow/tickets.md`), or the open pull requests to carry on. The first is recommended: the query's first ticket, otherwise the most recently updated pull request. Last: **nothing yet, I'll say**. On an existing project the team starts only on what the Owner picks here, never on its own choice; once picked, hand it to the `dev-team:orchestrator` skill. With nothing concrete, end with the next step as in step 7.
 
 ## 6. Check it works
 
@@ -105,7 +110,9 @@ The root, mode and committed match the answers, `status.md` exists, and `seed-dr
 - **What was set up,** in a few lines: where the documents are and whether they're committed, the autonomy level, the commit style, the stack (picked, named, or proposed with the first feature), where the team runs, and the extras turned on.
 - **Committed workspace:** offer to commit the new files.
 - **Nothing left as homework.** Never list or count open sections, and never ask the Owner to fill in files: the first plan that needs a section sets it.
-- **End with the next step,** in plain words: tell the team the first thing to build, with an example drawn from what they're building. Then one line on what they can ask for later, such as a ticket system or the board, in plain words.
+- **Start the team,** when the Owner chose **start on what I described**: hand their description, word for word, to the `dev-team:orchestrator` skill as the first request. Under Orca that is the first dispatch, and this session is the coordinator from then on. Say what happens next in plain words: who is working on it, and when they'll hear from the team, by their autonomy (under *standard*, the requirements come to them to approve before anything is built).
+- **Otherwise end with the next step,** in plain words: tell the team the first thing to build, with an example drawn from what they're building.
+- Then one line on what they can ask for later, such as a ticket system or the board, in plain words.
 
 ## Already set up
 
