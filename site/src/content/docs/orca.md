@@ -29,7 +29,11 @@ Without the line the default runtime applies, even inside Orca. Every setting on
 
 Peers live in named **homes**: `dt-product`, `dt-designer`, `dt-architect`, `dt-reviewer`, and `dt-dev-1`, `dt-dev-2` and so on for developers. A home holds one peer, started on its first dispatch, and the spec of each dispatch gives it its role.
 
-Worktrees are chosen per dispatch. Roles that work one after another share the feature worktree; each parallel stream gets its own child worktree. Only one peer edits a worktree at a time. (The [recommended setup](/dev-team/orca-recommended/) gives each home its own worktree instead.) The whole team shares one Orca Run, created by the first dispatch. Homes and the Run are kept on the machine, in the git directory, never in the workspace.
+Each home also gets a first name, picked at random the first time it's used, so the team reads like one: Bob the developer, Sandra the reviewer. The name shows beside the role on the home's terminal tab, on its worktree in Orca's sidebar, in `peer list` and on the [Owner board](/dev-team/board/), and the coordinator uses it when it tells you who did what. `peer team --rename dt-dev-1 Sandra` changes one.
+
+By default a home is made on its first task. To see the whole team in Orca's sidebar from the start, `peer team --create` makes every home the [recommended setup](/dev-team/orca-recommended/) names at once. It makes the worktrees only, so nothing runs, and no usage is spent, until each home's first task. Setup asks which you want.
+
+Worktrees are chosen per dispatch. Roles that work one after another share the feature worktree; each parallel stream gets its own child worktree. Only one peer edits a worktree at a time. (The [recommended setup](/dev-team/orca-recommended/) gives each home its own worktree instead.) The whole team shares one Orca Run, created by the first dispatch. Homes, their names and the Run are kept on the machine, in the git directory, never in the workspace.
 
 ## A fresh session per task
 

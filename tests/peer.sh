@@ -52,7 +52,9 @@ ok "first call creates the team run"      'called run-create && [ "$(reg "r[\"ru
 ok "the caller is the coordinator"         '[ "$(reg "r[\"coordinator\"][\"terminal\"]")" = term_coord ]'
 run dispatch dt-dev-1 senior-developer "Implement T01" --worktree new-child --name feat-a --base-branch feat
 ok "new worktree made as a child"          'called "\"worktree\", \"create\", \"--name\", \"feat-a\", \"--base-branch\", \"feat\", \"--parent-worktree\", \"current\""'
-ok "role model and effort, no fallback twin" 'launched | grep -q "\"--worktree\", \"path:/wt/feat-a\", \"--title\", \"dt-dev-1\", \"--command\", \"claude --model sonnet --effort medium\"\]"'
+ok "role model and effort, no fallback twin" 'launched | grep -q "\"--worktree\", \"path:/wt/feat-a\", \"--title\", \"$(home dt-dev-1 name) · developer\", \"--command\", \"claude --model sonnet --effort medium\"\]"'
+ok "the home has a name from the list"     'grep -q "\"$(home dt-dev-1 name)\"" "$REPO/bin/peer"'
+ok "the role line tells the peer its name" 'start_args | grep -q "\[dev-team home dt-dev-1\]\. .*Your name on the team is $(home dt-dev-1 name)\."'
 ok "worker-start takes the new terminal"   '[ $RC = 0 ] && start_args | grep -q "\"--terminal\", \"term_1\", \"--worktree\", \"path:/wt/feat-a\""'
 ok "spec opens with the role line"         'start_args | grep -q "You are the dev-team senior-developer peer \[dev-team home dt-dev-1\]"'
 ok "later calls reuse the run"             '! called run-create && called "\"run-use\", \"--id\", \"run_0a1b2c\""'
@@ -412,8 +414,32 @@ run board-stamp
 DEV_TEAM_STALL_MIN=999 run watch 0.02
 ok "watch reports drift on the listed rows" '[[ $OUT == *"BOARD | r1: board says review, should be done (PR merged)"* ]]'
 run list --board-json "$T/bj"
-ok "board json: one peers row per home"    'python3 -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(not (d[\"name\"]==\"dt-dev-1\" and d[\"role\"]==\"senior-developer\" and d[\"doing\"].startswith(\"Idle · last: \") and d[\"order\"]==1))" "$T/bj/peers/dt-dev-1.json"'
+ok "board json: one peers row per home"    'python3 -c "import json,sys;d=json.load(open(sys.argv[1]));sys.exit(not (d[\"name\"]==sys.argv[2] and d[\"role\"]==\"senior-developer\" and d[\"doing\"].startswith(\"Idle · last: \") and d[\"order\"]==1))" "$T/bj/peers/dt-dev-1.json" "$(home dt-dev-1 name)"'
 ok "board json: a sleeping home says so"   'grep -q "\"doing\": \"Asleep · last: T09\"" "$T/bj/peers/dt-dev-2.json"'
+ok "board json: every home has its own name" '[ "$(reg "len({h[\"name\"] for h in r[\"homes\"].values()}) == len(r[\"homes\"])")" = True ]'
+
+# team: the homes Team setup names, made now or by their first dispatch, each with a name
+mkdir -p "$T/p4" && cd "$T/p4" && git init -q
+printf -- '- **Runtime: Orca.** Roles run as Orca peers. Team model: opus. Fallback model: none. Advisor: none.\n## Team setup\n- **Homes.** `dt-product`, `dt-reviewer`, `dt-dev-1` to `dt-dev-3` (size medium), each in its own worktree named after the home.\n' > CLAUDE.md
+run team --create
+ok "team --create makes every named home"  '[ $RC = 0 ] && [ "$(reg "sorted(r[\"homes\"])")" = "['"'"'dt-dev-1'"'"', '"'"'dt-dev-2'"'"', '"'"'dt-dev-3'"'"', '"'"'dt-product'"'"', '"'"'dt-reviewer'"'"']" ]'
+ok "worktrees only, top level, no session" 'called "\"worktree\", \"create\", \"--name\", \"dt-dev-3\", \"--no-parent\"" && ! launched && [ "$(home dt-dev-3 asleep)" = True ]'
+ok "roles from the home names"             '[ "$(home dt-product role) $(home dt-dev-2 role)" = "product-manager senior-developer" ]'
+ok "each worktree shows its name and role" 'called "\"--display-name\", \"$(home dt-product name) · product manager\""'
+run team --create
+ok "team --create again makes nothing"     '[ $RC = 0 ] && ! called "\"worktree\", \"create\""'
+run dispatch dt-dev-2 senior-developer "Implement T02" --worktree new-top-level --name dt-dev-2
+ok "first dispatch reuses the made worktree" '[ $RC = 0 ] && ! called "\"worktree\", \"create\"" && launched | grep -q "\"path:/wt/dt-dev-2\""'
+run team --rename dt-dev-2 Sandra
+ok "rename: the new name, on the worktree too" '[ "$(home dt-dev-2 name)" = Sandra ] && called "\"--display-name\", \"Sandra · developer\""'
+run team --rename dt-dev-2 "two words"
+ok "rename refuses what isn't one name"    '[ $RC = 2 ]'
+run team
+ok "team lists who is who"                 '[[ $OUT == *"dt-dev-2       Sandra · developer"* ]]'
+printf -- '- **Runtime: Orca.** Roles run as Orca peers.\n' > CLAUDE.md
+run team --create
+ok "no Homes rule: team --create refuses"  '[ $RC = 2 ] && [[ $OUT == *"no Team setup"* ]]'
+
 mkdir -p "$T/p3/docs" && cd "$T/p3" && git init -q && echo x > docs/status.md
 printf -- '- **Owner board:** https://claude.ai/artifact/x\n' > CLAUDE.md
 OUT=$(echo '{}' | CLAUDE_PROJECT_DIR="$T/p3" CLAUDE_PLUGIN_ROOT="$REPO" "$REPO/hooks/coordinator.sh" stop)

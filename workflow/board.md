@@ -11,7 +11,7 @@ A private claude.ai artifact with its own database. The page (`${CLAUDE_PLUGIN_R
 | Path | One document per | Fields |
 |---|---|---|
 | `asks/<id>` | question or approval waiting on the Owner | `ticket`, `question` — one plain sentence: the decision needed and why — `order` |
-| `peers/<id>` | role session: an Orca home, or under the default runtime the role now running | `name`, `role`, `doing` (current task, or `Idle`), `order` — under Orca, `peer list --board-json <dir>` writes one file per home, for `ArtifactData` `file_path` |
+| `peers/<id>` | role session: an Orca home, or under the default runtime the role now running | `name` (an Orca home's name, `workflow/orca.md` § Topology), `role`, `doing` (current task, or `Idle`), `order` — under Orca, `peer list --board-json <dir>` writes one file per home, for `ArtifactData` `file_path` |
 | `work/<id>` | feature or ticket in flight; id = feature folder or ticket ID | `ticket`, `title`, `group`, `group_order`, `peer`, `pr`, `repo` (only when not the config's), `state`, `next` |
 | `meta/board` | — | `updated` (ISO time of the last write) |
 | `meta/config` | — | `owner` (how the board names the Owner; default "you"), `ticketUrl` (the ticket ID is appended), `repo` (`owner/name`), `repos` (short names a row's `repo` may use, e.g. `{"mobile": "acme/mobile-app"}`) |

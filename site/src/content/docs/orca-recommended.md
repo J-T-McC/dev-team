@@ -21,7 +21,7 @@ Every home is another Claude session drawing on the same usage limits, so the te
 | medium | Max 5x | small, plus a second developer |
 | large | Max 20x | two reviewers and four developers |
 
-Setup reads your plan from Claude Code to suggest one. On Pro it suggests running the team in the conversation instead, with small second: every Orca task starts a fresh session, and Pro's limits run out fast.
+Setup reads your plan from Claude Code to suggest one, then asks whether to make the whole team now, so it's in Orca's sidebar from the start, or each home as work needs it. On Pro it suggests running the team in the conversation instead, with small second: every Orca task starts a fresh session, and Pro's limits run out fast.
 
 Plain `/dev-team:orca` in a project without the Orca runtime asks whether you want this setup or just the runtime.
 
