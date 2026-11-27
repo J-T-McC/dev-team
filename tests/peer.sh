@@ -29,6 +29,7 @@ cd "$T/proj" && git init -q
 runtime() { printf -- '- **Runtime: Orca.** Roles run as Orca peers. %s Peer size limit: 2k. Worktree cards: off.\n- **Role models:** senior-developer: sonnet/medium; reviewer: high\n' "$1" > CLAUDE.md; }
 runtime "Team model: opus. Fallback model: sonnet. Advisor: fable."
 fail=0
+DENY=" --disallowedTools AskUserQuestion,EnterPlanMode,ExitPlanMode,Artifact,ArtifactData,ArtifactComments,Workflow,ScheduleWakeup,CronCreate"  # bin/peer PEER_DENIED
 
 ok()    { if eval "$2"; then echo "ok   $1"; else echo "FAIL $1"; fail=1; fi; }
 state() { python3 -c 'import json,sys;p=sys.argv[1];s=json.load(open(p));s[sys.argv[2]]=json.loads(sys.argv[3]);json.dump(s,open(p,"w"))' "$T/orca/state.json" "$1" "$2"; }
@@ -52,7 +53,7 @@ ok "first call creates the team run"      'called run-create && [ "$(reg "r[\"ru
 ok "the caller is the coordinator"         '[ "$(reg "r[\"coordinator\"][\"terminal\"]")" = term_coord ]'
 run dispatch dt-dev-1 senior-developer "Implement T01" --worktree new-child --name feat-a --base-branch feat
 ok "new worktree made as a child"          'called "\"worktree\", \"create\", \"--name\", \"feat-a\", \"--base-branch\", \"feat\", \"--parent-worktree\", \"current\""'
-ok "role model and effort, no fallback twin" 'launched | grep -q "\"--worktree\", \"path:/wt/feat-a\", \"--title\", \"$(home dt-dev-1 name) · developer\", \"--command\", \"claude --model sonnet --effort medium\"\]"'
+ok "role model and effort, no fallback twin" 'launched | grep -q "\"--worktree\", \"path:/wt/feat-a\", \"--title\", \"$(home dt-dev-1 name) · developer\", \"--command\", \"claude --model sonnet --effort medium$DENY\"\]"'
 ok "the home has a name from the list"     'grep -q "\"$(home dt-dev-1 name)\"" "$REPO/bin/peer"'
 ok "the role line tells the peer its name" 'start_args | grep -q "\[dev-team home dt-dev-1\]\. .*Your name on the team is $(home dt-dev-1 name)\."'
 ok "worker-start takes the new terminal"   '[ $RC = 0 ] && start_args | grep -q "\"--terminal\", \"term_1\", \"--worktree\", \"path:/wt/feat-a\""'
@@ -60,10 +61,10 @@ ok "spec opens with the role line"         'start_args | grep -q "You are the de
 ok "later calls reuse the run"             '! called run-create && called "\"run-use\", \"--id\", \"run_0a1b2c\""'
 ok "home recorded with its model"          '[ "$(reg "[r[\"homes\"][\"dt-dev-1\"][k] for k in (\"terminal\",\"worktree\",\"model\",\"effort\")]")" = "['"'"'term_1'"'"', '"'"'/wt/feat-a'"'"', '"'"'sonnet'"'"', '"'"'medium'"'"']" ]'
 run dispatch dt-architect principal-engineer "Plan F1" --worktree path:/wt/feat-a
-ok "team model, role effort, fallback, advisor" '[ "$(command)" = "claude --model opus --effort xhigh --fallback-model sonnet --settings '"'"'{\"advisorModel\": \"fable\"}'"'"'" ]'
+ok "team model, role effort, fallback, advisor" '[ "$(command)" = "claude --model opus --effort xhigh --fallback-model sonnet --settings '"'"'{\"advisorModel\": \"fable\"}'"'"'$DENY" ]'
 ok "advisor roles hear about it"           'start_args | grep -q "You have an advisor model"'
 DEV_TEAM_CLAUDE="claude --permission-mode acceptEdits" run dispatch dt-reviewer reviewer "Review F1" --worktree path:/wt/feat-a
-ok "effort-only override, no advisor"      '[ "$(command)" = "claude --permission-mode acceptEdits --model opus --effort high --fallback-model sonnet" ] && ! start_args | grep -q "advisor model"'
+ok "effort-only override, no advisor"      '[ "$(command)" = "claude --permission-mode acceptEdits --model opus --effort high --fallback-model sonnet$DENY" ] && ! start_args | grep -q "advisor model"'
 runtime "Worktree cards: off."
 run dispatch dt-product product-manager "Brief APP-1" --worktree path:/wt/feat-a
 ok "no Team model: refuses to launch"      '[ $RC = 2 ] && [[ $OUT == *"no Team model"* ]] && ! launched'
@@ -256,7 +257,7 @@ shows "$T1" "❯ "; shows "$(home dt-architect terminal)" "hit your Opus 5.5 lim
 DEV_TEAM_STUCK_MIN=0 run watch 0.02
 state stage '"settled"'
 run dispatch dt-architect principal-engineer "Plan F3"
-ok "team model out: launches on the fallback" '[[ $OUT == *"launching on the fallback, sonnet"* ]] && [ "$(command)" = "claude --model sonnet --effort xhigh" ]'
+ok "team model out: launches on the fallback" '[[ $OUT == *"launching on the fallback, sonnet"* ]] && [ "$(command)" = "claude --model sonnet --effort xhigh$DENY" ]'
 run limits --clear fable
 ok "limits --clear removes one"            '[[ $OUT == "cleared: fable" ]] && [[ "$("$PEER" limits)" != *fable* ]]'
 python3 - <<'PY'
@@ -317,11 +318,42 @@ run wrap-up
 ok "wrap-up with nobody working"           '[ $RC = 0 ] && [[ $OUT == "no peer is working" ]]'
 grep -v '^- \*\*Hours:' CLAUDE.open > CLAUDE.md; rm CLAUDE.open CLAUDE.closed
 
+# peer tools: rule-breaking tools are left out of a peer's session unless the Runtime line keeps them
+cp CLAUDE.md CLAUDE.keep; runtime "Team model: opus. Fallback model: none. Advisor: none. Peer tools: all."
+state stage '"settled"'
+run dispatch dt-dev-1 senior-developer "T10" --owner
+ok "Peer tools: all keeps every tool"      '[ $RC = 0 ] && [[ "$(command)" != *disallowedTools* ]]'
+state stage '"settled"'
+runtime "Team model: opus. Fallback model: none. Advisor: none. Peer MCP: none."
+run dispatch dt-dev-1 senior-developer "T11" --owner
+ok "Peer MCP: none launches with no MCP server" '[ $RC = 0 ] && [ "$(command)" = "claude --model sonnet --effort medium$DENY --strict-mcp-config" ]'
+state stage '"settled"'
+printf '%s' '{"mcpServers": {"serena": {"command": "serena"}, "rea": {"command": "rea"}}}' > "$T/claude/.claude.json"
+runtime "Team model: opus. Fallback model: none. Advisor: none. Peer MCP: serena."
+run dispatch dt-dev-1 senior-developer "T12" --owner
+CFG="$(git rev-parse --path-format=absolute --git-common-dir)/dev-team/peer-mcp.json"
+ok "Peer MCP: serena keeps only serena"   '[ $RC = 0 ] && [ "$(command)" = "claude --model sonnet --effort medium$DENY --strict-mcp-config --mcp-config $CFG" ] && [ "$(python3 -c "import json; print(list(json.load(open(\"$CFG\"))[\"mcpServers\"]))")" = "['"'"'serena'"'"']" ]'
+ok "its config is private"                '[ "$(stat -f %Lp "$CFG" 2>/dev/null || stat -c %a "$CFG")" = 600 ]'
+state stage '"settled"'
+runtime "Team model: opus. Fallback model: none. Advisor: none. Peer MCP: serena, Claude Docs."
+run dispatch dt-dev-1 senior-developer "T13" --owner
+ok "a server it can't find keeps every server" '[ $RC = 0 ] && [[ $OUT == *"Peer MCP: Claude Docs is not in"* ]] && [[ "$(command)" != *mcp-config* ]]'
+rm "$T/claude/.claude.json"
+state stage '"settled"'
+echo '{"autoCompactWindow": 400000}' > "$T/claude/settings.json"
+runtime "Team model: opus. Fallback model: none. Advisor: none. Peer size limit: 400k."
+run sizes
+ok "a size limit past auto-compact is flagged" '[[ $OUT == "note: the Peer size limit (400k) is above where Claude Code compacts (~368k"* ]]'
+runtime "Team model: opus. Fallback model: none. Advisor: none. Peer size limit: 200k."
+run sizes
+ok "one below it is not"                   '[[ $OUT != *"note:"* ]]'
+rm "$T/claude/settings.json"; mv CLAUDE.keep CLAUDE.md
+
 # --- a second project: one-task models, re-check after start, stale shells, orphaned and dead sessions -----------
 mkdir -p "$T/p2" && cd "$T/p2" && git init -q && rm -f "$T/orca/state.json"
 runtime "Team model: opus. Fallback model: sonnet. Advisor: none."
 run dispatch dt-dev-1 senior-developer "Spike" --worktree path:/wt/a --model haiku --effort low
-ok "one-task model and effort"             '[ $RC = 0 ] && [ "$(command)" = "claude --model haiku --effort low --fallback-model sonnet" ] && [ "$(home dt-dev-1 once)" = True ]'
+ok "one-task model and effort"             '[ $RC = 0 ] && [ "$(command)" = "claude --model haiku --effort low --fallback-model sonnet$DENY" ] && [ "$(home dt-dev-1 once)" = True ]'
 ok "list marks it as this task's"          '[[ $("$PEER" list) == *"haiku/low (this task)"* ]]'
 run switch
 ok "switch leaves a one-task model alone"  '[[ $OUT == *"dt-dev-1: on a model chosen for this one task"* ]] && ! called "/model"'
@@ -329,7 +361,7 @@ state stage '"settled"'
 run dispatch --keep dt-dev-1 senior-developer "Fix" --model opus
 ok "--keep refuses a one-task model"       '[ $RC = 2 ] && [[ $OUT == *"needs a fresh session"* ]]'
 run dispatch dt-dev-1 senior-developer "T02"
-ok "the next task is on the team settings" '[ "$(command)" = "claude --model sonnet --effort medium" ] && [ "$(home dt-dev-1 once)" = False ]'
+ok "the next task is on the team settings" '[ "$(command)" = "claude --model sonnet --effort medium$DENY" ] && [ "$(home dt-dev-1 once)" = False ]'
 state stage '"settled"'; state recheck_fail true
 run dispatch dt-dev-1 senior-developer "T03"
 ok "a dispatch that fails after ready is caught" '[ $RC = 1 ] && [[ $OUT == *"reported ready, but the dispatch failed"*"already owns an active dispatch"* ]] && [ "$(home dt-dev-1 dispatch)" != None ]'

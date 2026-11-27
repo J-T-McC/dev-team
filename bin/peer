@@ -171,6 +171,27 @@ def size_limit():
     return int(m.group(1)) if m else 400
 
 
+def compact_k():
+    """Where Claude Code compacts on its own, in k tokens, when a settings file sets autoCompactWindow (it compacts at
+    about 92% of it); else None. The project's settings win over the user's."""
+    window = None
+    for f in (CLAUDE_DIR / "settings.json", ROOT / ".claude" / "settings.json", ROOT / ".claude" / "settings.local.json"):
+        try:
+            window = int(json.loads(f.read_text()).get("autoCompactWindow") or window or 0) or window
+        except (OSError, ValueError, TypeError, AttributeError):
+            pass
+    return int(window * 0.92 / 1000) if window else None
+
+
+def size_warning():
+    """A size limit Claude Code's own compaction always reaches first never fires."""
+    at, limit = compact_k(), size_limit()
+    if at and limit >= at:
+        return (f"the Peer size limit ({limit}k) is above where Claude Code compacts (~{at}k, autoCompactWindow), so "
+                "peers compact instead of handing over: set the limit below it (workflow/orca.md § Peer lifetime)")
+    return None
+
+
 # --- launch settings (workflow/orca.md § Launch settings) ------------------------------------------------------------
 
 def setting(name):
@@ -237,6 +258,47 @@ def limited(model, lim):
     return next((f for f in lim if f in model.lower()), None)
 
 
+# Tools a peer must not use, left out of its session (and their schemas out of every call): they need the Owner at
+# the keyboard (a question, plan approval), publish outside the repository (artifacts: the floor), need the Owner's
+# opt-in (multi-agent workflows), or outlive the task (scheduled wake-ups). `Peer tools: all` on the Runtime line keeps
+# them. A name this Claude Code doesn't have is ignored.
+PEER_DENIED = ["AskUserQuestion", "EnterPlanMode", "ExitPlanMode", "Artifact", "ArtifactData", "ArtifactComments",
+               "Workflow", "ScheduleWakeup", "CronCreate"]
+
+
+def mcp_plan():
+    """(flags, notes) for the Runtime line's `Peer MCP:`. Left out or all: every MCP server. none: no server. Else the
+    servers to keep, taken from the MCP configs Claude Code reads (~/.claude.json, the project's .mcp.json)."""
+    line = re.search(r"\*\*Runtime: Orca\.\*\*(.*)", project_text())
+    m = re.search(r"\bPeer MCP:\s*(.+?)\s*(?:\.\s|\.?$)", line.group(1) if line else "", re.I)
+    value = m.group(1).strip(" `") if m else "all"
+    if value.lower() == "all":
+        return [], []
+    if value.lower() in ("none", "off"):
+        return ["--strict-mcp-config"], []
+    known = {}
+    user = Path(os.environ["CLAUDE_CONFIG_DIR"]) / ".claude.json" if os.environ.get("CLAUDE_CONFIG_DIR") \
+        else Path.home() / ".claude.json"
+    for f, scope in ((user, None), (ROOT / ".mcp.json", None), (user, str(ROOT))):
+        try:
+            d = json.loads(f.read_text())
+            known.update((((d.get("projects") or {}).get(scope) or {}) if scope else d).get("mcpServers") or {})
+        except (OSError, ValueError, AttributeError):
+            pass
+    want = [n.strip(" `") for n in value.split(",") if n.strip(" `")]
+    missing = [n for n in want if n not in known]
+    if missing:
+        return [], [f"Peer MCP: {', '.join(missing)} is not in ~/.claude.json or .mcp.json (a claude.ai connector or a "
+                    "plugin's server can't be kept on its own): launching with every MCP server"]
+    # A copy of the servers' own settings, keys included, so it stays private like the file it came from.
+    cfg = STATE / "peer-mcp.json"
+    STATE.mkdir(parents=True, exist_ok=True)
+    fd = os.open(cfg, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as out:
+        json.dump({"mcpServers": {n: known[n] for n in want}}, out, indent=2)
+    return ["--strict-mcp-config", "--mcp-config", str(cfg)], []
+
+
 def launch_plan(role, model_once="", effort_once=""):
     """(model, effort, claude flags, notes) for a new session of this role. Never the global default.
     model_once / effort_once: a dispatch's own choice for this one task."""
@@ -264,6 +326,14 @@ def launch_plan(role, model_once="", effort_once=""):
             notes.append(f"advisor {adv_model.strip()} is out of usage: launching without it")
         else:
             flags += ["--settings", json.dumps({"advisorModel": adv_model.strip()})]
+    if setting("Peer tools").lower() != "all":
+        flags += ["--disallowedTools", ",".join(PEER_DENIED)]
+    mcp, mcp_notes = mcp_plan()
+    flags += mcp
+    notes += mcp_notes
+    warn = size_warning()
+    if warn:
+        notes.append(warn)
     return model, effort, flags, notes
 
 
@@ -961,7 +1031,8 @@ def cmd_adopt(argv):
 def nudge(h, subject):
     """Type a one-line nudge into the peer's terminal: an idle peer never reads its mailbox on its own."""
     term = h["terminal"]
-    text = f"From coordinator: {subject} — check your orchestration messages, and --ack each batch until check is empty."
+    text = (f"From coordinator: {subject} — read it with `orca orchestration check`; `check --ack <deliveryId>` "
+            "acknowledges that batch and shows the next, until none is left.")
     send_ = ["orca", "terminal", "send", "--terminal", term, "--text", text, "--enter", *on(h)]
     out = subprocess.run(send_, capture_output=True, text=True, timeout=120)
     req = re.search(r"--retry-request\s+([0-9a-f-]+)", out.stdout + out.stderr)
@@ -1407,6 +1478,9 @@ def context_k(f):
 
 def cmd_sizes(argv):
     reg, limit = load(), size_limit()
+    warn = size_warning()
+    if warn:
+        print(f"note: {warn}")
     for home, h in sorted(reg["homes"].items()):
         if h.get("env"):
             print(f"{home:14} {h['role']:19} on {h['env']}: no local transcript")

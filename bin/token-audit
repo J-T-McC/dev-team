@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
-"""token-audit [--days N] [--top N] [project-dir] — what the team's sessions pay to read files (commands/audit.md).
+"""token-audit [--days N] [--top N] [project-dir] — what the team's sessions pay per call and to read files
+(commands/audit.md).
 
 Scans this project's Claude Code transcripts (~/.claude/projects/: the main checkout's folder, each git worktree's,
-and their subagents) from the last N days (default 7), matches every Read, Grep and shell read (cat, head, sed, grep,
-…) to its result, and prints a summary only:
-  - the files that cost the most, split into whole-file and partial reads, with their top readers (peer home or role);
-  - totals per reader;
+and their subagents) from the last N days (default 7) and prints a summary only:
+  - per reader (peer home, role, or agent), from each call's usage: input-equivalent tokens, calls, the average
+    context a call re-sends, the context at session start, and Claude Code's own compactions;
+  - what every call carries: the tool schemas, and each MCP server's tools and instructions, with the sessions that
+    loaded it and the ones that used it;
+  - every Read, Grep and shell read (cat, head, sed, grep, …) matched to its result: the files that cost the most,
+    split into whole-file and partial reads, with their top readers; totals per reader;
   - what every session loads: the CLAUDE.md chain and its imports, the dev-team section, the memory index, and the
     SessionStart hook output the sessions actually got;
   - workspace documents over the size limit (<ws>/standards/documentation.md § Size and reading; default 25 KB).
-Tokens are estimated as characters ÷ 4. A shell command that reads several files shares its output evenly.
+Usage figures are the API's own. Input-equivalent prices each kind of token against plain input: cache reads ×0.1,
+cache writes ×1.25 (5 minutes) or ×2 (1 hour), output ×5. Read and schema sizes are estimated as characters ÷ 4. A
+shell command that reads several files shares its output evenly.
 """
 import argparse, glob, json, os, re, shlex, subprocess, sys, time
 from collections import defaultdict
@@ -34,6 +40,18 @@ HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1[^\n]*\n.*?\n\s*\2(?=\s|$)", re.S)
 MANY = 5
 SEARCH = f"(shell searches over more than {MANY} files)"
 SKIP_LINE = ('{"type":"api-request', '{"type":"file-history', '{"type":"data-flow', '{"type":"queue-operation')
+SHAPE = '{"type":"api-request-shape'
+MCP_DELTAS = ("deferred_tools_delta", "mcp_instructions_delta")
+NAME_CHARS = 1.5  # characters per token of a deferred tool's name (mcp__server__snake_case): measured, not ÷ 4
+
+
+def server(name):
+    """The MCP server a tool name (mcp__<server>__<tool>) or an instructions block's server name belongs to."""
+    return name.split("__")[1] if name.startswith("mcp__") else re.sub(r"[^\w-]", "_", name)
+
+
+def usage_row():
+    return {"sessions": 0, "calls": 0, "context": 0, "eq": 0.0, "starts": [], "compacts": []}
 
 
 def tok(n):
@@ -78,6 +96,10 @@ class Audit:
         self.sessions = 0
         self.starts = []  # per session: {hook: characters of SessionStart output}
         self.seen = set()
+        self.msgs = set()  # API calls already counted: a resumed session repeats them
+        self.usage = defaultdict(usage_row)
+        self.schemas = []  # per session: {tool: tokens} of the tool schemas every call sends
+        self.mcp = defaultdict(lambda: {"loaded": 0, "used": 0, "tokens": [], "cost": 0.0})
 
     # --- where the transcripts are ------------------------------------------------------------------------------
     def folders(self):
@@ -193,11 +215,26 @@ class Audit:
         main = worktree == str(self.top)
         name = None if main else Path(worktree).name  # the peer home, once its task names it; else the worktree
         role, home, pending, active, start, before_reply, done = None, None, {}, False, defaultdict(int), True, []
-        cwd = worktree
+        cwd, calls, eq, context, first, compacts, schema = worktree, 0, 0.0, 0, None, [], None
+        mcp_names, mcp_text, mcp_used = defaultdict(dict), {}, set()
         for line in f.open(errors="ignore"):
+            if line[:40].replace(" ", "").startswith(SHAPE) and schema is None:
+                try:
+                    tools = (json.loads(line).get("shape") or {}).get("tools") or []
+                except ValueError:
+                    tools = []
+                schema = {}
+                for t in tools:
+                    tool = str(t.get("name", ""))
+                    if tool.startswith("mcp__"):
+                        mcp_names[server(tool)][tool] = len(json.dumps(t)) / 4
+                    else:
+                        schema[tool] = len(json.dumps(t)) / 4
+                continue
             if line.startswith(SKIP_LINE):
                 continue
-            if not any(k in line for k in ('"tool_use"', '"tool_result"', '"attachment"', "dev-team", '"assistant"')):
+            if not any(k in line for k in ('"tool_use"', '"tool_result"', '"attachment"', "dev-team", '"assistant"',
+                                           '"compact_boundary"')):
                 continue
             try:
                 e = json.loads(line)
@@ -205,6 +242,22 @@ class Audit:
                 continue
             t = e.get("type")
             cwd = e.get("cwd") or cwd
+            fresh = (e.get("timestamp") or "") >= self.cutoff
+            if t == "system" and e.get("subtype") == "compact_boundary":
+                m = e.get("compactMetadata") or {}
+                if fresh and m.get("trigger") == "auto" and m.get("preTokens"):
+                    compacts.append(m["preTokens"])
+                continue
+            if t == "attachment" and (e.get("attachment") or {}).get("type") in MCP_DELTAS:
+                a = e["attachment"]
+                if a["type"] == "deferred_tools_delta":
+                    for n in a.get("addedNames") or []:
+                        if n.startswith("mcp__"):
+                            mcp_names[server(n)].setdefault(n, (len(n) + 1) / NAME_CHARS)
+                else:
+                    for n, b in zip(a.get("addedNames") or [], a.get("addedBlocks") or []):
+                        mcp_text[server(n)] = len(b) / 4
+                continue
             if t == "attachment" and before_reply and not agent:
                 a = e.get("attachment") or {}
                 if a.get("type") == "hook_success" and str(a.get("hookEvent", "")).startswith("SessionStart"):
@@ -220,6 +273,19 @@ class Audit:
             content = msg.get("content")
             if t == "assistant":
                 before_reply = False
+                u, mid = msg.get("usage") or {}, msg.get("id")
+                if u and fresh and mid not in self.msgs:
+                    self.msgs.add(mid)
+                    w = u.get("cache_creation") or {}
+                    w1 = w.get("ephemeral_1h_input_tokens") or 0
+                    wr, rd = u.get("cache_creation_input_tokens") or 0, u.get("cache_read_input_tokens") or 0
+                    ctx = (u.get("input_tokens") or 0) + wr + rd
+                    calls, context, first = calls + 1, context + ctx, first if first is not None else ctx
+                    eq += (u.get("input_tokens") or 0) + (wr - w1) * 1.25 + w1 * 2 + rd * 0.1 + \
+                        (u.get("output_tokens") or 0) * 5
+                for b in content if isinstance(content, list) else []:
+                    if isinstance(b, dict) and b.get("type") == "tool_use" and str(b.get("name")).startswith("mcp__"):
+                        mcp_used.add(server(b["name"]))
             if t == "user":
                 blocks = [b for b in content or [] if isinstance(b, dict)] if isinstance(content, list) else []
                 txt = content if isinstance(content, str) else text_of([b for b in blocks if b.get("type") == "text"])
@@ -260,6 +326,23 @@ class Audit:
             r = call[3] or (next(iter(roles)) if len(roles) == 1 else None)
             who = f"{agent} (agent)" if agent else home or name or r or "main checkout"
             self.count((*call[:3], who), chars, result)
+        if calls:
+            only = next(iter(roles)) if len(roles) == 1 else None
+            row = self.usage[f"{agent} (agent)" if agent else home or name or only or "main checkout"]
+            row["sessions"] += 1
+            row["calls"] += calls
+            row["context"] += context
+            row["eq"] += eq
+            row["starts"].append(first)
+            row["compacts"] += compacts
+            if schema:
+                self.schemas.append(schema)
+            for srv in {*mcp_names, *mcp_text}:
+                m, size = self.mcp[srv], sum(mcp_names[srv].values()) + mcp_text.get(srv, 0)
+                m["loaded"] += 1
+                m["used"] += srv in mcp_used
+                m["tokens"].append(size)
+                m["cost"] += size * calls * 0.1  # read from the cache on every call
         if active or start:
             self.sessions += 1
         if start:
@@ -436,6 +519,47 @@ def report_loaded(top, audit, folders):
             print(f"  {kb(f.stat().st_size):>9}  ≈{tok(f.stat().st_size / 4):>5}  {rel(top, f)}")
 
 
+def median(xs):
+    xs = sorted(xs)
+    return xs[len(xs) // 2] if xs else 0
+
+
+def report_calls(top, audit, days):
+    rows = audit.usage
+    print(f"\nCalls, last {days}, from each call's usage (input-equivalent: cache reads ×0.1, cache writes ×1.25 or ×2, "
+          "output ×5)")
+    if not rows:
+        return print("  no calls with usage found")
+    print("  input-eq  calls  avg context  start  auto-compactions  reader")
+    for who, r in sorted(rows.items(), key=lambda x: -x[1]["eq"]):
+        c = r["compacts"]
+        comp = f"{len(c)} at ~{tok(median(c))}" if c else "none"
+        print(f"  {tok(r['eq']):>8}  {r['calls']:>5}  {tok(r['context'] / r['calls']):>11}  {tok(median(r['starts'])):>5}"
+              f"  {comp:>16}  {who}")
+    every = [x for r in rows.values() for x in r["compacts"]]
+    text = "\n".join((top / n).read_text(errors="ignore") for n in ("CLAUDE.local.md", "CLAUDE.md") if (top / n).is_file())
+    if every and "**Runtime: Orca.**" in text:
+        m = re.search(r"Peer size limit:\s*(\d+)\s*k", text, re.I)
+        limit = int(m.group(1)) if m else 400
+        if limit * 1000 >= median(every):
+            print(f"  Claude Code compacted {len(every)} time(s), at a median {tok(median(every))}: the Peer size limit "
+                  f"({limit}k) is above that, so it never fires (workflow/orca.md § Peer lifetime)")
+    if audit.schemas:
+        per = defaultdict(list)
+        for sch in audit.schemas:
+            for k, v in sch.items():
+                per[k].append(v)
+        total = median([sum(sch.values()) for sch in audit.schemas])
+        big = ", ".join(f"{k} {tok(median(v))}" for k, v in sorted(per.items(), key=lambda x: -median(x[1]))[:4])
+        print(f"\nEvery call carries tool schemas of ~{tok(total)} (median session); the largest: {big}")
+    if audit.mcp:
+        sessions = sum(r["sessions"] for r in rows.values())
+        print(f"\nMCP servers, out of {sessions} session(s): tools and instructions per call, sessions that loaded and "
+              "used it, input-eq\n  per call  loaded  used  input-eq  server")
+        for srv, m in sorted(audit.mcp.items(), key=lambda x: -x[1]["cost"]):
+            print(f"  {tok(median(m['tokens'])):>8}  {m['loaded']:>6}  {m['used']:>4}  {tok(m['cost']):>8}  {srv}")
+
+
 def rel(top, p):
     p = str(p)
     if p.startswith(str(top) + "/"):
@@ -477,6 +601,7 @@ def main():
         print("\nBy reader\n  tokens  calls   whole  reader")
         for w, r in sorted(audit.readers.items(), key=lambda x: -x[1]["tokens"]):
             print(f"  {tok(r['tokens']):>6}  {r['calls']:>5}  {tok(r['whole']):>6}  {w}")
+    report_calls(top, audit, days)
     report_loaded(top, audit, folders)
     ws = workspace(top)
     limit = size_limit(top, ws)

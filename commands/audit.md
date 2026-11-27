@@ -1,13 +1,13 @@
 ---
-description: Token audit — what the team's sessions pay to read files and load at start, the bloat behind it, and trims on approval.
+description: Token audit — what the team's sessions pay per call, to read files and to load at start, the bloat behind it, and trims on approval.
 argument-hint: "[days, default 7]"
 ---
 
-Find what the team's frequently read and always-loaded files cost in tokens, and trim the bloat without changing what any rule means. Run it in the coordinator's conversation. `<ws>` is the workspace root: `source "${CLAUDE_PLUGIN_ROOT}/bin/_workspace.sh" . && echo $WS`.
+Find what the team's calls, frequently read files and always-loaded files cost in tokens, and trim the bloat without changing what any rule means. Run it in the coordinator's conversation. `<ws>` is the workspace root: `source "${CLAUDE_PLUGIN_ROOT}/bin/_workspace.sh" . && echo $WS`.
 
 Request: $ARGUMENTS
 
-1. **Measure.** Run `"${CLAUDE_PLUGIN_ROOT}/bin/token-audit" --days <N> .` (N from the request, default 7) and read only its summary; never open the transcripts. The N days are a sample of real use, not a search for files that grew: a file's cost is its size × how often those sessions loaded it. It lists the files that cost the most to read, whole-file and partial, with their readers (peer home, inline role, or agent), then the totals per reader.
+1. **Measure.** Run `"${CLAUDE_PLUGIN_ROOT}/bin/token-audit" --days <N> .` (N from the request, default 7) and read only its summary; never open the transcripts. The N days are a sample of real use, not a search for files that grew: a file's cost is its size × how often those sessions loaded it. It starts with each reader's calls from their own usage: input-equivalent tokens, calls, average context, context at session start, and Claude Code's auto-compactions. Then what every call carries: the tool schemas, and each MCP server with the sessions that loaded and used it. Then it lists the files that cost the most to read, whole-file and partial, with their readers (peer home, inline role, or agent), then the totals per reader.
 
 2. **Size.** The same output lists what every session loads, with sizes: the `CLAUDE.md` chain and its imports, the dev-team section and its Team setup, the memory index, and the SessionStart hook output sessions actually got. Then the workspace documents over the size limit (`<ws>/standards/documentation.md` § Size and reading; 25 KB by default) that were read or changed in the window.
 
@@ -18,6 +18,10 @@ Request: $ARGUMENTS
    - coordinator-only material that every peer loads: it moves to a file only the coordinator reads, behind a one-line pointer;
    - a frequently read file with no headings, or one section holding most of it, so nobody can read part of it: one heading per entry;
    - a live document over the limit or often read whole: its owning role replaces superseded text in place and splits it into part files.
+
+   Then in the calls:
+   - **Long sessions:** compactions at or under the Peer size limit (the summary says so) → a lower limit, below them. Saving: the readers' cache reads × the share of their average context the lower limit cuts.
+   - **MCP servers peers never used** → `Peer MCP:` keeping only the used ones, or `none` (`${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` § Launch settings). Saving: its input-eq. Both are Runtime-line changes: the Owner decides.
 
    Expected saving: the share of a file cut × its weekly read cost, or, for an always-loaded file, the tokens cut × sessions per week. Weekly figures are the window's × 7 ÷ N.
 
