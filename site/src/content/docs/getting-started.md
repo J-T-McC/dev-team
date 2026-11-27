@@ -27,27 +27,17 @@ Ask Claude, in your own words:
 set up dev-team in this project
 ```
 
-Setup reads the project and your machine first: its commit history, the tools its scripts and CI run, who owns the repository, your Claude plan, and whether Orca is installed. Every question then comes with a suggested answer, so you can accept the suggestions and be done. There are at most three rounds:
+Setup reads the project and your machine before it asks anything: the commit history, the tools your scripts and CI run, who owns the repository, your Claude plan, and whether Orca is installed. Every question comes with a suggested answer, so you can take the suggestions and be done in three rounds or fewer.
 
-1. **The basics.**
-   - **Whose project is it?**
-     - *Your project, shared with the team*: dev-team's rules go in `CLAUDE.md` and its documents are committed with your code.
-     - *Your project, just you for now*: the rules go in your own `CLAUDE.local.md`, and the documents are kept out of the repository, in a history of their own.
-     - *Someone else's*: [guest mode](/dev-team/workspace/#guest-mode).
-   - **How involved do you want to be?** Supervised, standard or autonomous ([autonomy](/dev-team/autonomy/)).
-   - **Commit messages:** the project's own style, quoted from its history, or dev-team's, or your own.
+The first round covers the basics. Whose project is it? Yours and shared with the team puts dev-team's rules in `CLAUDE.md` and commits its documents with your code. Yours alone for now puts the rules in your own `CLAUDE.local.md` and keeps the documents out of the repository, in a history of their own. Someone else's is [guest mode](/dev-team/workspace/#guest-mode). Then how involved you want to be ([autonomy](/dev-team/autonomy/)), and the commit style: the project's own, quoted from its history, dev-team's, or yours. A new project is also asked what you're building.
 
-   A new project is also asked what you're building.
-2. **How the team works,** only where it applies:
-   - **The stack,** for a new project: let the team pick, name it yourself, or decide at the first feature.
-   - **Where the team runs,** when Orca is installed: here in the conversation, or in [Orca](/dev-team/orca/), sized for your plan, with each role made when work first needs it or the whole team made now.
-   - **What the team works on** ([more](/dev-team/autonomy/#what-the-team-works-on)): for a new project, build what you described on its own, start it and wait for you, or wait for your first task; for an existing one, only what you hand it, your tickets as they arrive, or what the product manager picks.
-   - **Extras,** where you can pick several: the [Owner board](/dev-team/board/), [check-ins](/dev-team/checkins/), a [ticket system](/dev-team/tickets/), and giving teammates the plugin.
-3. **For an existing project,** one summary of what it found in your code, ending with: use these, show me the files first, or change something. If the team works only on what you hand it, and there's a ticket system or open pull requests, it also asks which one the team should start on. On an existing project the team never picks its own first task.
+The second round asks only what applies. A new project decides who picks the stack: the team, you, or nobody until the first feature. With Orca installed, you choose where the team runs: here in the conversation, or in [Orca](/dev-team/orca/), sized for your plan, with each role made when work first needs it or the whole team made at once. You choose [what the team works on](/dev-team/autonomy/#what-the-team-works-on). On a new project that's building what you described, starting it and waiting for you, or waiting for your first task. On an existing one it's only what you hand it, your tickets as they arrive, or what the product manager picks. Last come the extras: the [Owner board](/dev-team/board/), [check-ins](/dev-team/checkins/), a [ticket system](/dev-team/tickets/), and giving teammates the plugin.
 
-The documents go in `dev-team/` (`.dev-team/` for a guest), and setup shows where it put everything. Anything still open in the standards isn't homework: the team proposes it when the first piece of work needs it. Setup finishes by starting the team on what you described, if you said to, or by suggesting the first thing to ask it for.
+An existing project then gets one summary of what setup found in your code ([below](#existing-codebases)), ending with: use these, show me the files first, or change something. If the team works only on what you hand it, and you have a ticket system or open pull requests, setup also asks which one to start on. On an existing project the team never picks its own first task.
 
-**Letting the team pick the stack** needs a few facts first: where it runs, where it's hosted, who uses it, what it stores, and what it must use. Setup asks for any your description left out. The lead engineer then chooses current, well-established tools that fit the product, and writes down why in the project's first decision record (ADR-001). Anything that costs money, such as paid hosting, still comes to you.
+The documents go in `dev-team/` (`.dev-team/` for a guest), and setup shows where everything went. A standard it couldn't fill isn't homework: the team proposes it when the first piece of work needs it. Setup ends by starting the team on what you described, if you said to, or by suggesting the first thing to ask for. Nothing from your project is ever sent back to the plugin's repository.
+
+If you let the team pick the stack, it needs a few facts first: where the product runs, where it's hosted, who uses it, what it stores, and what it must use. Setup asks for any your description left out. The lead engineer then chooses current, well-established tools that fit, and writes down why in the project's first decision record (ADR-001). Anything that costs money, such as paid hosting, still comes to you.
 
 Run setup again at any time. On a project that's already set up, it shows the current settings and asks what to change, without copying anything again.
 
@@ -59,7 +49,7 @@ What runs counts, not what's lying around. A linter that the scripts or CI run i
 
 Setup also reads your existing `CLAUDE.md` for rules on the same subjects as dev-team's (commit format, where docs live, review process, branch policy). Your rule wins by default, since it's the one in use, and the summary lists each pair in case you'd rather take dev-team's. Your own lines are never changed without your yes.
 
-Work already under way gets a row in `status.md` at its real phase, marked `pre-adoption`. Your open pull requests are offered as candidates. Gates before that phase are waived; gates after it apply in full. Nothing already shipped is documented after the fact. There are no retro PRDs and no retro ADRs, and the next new piece of work starts with the product-manager like any other.
+Work already under way gets a row in `status.md` at its real phase, marked `pre-adoption`. Your open pull requests are offered as candidates. Gates before that phase are waived; gates after it apply in full. Nothing already shipped is documented after the fact, so there are no retro PRDs or ADRs, and the next new piece of work starts with the product-manager like any other.
 
 ## Start work
 
