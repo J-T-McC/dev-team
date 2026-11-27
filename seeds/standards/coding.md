@@ -1,6 +1,6 @@
 # Coding Standards
 
-> Owned by the Principal Engineer (proposes) and Project Owner (approves). Setup fills what it can from the code; a section marked _open_ is set by the first plan that needs it, which proposes it for the Owner's yes. Until then, follow the code around you and never guess a new convention.
+> Owned by the Principal Engineer (proposes) and the approver dev-team `workflow/handoffs.md` § Autonomy names (the Owner, below autonomous). Setup fills what it can from the code; a section marked _open_ is set by the first plan that needs it, which proposes it. Until then, follow the code around you and never guess a new convention.
 
 ## Commit messages (active)
 
@@ -52,5 +52,5 @@ _Open — error types, propagation, user-facing messages._
 - Docstrings only on public interfaces, one or two lines, in the language's usual format.
 
 ## Dependencies
-- A new dependency is a major decision: an ADR and the Owner's yes (dev-team `workflow/handoffs.md` § Autonomy).
+- A new dependency is a major decision: an ADR, signed as dev-team `workflow/handoffs.md` § Autonomy says.
 - Prefer an established, maintained library over writing your own; prefer what the project already uses over a new one.

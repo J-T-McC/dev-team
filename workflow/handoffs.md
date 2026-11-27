@@ -45,6 +45,7 @@ How involved the Project Owner is, set per project by one line in the project `C
 | Major decision (`workflow/overview.md`) | ✋ Owner | ✋ Owner | ✅ the owning role — PE in an ADR, PM in a PRD revision — the floor excepted |
 | Each completed task | ✋ Owner checks before the next starts | — | — |
 | Requirement question | ✋ Owner (PM drafts the answer) | ✅ PM as proxy | ✅ PM as proxy |
+| A standard or stack row a plan or spec proposes (an _open_ section, or a change) | ✋ Owner | ✋ Owner | ✅ whoever signs that plan or spec |
 | Release (feature → Done) | ✋ Owner | ✋ Owner | ✅ Orchestrator, on *Approve* or *Approve with follow-ups* (follow-ups filed as backlog items) |
 
 - **The floor stays with the Owner at every level**: anything irreversible or destructive (including data-model changes affecting existing data), security-sensitive surfaces (auth, permissions, secrets, PII), anything that spends money, any action leaving the repository (deploy, publish, external messages), and recording the Owner or their surroundings (microphone, camera, screen). Roles use fake devices by default; a command that switches a browser or emulator to the host's microphone counts as recording. A real recording needs the Owner's go for that one recording — what, where, how long — asked through the coordinator. Release means *Done in `<ws>/status.md`*, never a deploy. Ticket-system writes that `<ws>/standards/tickets.md` allows are pre-authorized by that config (`workflow/tickets.md`), and Owner-board writes by turning the board on (`workflow/board.md`).

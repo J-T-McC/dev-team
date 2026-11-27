@@ -8,7 +8,7 @@
 <The unknown that blocks a decision, and which decision it blocks.>
 
 ## Findings
-<What was learned, with evidence: files, docs, experiments, people asked. Facts first, opinions marked.>
+<What was learned, with evidence: files, docs, experiments, people asked. Facts first, opinions marked. Several experiments or probes: each keeps its full findings in its own file, linked here with a summary of a few lines, so this file stays under the size limit.>
 
 ## Risk *(risk-gated work only — delete otherwise)*
 <What changes and where it is stored or referenced; who gains or loses access or data; what existing users, connections, or data break; how to roll back. Every claim cites the code.>

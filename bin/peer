@@ -463,6 +463,36 @@ def cleanup(home, h, term):
         print(f"{home}: cleared {path}")
 
 
+DOC_ROLES = ("product-manager", "designer", "principal-engineer")
+
+
+def refresh_worktree(home, path):
+    """Before a document role's task, its own worktree (named after the home, as Team setup makes them) moves to the
+    default branch's latest commit, so the new session loads the current CLAUDE.md and reads current code. Document
+    roles never branch (workflow/orca-recommended.md § Roles and git). Left alone with uncommitted changes, or with
+    commits that are on no remote branch and not in the default branch."""
+    if Path(path).name != home or not Path(path).is_dir():
+        return None
+    g = lambda *a: git("-C", path, *a)
+    if subprocess.run(["git", "-C", path, "status", "--porcelain"], capture_output=True, text=True).stdout.strip():
+        return f"{home}'s worktree has uncommitted changes, so it stays at its commit"
+    g("fetch", "-q", "origin")
+    base = g("rev-parse", "--abbrev-ref", "origin/HEAD") or \
+        next((b for b in ("origin/main", "origin/master") if g("rev-parse", "-q", "--verify", b)), "") or \
+        git("-C", str(ROOT), "symbolic-ref", "--short", "HEAD")
+    if not base:
+        return None
+    head, tip = g("rev-parse", "HEAD"), g("rev-parse", base)
+    if not tip or head == tip:
+        return None
+    ancestor = subprocess.run(["git", "-C", path, "merge-base", "--is-ancestor", "HEAD", base]).returncode == 0
+    if not ancestor and not g("branch", "-r", "--contains", "HEAD"):
+        return f"{home}'s worktree has commits that are on no remote branch, so it stays at its commit"
+    if subprocess.run(["git", "-C", path, "checkout", "-q", "--detach", base], capture_output=True).returncode:
+        return f"{home}'s worktree could not move to {base}"
+    return f"{home}'s worktree moved to the latest {base} ({tip[:7]})"
+
+
 def close_session(home, h):
     """End the peer's session, close its terminal, and clean up after it; the worktree stays.
     None when done, else why not. The home's terminal is cleared once it is gone."""
@@ -637,7 +667,9 @@ def cmd_dispatch(argv):
         if why:
             save(reg)
             die(why)
-        for n in notes:
+        if role in DOC_ROLES and not env and h and h.get("worktree") and wt in (None, "path:" + h["worktree"]):
+            notes.append(refresh_worktree(home, h["worktree"]))
+        for n in filter(None, notes):
             print(n)
         if env:
             term, path, version = None, None, orca_version(env)

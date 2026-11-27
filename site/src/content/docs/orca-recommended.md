@@ -51,11 +51,11 @@ Most of the setup is how the plugin already works: a fresh session for every tas
 |---|---|---|
 | Homes | product, designer, architect, a reviewer, and developers the coordinator adds as needed | sized by plan (above); a new home needs your yes |
 | Worktrees | one per feature, and one per parallel stream | one per home, named after it |
-| Branches | parallel streams merge into a feature branch | a new branch from the default branch for every task, one PR per ticket to start |
+| Branches | parallel streams merge into a feature branch | a new branch from the default branch for every task, one PR per ticket to start; the product manager, designer and lead engineer never branch, and their worktrees move to the latest default branch before each task |
 | Reviews | in the feature's worktree | read-only: the reviewer fetches and diffs, and tests the reviewed commit in its own worktree |
 | PRs | no rule | drafts while building, ready only after the reviewer approves, and peers never merge |
 | Tests | the full suite for every task | only what changed while working, related suites at the end, the full suite when the coordinator says |
-| Outside services | blocked or capped for each task | tests never call paid services, new services and installs need your yes, and production is read only when an action depends on it |
+| Outside services | blocked or capped for each task | tests never call paid services, new services and installs need your yes (what the stack names is already approved), and production is read only when an action depends on it |
 | Workspace | committed with the code | its own repository, pushed so other machines get the specs |
 
 The test rules are rules, not a lock. Nothing blocks a full run; the coordinator's spec says when one happens.

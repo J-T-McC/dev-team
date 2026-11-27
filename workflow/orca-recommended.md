@@ -28,7 +28,7 @@ A preset for the Orca runtime (`workflow/orca.md`) that held up through weeks of
 
 ## Roles and git
 
-- **Document roles never branch** (Team setup § Git). Their output is specs in the workspace; they need the code only to read, at the default branch's latest commit. The workspace is reached from any worktree by its absolute path in the main checkout, committed or not, so every role reads and writes one live copy: a committed workspace's copy inside each worktree is only that branch's snapshot, and specs written there would split across worktrees (`workflow/workspace.md` § Guest mode).
+- **Document roles never branch** (Team setup § Git). Their output is specs in the workspace; they need the code only to read, at the default branch's latest commit. `peer dispatch` moves a document role's own worktree there before each task, so its new session also loads the current `CLAUDE.md`; a worktree with uncommitted changes, or commits on no remote branch, stays put and the dispatch says so. The workspace is reached from any worktree by its absolute path in the main checkout, committed or not, so every role reads and writes one live copy: a committed workspace's copy inside each worktree is only that branch's snapshot, and specs written there would split across worktrees (`workflow/workspace.md` § Guest mode).
 - **Each developer starts each task on a new branch from the default branch, and owns its branches.** Two peers on one branch overwrite each other's pushes, and a branch per task keeps each PR to one change. Streams no longer merge into a shared feature branch (`workflow/orca.md` § Parallel streams): each task is its own PR.
 - **Reviews are read-only.** A reviewer that checks out a developer's branch can leave changes on it or move it under the developer. Fetch and diff, and test the reviewed commit, detached, in the reviewer's own worktree. That a reviewer never reviews a change it implemented is a plugin rule (`workflow/orca.md` § Peer lifetime).
 - **Peers never merge a PR.** The merge puts a change on the branch everyone builds on, so it stays with the Owner.
@@ -55,7 +55,7 @@ A preset for the Orca runtime (`workflow/orca.md`) that held up through weeks of
 The Owner fills each `⟨…⟩` in Team setup § Outside services. The plugin already blocks or caps third-party calls and has tasks report their counts (`workflow/handoffs.md` § Outside services), and has every role close what it starts (§ Assume mistakes). The preset adds:
 
 - **Automated tests never call paid services,** whatever the cap: they run often and unattended.
-- **New services and installs need the Owner's yes,** except reinstalling what the lockfiles already pin. Each one is a cost, an account, or new code from outside that the Owner should choose.
+- **New services and installs need the Owner's yes,** except reinstalling what the lockfiles already pin, or, before a lockfile exists, installing what `<ws>/stack/stack.md` names: the stack was approved already. Each one is a cost, an account, or new code from outside that the Owner should choose.
 - **Production is queried only when an action depends on the result.** Every other read adds load to production and may touch real people's data.
 
 ## Owner attention, friction, writing

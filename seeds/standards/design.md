@@ -1,6 +1,6 @@
 # Design Standards
 
-> Owned by the Designer (proposes) and Project Owner (approves). A section marked _open_ is set by the first design spec that needs it, which proposes it for the Owner's yes.
+> Owned by the Designer (proposes) and the approver dev-team `workflow/handoffs.md` § Autonomy names (the Owner, below autonomous). A section marked _open_ is set by the first design spec that needs it, which proposes it.
 
 ## Requirements (active)
 - Every UI-bearing user story maps to a flow in the design spec (plugin `templates/design-spec.md`); states (empty, loading, error, success) are designed wherever they occur.
