@@ -33,7 +33,7 @@ Roles that work one after another share the feature's worktree, and only one pee
 
 ## A fresh session per task
 
-Every task starts in a new session, so old context can't mislead it, and new MCP servers, settings and plugin updates load. Nothing is lost. Specs are self-contained and the work lives in the workspace. One measured peer cost about 35k tokens to start, mostly the project's own context ([what it costs](/dev-team/costs/)).
+Every task starts in a new session, so old context can't mislead it, and new MCP servers, settings and plugin updates load. Each home's worktree has its own plugin install, so `peer dispatch` moves it to the main checkout's version first. Nothing is lost. Specs are self-contained and the work lives in the workspace. One measured peer cost about 35k tokens to start, mostly the project's own context ([what it costs](/dev-team/costs/)).
 
 Closing a session stops the MCP servers it left running and names anything else, such as a dev server, for you to close. A machine-wide service it happened to start, like Docker Desktop, keeps running. `Session caches:` on the Runtime line clears per-session caches as well. `peer sleep <home>` (or `--idle`) closes a session and keeps its worktree for the next dispatch.
 

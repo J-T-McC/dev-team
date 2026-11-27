@@ -72,6 +72,10 @@ runtime "Team model: opus. Fallback model: sonnet. Advisor: fable."
 # dispatch: refusals
 run dispatch dt-dev-1 senior-developer "Implement T02"
 ok "refuses a home still working"          '[ $RC = 2 ] && [[ $OUT == *"still working"* ]] && ! called worker-start'
+state ready_fail true
+run list
+ok "a dispatch that failed at startup isn't working" '[[ $(grep "^dt-dev-1 " <<< "$OUT") != *working* ]]'
+state ready_fail false
 state stage '"settled"'
 run dispatch dt-dev-1 reviewer "Review"
 ok "refuses a role the home does not hold" '[ $RC = 2 ] && [[ $OUT == *"is a senior-developer home"* ]]'
@@ -262,6 +266,12 @@ ok "a keep stuck at readiness says why"    '[ $RC = 1 ] && [[ $OUT == *"may pred
 state start_fail false; state orphan_on_close true
 run sleep dt-dev-1
 ok "an orphaned terminal counts as closed" '[[ $OUT == *"dt-dev-1: asleep"* ]] && [[ $OUT != *"did not close"* ]] && [ "$(home dt-dev-1 terminal)" = None ]'
+
+state orphan_on_close false; state close_lag 2
+setreg 'r["homes"]["dt-dev-1"].update(terminal="term_x", asleep=False)'; fake 's["terminals"]["term_x"]={"open": True, "path": "/wt/x"}'
+run sleep dt-dev-1
+ok "a terminal slow to close is waited for"  '[[ $OUT == *"dt-dev-1: asleep"* ]] && [[ $OUT != *"did not close"* ]]'
+state close_lag 0
 state orphan_on_close false
 run dispatch dt-dev-1 senior-developer "T04"
 state stage '"settled"'; fake "s['orphaned'] = ['$(home dt-dev-1 terminal)']"
@@ -463,6 +473,25 @@ rm "$T/p5-wt/dt-product/notes.md" && git -C "$T/p5-wt/dt-product" -c user.name=t
 setreg 'r["homes"]["dt-product"].update(terminal=None, asleep=True, dispatch=None)'
 run dispatch dt-product product-manager "Revise the PRD again"
 ok "a commit on no remote branch: it stays"              '[ $RC = 0 ] && [ "$(at dt-product)" != "$(tip)" ] && [[ $OUT == *"on no remote branch"* ]]'
+
+# a reviewer's worktree also starts each task on the latest main (a detached PR head carries its older CLAUDE.md)
+git worktree add -q --detach "$T/p5-wt/dt-reviewer" HEAD~1
+setreg 'r["homes"]["dt-reviewer"] = {"role": "reviewer", "worktree": "'"$T/p5-wt/dt-reviewer"'", "terminal": None, "asleep": True, "env": None, "name": "Uma"}'
+run dispatch dt-reviewer reviewer "Review PR #3"
+ok "a reviewer's worktree moves to the latest main"     '[ $RC = 0 ] && [ "$(at dt-reviewer)" = "$(tip)" ]'
+
+# a home's own plugin install record follows the main checkout's (Claude Code keeps one per path)
+mkdir -p "$T/claude/plugins" "$T/cache/new" "$T/cache/old"
+rec() { printf '{"version": 2, "plugins": {"dev-team@dev-team": [{"scope": "local", "projectPath": "%s", "installPath": "%s/cache/new", "version": "new1"}, {"scope": "local", "projectPath": "%s", "installPath": "%s/cache/old", "version": "old1"}], "other@x": [{"scope": "local", "projectPath": "%s", "installPath": "/o", "version": "o"}]}}\n' "$T/p5" "$T" "$T/p5-wt/dt-dev-1" "$T" "$T/p5-wt/dt-dev-1" > "$T/claude/plugins/installed_plugins.json"; }
+inst() { python3 -c 'import json,sys;d=json.load(open(sys.argv[1]))["plugins"];print(d[sys.argv[2]][int(sys.argv[3])]["version"])' "$T/claude/plugins/installed_plugins.json" "$1" "$2"; }
+rec; setreg 'r["homes"]["dt-dev-1"].update(terminal=None, asleep=True, dispatch=None)'
+run dispatch dt-dev-1 senior-developer "Implement T02"
+ok "a home on an old plugin moves to the main checkout's" '[ $RC = 0 ] && [ "$(inst dev-team@dev-team 1)" = new1 ] && [[ $OUT == *"plugin moved from old1 to"*"new1"* ]]'
+ok "other plugins' records are left alone"               '[ "$(inst other@x 0)" = o ]'
+setreg 'r["homes"]["dt-dev-1"].update(terminal=None, asleep=True, dispatch=None)'
+run dispatch dt-dev-1 senior-developer "Implement T03"
+ok "a home already current: nothing to say"              '[ $RC = 0 ] && [[ $OUT != *"plugin moved"* ]]'
+rm -rf "$T/claude/plugins"
 
 mkdir -p "$T/p3/docs" && cd "$T/p3" && git init -q && echo x > docs/status.md
 printf -- '- **Owner board:** https://claude.ai/artifact/x\n' > CLAUDE.md
