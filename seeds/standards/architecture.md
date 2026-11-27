@@ -1,6 +1,6 @@
 # Architecture Standards
 
-> Owned by the Principal Engineer (proposes) and Project Owner (approves). Setup fills what it can from the code; a section marked _open_ is set by the first plan that needs it, which proposes it for the Owner's yes.
+> Owned by the Principal Engineer (proposes) and the approver dev-team `workflow/handoffs.md` § Autonomy names (the Owner, below autonomous). Setup fills what it can from the code; a section marked _open_ is set by the first plan that needs it, which proposes it.
 
 ## Requirements (active)
 - Significant, hard-to-reverse decisions require an ADR (plugin `templates/adr.md`).

@@ -26,7 +26,7 @@ The goal is the most maintainable, scalable and hostable stack for this product,
 - **No slow interpreted backends** (PHP, Python, Ruby), unless the Owner wants to read the code and knows the language, or the product needs that ecosystem (machine learning, data work).
 - **Don't reinvent the wheel.** Established frameworks and libraries over custom code; managed services over running your own, where they fit the hosting answer.
 - **Current.** Every choice is maintained today, and its version is the latest stable release, checked at pick time from its registry or official site, never from memory.
-- **Local development is part of the stack:** how to install, run and test it on the Owner's machine. Use what `setup-detect` found installed when it fits; otherwise name what the first task installs.
+- **Local development is part of the stack:** how to install, run and test it on the Owner's machine. Check what is installed, and at what version, for every tool the stack names, test tools included (a browser for UI tests, for one), and record each gap in the row: use what `setup-detect` found when it fits; otherwise name what the first task installs or updates.
 
 ## Recording it
 

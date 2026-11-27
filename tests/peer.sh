@@ -440,6 +440,30 @@ printf -- '- **Runtime: Orca.** Roles run as Orca peers.\n' > CLAUDE.md
 run team --create
 ok "no Homes rule: team --create refuses"  '[ $RC = 2 ] && [[ $OUT == *"no Team setup"* ]]'
 
+# a document role's own worktree moves to the latest default branch before each task (orca-recommended § Roles and git)
+G="git -c user.name=t -c user.email=t@t"
+mkdir -p "$T/p5" && cd "$T/p5" && git init -q -b main && $G commit -q --allow-empty -m one
+git init -q --bare "$T/p5-origin.git" && git remote add origin "$T/p5-origin.git" && git push -q -u origin main 2>/dev/null
+git remote set-head origin main
+git worktree add -q --detach "$T/p5-wt/dt-product" && git worktree add -q --detach "$T/p5-wt/dt-dev-1"
+printf -- '- **Runtime: Orca.** Roles run as Orca peers. Team model: opus. Fallback model: none. Advisor: none.\n' > CLAUDE.md
+mkdir -p .git/dev-team && printf '{"run": "run_0a1b2c", "homes": {"dt-product": {"role": "product-manager", "worktree": "%s", "terminal": null, "asleep": true, "env": null, "name": "Ada"}, "dt-dev-1": {"role": "senior-developer", "worktree": "%s", "terminal": null, "asleep": true, "env": null, "name": "Bob"}}}\n' "$T/p5-wt/dt-product" "$T/p5-wt/dt-dev-1" > .git/dev-team/peers.json
+$G commit -q --allow-empty -m two && git push -q origin main 2>/dev/null
+tip() { git rev-parse --short origin/main; }
+at()  { git -C "$T/p5-wt/$1" rev-parse --short HEAD; }
+run dispatch dt-product product-manager "Write the PRD"
+ok "a document role's worktree moves to the latest main" '[ $RC = 0 ] && [ "$(at dt-product)" = "$(tip)" ] && [[ $OUT == *"moved to the latest origin/main"* ]]'
+run dispatch dt-dev-1 senior-developer "Implement T01"
+ok "a developer's worktree is left where it is"           '[ $RC = 0 ] && [ "$(at dt-dev-1)" != "$(tip)" ]'
+setreg 'r["homes"]["dt-product"].update(terminal=None, asleep=True, dispatch=None)'
+$G commit -q --allow-empty -m three && git push -q origin main 2>/dev/null && touch "$T/p5-wt/dt-product/notes.md"
+run dispatch dt-product product-manager "Revise the PRD"
+ok "uncommitted changes: it stays, and says why"         '[ $RC = 0 ] && [ "$(at dt-product)" != "$(tip)" ] && [[ $OUT == *"uncommitted changes"* ]]'
+rm "$T/p5-wt/dt-product/notes.md" && git -C "$T/p5-wt/dt-product" -c user.name=t -c user.email=t@t commit -q --allow-empty -m local
+setreg 'r["homes"]["dt-product"].update(terminal=None, asleep=True, dispatch=None)'
+run dispatch dt-product product-manager "Revise the PRD again"
+ok "a commit on no remote branch: it stays"              '[ $RC = 0 ] && [ "$(at dt-product)" != "$(tip)" ] && [[ $OUT == *"on no remote branch"* ]]'
+
 mkdir -p "$T/p3/docs" && cd "$T/p3" && git init -q && echo x > docs/status.md
 printf -- '- **Owner board:** https://claude.ai/artifact/x\n' > CLAUDE.md
 OUT=$(echo '{}' | CLAUDE_PROJECT_DIR="$T/p3" CLAUDE_PLUGIN_ROOT="$REPO" "$REPO/hooks/coordinator.sh" stop)

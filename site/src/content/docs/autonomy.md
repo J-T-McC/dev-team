@@ -19,6 +19,7 @@ No line means `standard`. You can change it whenever you like. A change applies 
 | Major decision | ✋ you | ✋ you | ✅ the role that owns it, except the floor |
 | Each finished task | ✋ you, before the next starts | | |
 | Requirement question | ✋ you (the product-manager drafts the answer) | ✅ product-manager | ✅ product-manager |
+| A standard or stack choice a plan or design proposes | ✋ you | ✋ you | ✅ whoever signs that plan or design |
 | Release | ✋ you | ✋ you | ✅ orchestrator, on an approving review |
 
 ## The floor

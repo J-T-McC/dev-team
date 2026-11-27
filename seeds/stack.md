@@ -1,6 +1,6 @@
 # Technology Stack
 
-> The Principal Engineer designs within this stack; changes require an Owner-approved ADR. Setup fills it from the code (existing projects), from the Owner, or by the team when the Owner lets it pick (dev-team `workflow/stack-pick.md`). A row marked _open_ is chosen by the first plan that needs it, which proposes it for the Owner's yes; never guess one.
+> The Principal Engineer designs within this stack; changes require an ADR, approved as dev-team `workflow/handoffs.md` § Autonomy says. Setup fills it from the code (existing projects), from the Owner, or by the team when the Owner lets it pick (dev-team `workflow/stack-pick.md`). A row marked _open_ is chosen by the first plan that needs it, which proposes it for the approver § Autonomy names; never guess one.
 
 **Product:** _open — what it is, who it's for, where it runs._
 
