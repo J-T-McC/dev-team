@@ -3,13 +3,13 @@ title: Workspace
 description: Where the team keeps its documents, how they're named, and guest mode for projects you don't own.
 ---
 
-Everything the team writes goes in one workspace inside your project. Each feature gets one folder holding everything it produces. Shared material (status, ADRs, backlog, fixes, standards, stack) sits at the workspace root.
+Everything the team writes goes in one workspace inside your project. Each feature gets its own folder. Shared material sits at the root.
 
 ```
 dev-team/                 workspace root
-  status.md               work in flight: phase, role, blockers, approvals, path
+  status.md               work in flight: phase, role, blockers, approvals
   status-done.md          finished work, newest first
-  triage.md               requests only a person can do, with the reason
+  triage.md               requests only a person can do
   friction-log.md         what slowed the team down
   architecture/           ADRs: adr-001-session-storage.md
   backlog/                index.md, archive.md, B001-bulk-import.md
@@ -22,7 +22,7 @@ dev-team/                 workspace root
 
 ## The Workspace line
 
-One line in the dev-team section of `CLAUDE.md` (or `CLAUDE.local.md`, below) sets the layout:
+One line in the dev-team section sets the layout:
 
 ```
 - **Workspace:** `dev-team` · features `dev-team/features` · folders `slug` · committed
@@ -32,44 +32,28 @@ One line in the dev-team section of `CLAUDE.md` (or `CLAUDE.local.md`, below) se
 |---|---|---|
 | root (first value) | any folder | `dev-team` (guest mode: `.dev-team`) |
 | `features` | any folder, inside the root or not | `<root>/features` |
-| `folders` | `slug`, `F###-slug`, `<ticket>-slug` | `slug` |
+| `folders` | `slug` for small projects, `F###-slug` for large ones, `<ticket>-slug` for work from tickets | `slug` |
 | committed | `committed`, `not committed` | `committed` |
 | `just me` | there or not | not there |
 
-A project with no Workspace line at all uses `docs`, as projects did before `dev-team/` became the default, so older projects keep working without a move.
-
-Use `slug` on small projects, `F###-slug` on large ones with many features, and `<ticket>-slug` when work comes from tickets. Change a setting only together with a move: `/dev-team:sync` moves the files.
+A project with no Workspace line uses `docs`, so older projects keep working. Change a setting only together with a move. `/dev-team:sync` moves the files, and also moves an old type-first layout (`docs/product/`, `docs/plans/`) into feature folders.
 
 ## Whose project
 
-Setup's first question decides where the dev-team section goes and whether the workspace is committed:
-
-| Answer | Section | Workspace | The line ends with |
-|---|---|---|---|
-| Your project, shared | `CLAUDE.md` | committed with your code | `· committed` |
-| Your project, just you for now | `CLAUDE.local.md` | kept out of the repository, in its own history | `· not committed · just me` |
-| Someone else's | `CLAUDE.local.md` | kept out of the repository, in its own history | `· not committed` |
-
-"Just you" works like guest mode for where things live, but the conventions are yours to choose. Nobody else has the workspace, so code, commits and PRs never link into it. When you're ready, ask to share dev-team with the team: the section moves to `CLAUDE.md` and the workspace is committed with your code.
+Setup's first question fills the line in. For a shared project of yours, the section goes in `CLAUDE.md` and the workspace is committed with your code. For one that's yours alone for now (`just me`) or someone else's ([guest mode](#guest-mode)), it goes in `CLAUDE.local.md`, and the workspace keeps its own history outside the repository. With "just me" the conventions are yours. When you want the team in, ask to share dev-team and the workspace moves into your code.
 
 ## Small files on purpose
 
-Agents re-read the live files constantly, so those stay small. At Done, a feature's row moves from `status.md` to the top of `status-done.md`, and finished backlog items move to `backlog/archive.md`. The archives cost nothing until someone opens them.
+Agents re-read the live files all the time, so finished work moves out to `status-done.md` and `backlog/archive.md`. A live brief, plan or design stays under about 25 KB (`standards/documentation.md` § Size and reading). Past that, a hook warns the agent. Edits replace old text instead of piling up below it, because git keeps the history.
 
-A live brief, plan or design stays under about 25 KB (`standards/documentation.md` § Size and reading). A change replaces the old text instead of adding an amendment below it, since git keeps the history, and a document that still outgrows the limit is split into part files. When an edit takes a feature document past the limit, a hook tells the agent that made it. Agents read these documents by section: the headings first, then only what the task needs.
-
-Names sort and never collide: three-digit backlog items and ADRs (`B001`, `adr-001`), two-digit tasks (`T01`), three-digit questions (`q001`), and fixes that start with their date. A feature's handoff lists related features by folder name and the ADRs it made or follows, so agents follow links instead of searching. If the features folder is shared with other people's folders, the team writes only in folders it created.
+In a features folder shared with other people, the team writes only in folders it created.
 
 ## Guest mode
 
-Guest mode is for a project dev-team doesn't own, where the team doesn't use it and mustn't see it.
+This is for a project you don't own, where the team doesn't use dev-team and mustn't see it. The section goes in `CLAUDE.local.md` and the plugin is installed at local scope. Their `CLAUDE.md`, `.gitignore` and `.claude/settings.json` are never edited. By default the workspace is `.dev-team/`, a hidden folder their agents' searches skip.
 
-The dev-team section goes in `CLAUDE.local.md`, which is never committed, and the plugin is installed at local scope. Their `CLAUDE.md`, `.gitignore` and `.claude/settings.json` are never edited. The workspace defaults to `.dev-team/`, a hidden folder their own agents' searches skip.
+Their conventions win, from commits to test commands, and nothing the team writes in their repository or tracker mentions dev-team.
 
-Their conventions win for commits, branches, PRs, code style, reviews and test commands. The workspace's standards record only what their repository doesn't already document. Code, comments, commit messages, PRs and ticket comments never mention dev-team, its roles or its paths, since teammates couldn't follow those links anyway.
+The workspace is listed in `.git/info/exclude` and is a git repository of its own, which a Stop hook commits whenever it changes. Give it a remote (`git -C .dev-team push -u origin HEAD`) and the hook pushes too, so your other machines can pull the specs. Keep feature folders inside the root, or they get no history.
 
-The workspace is never committed with their code. It's listed in `.git/info/exclude` and becomes its own git repository, so its history is kept, and a Stop hook commits it whenever it changes. If Claude Code's sandbox stops setup from creating that repository, setup says so and gives you the command to run. Give that repository a remote (`git -C .dev-team push -u origin HEAD`) and the hook pushes it too, so your other machines can pull the specs. Keep feature folders inside the root in that case: folders outside it are excluded too, but get no history. New git worktrees don't contain an uncommitted workspace, so peers working in one use the main checkout's workspace by its full path.
-
-## Moving an older project
-
-Projects set up before feature folders use a type-first layout (`docs/product/`, `docs/plans/` and so on). `/dev-team:sync` spots it and runs `migrate-layout`: a dry run first, then, once you approve, it moves the files with `git mv`, rewrites links, names the feature folders, and splits finished rows into `status-done.md`.
+Full rules: [workflow/workspace.md](https://github.com/J-T-McC/dev-team/blob/main/workflow/workspace.md).
