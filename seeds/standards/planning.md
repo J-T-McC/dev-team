@@ -27,7 +27,7 @@ Rules:
 ## Steering (active)
 How the Product Manager picks the next item when the project's Next work is `steered` (dev-team `workflow/handoffs.md` § Next work). Tune the mix to the project.
 - **Bugs that hurt users first,** then tickets from the work query (the Owner's priorities) ahead of backlog items of the same priority.
-- **About one cleanup item for every two features:** enough that the code doesn't rot, not so much that nothing new ships. A debt item blocking the next feature goes first.
+- **About one cleanup item for every two features:** enough that the code doesn't rot, not so much that nothing new ships. A debt item blocking the next feature goes first. The count starts with the first feature on the default branch: before there's code there's nothing to clean, and a cleanup item is never invented to meet the mix.
 - **Small before large** at the same priority, so something finishes every day or so.
 - Each pick gets one line of why, in the PM's report.
 

@@ -61,7 +61,7 @@ A home can run on a connected Orca server with `peer dispatch <home> <role> <spe
 
 ## Worktree cards and the browser
 
-`Worktree cards: on` mirrors `status.md` onto Orca's worktree cards and flags a card when you're needed. It's a lighter view than the [Owner board](/dev-team/board/), and the two can run together. UI checks and mockup snapshots use Orca's built-in browser instead of Playwright.
+`Worktree cards: on` mirrors `status.md` onto Orca's worktree cards and flags a card when you're needed. It's a lighter view than the [Owner board](/dev-team/board/), and the two can run together. UI checks and mockup snapshots use Orca's built-in browser instead of Playwright, except keyboard and focus checks: its page never has window focus, so those still run in Playwright.
 
 [Check-ins](/dev-team/checkins/) are the other Orca extra: scheduled runs that keep work moving.
 
