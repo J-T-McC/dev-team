@@ -18,10 +18,18 @@ Work that is real but not now. Canonical structure — one index, one file per i
 
 Rules:
 - **Any role files** an item (feature idea, deferred scope, tech debt, known bug not being fixed now); the **Product Manager owns the index** — priority, status, and promotion.
+- **The index's row order is the rank,** top first; re-ranking moves rows there, never notes in item files. An item waiting on the Owner (the floor, `workflow/handoffs.md` § Autonomy) sits last, marked *parked*, so nothing queues behind it.
 - One item per row and per file; an item too large to state in a few lines is a feature — file it as a feature item and let it become a PRD.
-- Promotion is the only exit into work: `feature` → PM writes a PRD (pipeline); `bug`/`debt` → Owner delegates to the Senior Developer (fast path). Record the destination in the promotion log and flip Status.
+- Promotion is the only exit into work: `feature` → PM writes a PRD (pipeline); `bug`/`debt` → Owner delegates to the Senior Developer (fast path); with Next work `steered`, the PM promotes them itself. Record the destination in the promotion log and flip Status.
 - The backlog is not a queue or a status board: `<ws>/status.md` tracks work in flight, the backlog tracks work not started. An item leaves the backlog the moment it enters either path.
 - Not in the backlog: review follow-ups (they stay in the review record until the Owner acts on them), and open questions (they are question docs).
+
+## Steering (active)
+How the Product Manager picks the next item when the project's Next work is `steered` (dev-team `workflow/handoffs.md` § Next work). Tune the mix to the project.
+- **Bugs that hurt users first,** then tickets from the work query (the Owner's priorities) ahead of backlog items of the same priority.
+- **About one cleanup item for every two features:** enough that the code doesn't rot, not so much that nothing new ships. A debt item blocking the next feature goes first.
+- **Small before large** at the same priority, so something finishes every day or so.
+- Each pick gets one line of why, in the PM's report.
 
 ## Agent limits (active)
 What agents in this project cannot do; the Product Manager checks every request against it before triage, and any role that hits one mid-work stops and marks the feature blocked on the Owner.

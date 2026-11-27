@@ -52,8 +52,17 @@ Only the questions that apply; skip the round when none do.
   - **I'll name it:** say the languages and frameworks; suggest some from what `machine.tools` shows installed, and, with the Owner's yes, from their other projects (`setup-detect --other-projects <their projects folder>`).
   - **Decide at the first feature:** the team proposes a stack with the first plan, for your yes.
 
-  **Let the team pick** needs the facts in `${CLAUDE_PLUGIN_ROOT}/workflow/stack-pick.md` § Facts first. Ask for each one the description left out, each with a suggested answer and room for their own, and pick nothing until they're answered.
-- **Where the team runs** (only when `machine.tools` has `orca`, or `claude.in_orca` is true): recommend `suggest.runtime`, with its reason. The answers: **here, in this conversation** (one role at a time), or **Orca, sized for your plan** (each role its own session, side by side; sizes in `${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md` § Team shape), or Orca at another size.
+  **Let the team pick** needs the facts in `${CLAUDE_PLUGIN_ROOT}/workflow/stack-pick.md` § Facts first. Ask for each one the description left out, each with a suggested answer and ending with its own "or your own answer" (once at the top is not enough), and pick nothing until they're answered.
+- **Where the team runs** (only when `machine.tools` has `orca`, or `claude.in_orca` is true): recommend `suggest.runtime`, with its reason. The answers: **here, in this conversation** (one role at a time); **Orca, sized for your plan** (each role its own session, side by side; sizes in `${CLAUDE_PLUGIN_ROOT}/workflow/orca-recommended.md` § Team shape), each role made the first time work needs it; or **Orca, with the whole team made now**, so every role, each with a name, is in Orca's sidebar from the start, with no session or usage until its first task. Another size is their own answer.
+- **What the team works on** (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Next work). How often it comes back to you follows the answer on how involved you want to be; say so.
+  - New projects:
+    - **Build it for me (Recommended):** the product manager splits what you described into features, and the team builds them one after another until it's done, then tells you what it built and what it would do next.
+    - **Start it, then wait for me:** the first feature only; you say what comes next.
+    - **I'll give the team its first task.**
+  - Existing projects:
+    - **Only what I hand it (Recommended).**
+    - **Work through our tickets** (only when `tickets` found one, or the Owner picks a ticket system in this round): the team takes the tickets your search returns as they arrive, in your ticket system's order, and only those.
+    - **Let the product manager steer:** it picks what's next from your tickets and the team's backlog, balancing new features against cleanup and bugs, like a product manager on a real team.
 - **Anything else to set up now?** Several answers allowed. Offer the board and check-ins only when `suggest.extras.available` lists them, and say in one line why one can't be offered yet:
   - **A live board of what needs you** (the Owner board): one page showing what's waiting on you, who's working on what, and the work in flight.
   - **Scheduled check-ins:** Orca checks on the team on a timer, for new tickets and stalled work.
@@ -65,6 +74,7 @@ Only the questions that apply; skip the round when none do.
 1. **The dev-team section:** `${CLAUDE_PLUGIN_ROOT}/seeds/CLAUDE.project.md`, with:
    - **The Workspace line** for the answer to question 1 (`workflow/workspace.md` § Whose project). Root `dev-team`, guest `.dev-team`; if `dev_team_dir` is `taken`, use `.dev-team` and say so. Features `<root>/features`, folders `slug`.
    - **Autonomy** set to the answer.
+   - **Next work:** build it for me → `product`; work through our tickets → `tickets`; let the product manager steer → `steered`; any other answer → `owner`. With `tickets` or `steered` and a ticket system, set one up (`commands/tickets.md`) if there isn't one, and under Orca set up check-ins with `groom` on, hourly, so new tickets are noticed (`commands/checkins.md`).
    - **Commits:** dev-team's style keeps the seed's line. The project's style: `- Commits: follow this project's style, e.g. \`<commits.example>\``. Their own: their words. Guest: `- Commits: follow this repository's conventions`.
    - **Shared:** append it to `CLAUDE.md`, or create the file. Never change the project's own lines; rules on the same subject follow `workflow/adoption.md` § Before writing anything. **Just me, guest:** write it to `CLAUDE.local.md`, never `CLAUDE.md`. If `claude.install_scope` has no `local`, tell them to install the plugin for this project only: `/plugin install dev-team@dev-team` and pick "Install for you, in this repo only (local scope)", or `claude plugin install dev-team@dev-team --scope local` from a shell in the project folder.
 2. **Just me, guest: the workspace's own history.** Three separate commands, so one that is blocked doesn't stop the others: add the root and, unless `git check-ignore -q CLAUDE.local.md` says it's ignored already, `CLAUDE.local.md` to `.git/info/exclude` (never `.gitignore`), with `printf`; `mkdir -p <root>`; then `git -C <root> init -q` (for example `git -C .dev-team init -q`). If a step fails, as `git init` does where a sandbox blocks writing a new repository, say so plainly and give the Owner the exact commands to run themselves. From then on the plugin's Stop hook commits the workspace whenever it changes.
@@ -73,7 +83,7 @@ Only the questions that apply; skip the round when none do.
    - **The team picks:** invoke the `dev-team:principal-engineer` skill to pick and record it (`workflow/stack-pick.md`).
    - **Named:** fill the rows they named, each checked as current (`workflow/stack-pick.md` § Defaults); the rest stay _open_.
    - **Later:** the rows stay _open_.
-5. **Where the team runs, and extras:** follow each chosen command's file. Orca: `${CLAUDE_PLUGIN_ROOT}/commands/orca.md`, `recommended` at the chosen size. The board: `commands/board.md`. Check-ins: `commands/checkins.md`. Tickets: `commands/tickets.md`. Sharing the plugin: add this to `.claude/settings.json`:
+5. **Where the team runs, and extras:** follow each chosen command's file. Orca: `${CLAUDE_PLUGIN_ROOT}/commands/orca.md`, `recommended` at the chosen size, with the answer on when to make the team. The board: `commands/board.md`. Check-ins: `commands/checkins.md`. Tickets: `commands/tickets.md`. Sharing the plugin: add this to `.claude/settings.json`:
 
 ```json
 {
@@ -89,7 +99,9 @@ Only the questions that apply; skip the round when none do.
 1. **Harvest:** invoke the `dev-team:principal-engineer` skill's adoption harvest to write `<ws>/stack/stack.md`, `<ws>/standards/coding.md` and `<ws>/standards/testing.md` (`workflow/adoption.md` § Harvesting). What runs is the standard (`code.runs`, `code.tools_run`). Each line cites its file. A section the code doesn't answer gets a suggestion, marked `(suggested at setup)`. Guest: only what the repository doesn't already document.
 2. **Mismatches go to the backlog,** one `debt` item each: config nothing runs (`code.config_not_run`), a tool only the docs name. Use the plugin's `templates/backlog-item.md` and add a row to `<ws>/backlog/index.md`. Never ask the Owner to sort them out at setup.
 3. **Work in flight:** one `<ws>/status.md` row per feature already under way, `Approvals: pre-adoption` (`workflow/adoption.md` § In-flight work). Propose the Owner's open pull requests (`open_prs`) as candidates in the digest, and write their rows only once the Owner confirms them.
-4. **The digest** is the finish message, with one question. It lists the stack and standards found, each with the file it came from; the suggestions for what the code didn't show; any rule pairs from their `CLAUDE.md`; the backlog items filed; and the in-flight candidates. Then ask: **use these (Recommended)** / **show me the files first** / **change something**.
+4. **The digest** is the finish message. It lists the stack and standards found, each with the file it came from; the suggestions for what the code didn't show; any rule pairs from their `CLAUDE.md`; the backlog items filed; and the in-flight candidates. Then ask, in one dialog:
+   - **Use these (Recommended)** / **show me the files first** / **change something**.
+   - **What should the team start on?** Only when Next work is `owner`, and only with something concrete to offer: up to three tickets from the work query, when a ticket system is set up (`workflow/tickets.md`), or the open pull requests to carry on. The first is recommended: the query's first ticket, otherwise the most recently updated pull request. Last: **nothing yet, I'll say**. On an existing project the team starts only on what the Owner picks here, never on its own choice; once picked, hand it to the `dev-team:orchestrator` skill. With nothing concrete, end with the next step as in step 7.
 
 ## 6. Check it works
 
@@ -105,12 +117,14 @@ The root, mode and committed match the answers, `status.md` exists, and `seed-dr
 - **What was set up,** in a few lines: where the documents are and whether they're committed, the autonomy level, the commit style, the stack (picked, named, or proposed with the first feature), where the team runs, and the extras turned on.
 - **Committed workspace:** offer to commit the new files.
 - **Nothing left as homework.** Never list or count open sections, and never ask the Owner to fill in files: the first plan that needs a section sets it.
-- **End with the next step,** in plain words: tell the team the first thing to build, with an example drawn from what they're building. Then one line on what they can ask for later, such as a ticket system or the board, in plain words.
+- **Start the team,** when the Owner chose **build it for me** or **start it, then wait for me**: hand their description, word for word, to the `dev-team:orchestrator` skill as the first request. With `tickets` or `steered`, ask the orchestrator for the first item instead. Under Orca that is the first dispatch, and this session is the coordinator from then on. Say what happens next in plain words: who is working on it, and when they'll hear from the team, by their autonomy (under *standard*, the requirements come to them to approve before anything is built).
+- **Otherwise end with the next step,** in plain words: tell the team the first thing to build, with an example drawn from what they're building.
+- Then one line on what they can ask for later, such as a ticket system or the board, in plain words.
 
 ## Already set up
 
 `setup-detect` says `state: set-up`. Write nothing until the Owner picks a change.
 
-1. **Show the settings** from the dev-team section (`CLAUDE.local.md` first, then `CLAUDE.md`): where the documents are and whether they're committed; whose project (`_workspace.sh`'s `WS_MODE`); autonomy; the commit style; where the team runs (a Runtime line or not); and the extras turned on (an `**Owner board:**` line, `<ws>/standards/tickets.md`, `<ws>/standards/checkins.md`).
+1. **Show the settings** from the dev-team section (`CLAUDE.local.md` first, then `CLAUDE.md`): where the documents are and whether they're committed; whose project (`_workspace.sh`'s `WS_MODE`); autonomy; what the team works on (the Next work line; none means `owner`); the commit style; where the team runs (a Runtime line or not); and the extras turned on (an `**Owner board:**` line, `<ws>/standards/tickets.md`, `<ws>/standards/checkins.md`).
 2. **Ask what to change:** **nothing, it's fine (Recommended)** / **change a setting** / **bring the workspace up to date with the plugin** (`commands/sync.md`) / **set up something extra** (the board, check-ins, tickets, Orca).
 3. **Then make only that change.** Moving the folders or changing whether they're committed moves files: `commands/sync.md`'s migration, on approval. Sharing a "just me" setup with the team: `workflow/workspace.md` § Whose project.

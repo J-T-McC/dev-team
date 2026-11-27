@@ -37,7 +37,8 @@ The coordinator's helper under the [Orca runtime](/dev-team/orca/). It keeps the
 | `peer prs [--sweep]` | the team's PRs and owners; `--sweep` lists open ones with a failing check or a conflict |
 | `peer sizes` | each peer's context size against the Peer size limit |
 | `peer limits [--clear [<model>]]` | models out of usage, as the watcher saw them |
-| `peer list [--board-json <dir>]` | homes, roles, models, worktrees and tasks; or the board's peers rows as files |
+| `peer list [--board-json <dir>]` | homes, names, roles, models, worktrees and tasks; or the board's peers rows as files |
+| `peer team [--create \| --rename <home> <name>]` | who is who in the team; `--create` makes every home's worktree now, with no session until its first task; `--rename` gives a home a new name |
 | `peer board-stamp [--rows <dir>]` | records that the Owner board matches `status.md` now |
 | `peer hook prompt\|stop` | the guard hooks, run by the plugin |
 
