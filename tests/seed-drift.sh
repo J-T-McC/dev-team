@@ -86,11 +86,15 @@ ok "no Orca: in-conversation rule required"  '[[ $OUT == *"missing rule \"Run ro
 fresh CLAUDE.md
 run
 ok "status.md from today's seed: no drift"   '[[ $OUT != *"status.md:"* ]]'
+ok "the seeds carry no HTML comment"         '[[ $OUT != *"HTML comment"* ]]'
 W=$(ls -d "$T/p"/*/status.md | head -1)
 printf '# Project Status\n\n| Feature | Phase | Current Role | Blockers | Approvals | Path |\n|---|---|---|---|---|---|\n\n## Approvals\n\n- PRD: PM\n' > "$W"
 run
 ok "status.md without Next: reported"         '[[ $OUT == *"status.md: no Next column"* ]]'
 ok "status.md approvals history: reported"    '[[ $OUT == *"status.md: an approvals history"* ]]'
+printf '# Friction log\n\n<!-- a note -->\n' >> "$(dirname "$W")/friction-log.md"
+run
+ok "an HTML comment in workspace Markdown: reported" '[[ $OUT == *"friction-log.md: an HTML comment"* ]]'
 
 fresh CLAUDE.local.md .dev-team
 printf '# Their project\n\n- **Their own rule.** Something.\n' > "$T/p/CLAUDE.md"

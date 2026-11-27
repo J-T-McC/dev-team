@@ -30,6 +30,10 @@ if grep -qs -e '^# Development Organization' -e '\*\*Workspace:\*\*' "$section";
               backlog-index.md:backlog/index.md backlog-archive.md:backlog/archive.md friction-log.md:friction-log.md; do
     [ -e "$P/$WS/${pair#*:}" ] || say "$WS/${pair#*:}: missing file (seed ${pair%%:*})"
   done
+  # HTML comments in workspace Markdown: Orca shows such a file as raw text (workflow/workspace.md).
+  while IFS= read -r f; do
+    say "${f#$P/}: an HTML comment (<!-- -->): Orca shows the file as raw text; make it a plain line"
+  done < <(find "$P/$WS" "$P/$FEATURES" -name '*.md' -not -path '*/.git/*' -exec grep -l -- '<!--' {} + 2>/dev/null | sort -u)
   # status.md as the seed now keeps it: a Next column, so the Phase cell holds only the phase; no approvals history.
   st="$P/$WS/status.md"
   if grep -qs '^| *Feature *|' "$st"; then

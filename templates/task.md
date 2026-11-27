@@ -11,4 +11,4 @@
 <Required tests.>
 
 ## Completion notes
-_pending_ <!-- Senior Developer fills in: what changed, how verified. -->
+_Pending: the Senior Developer writes what changed and how it was verified._

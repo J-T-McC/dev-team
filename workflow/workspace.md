@@ -62,6 +62,7 @@ A Workspace line in `CLAUDE.local.md` without `just me` is guest mode.
 - **Indexes hold only live rows.** At Done, the Orchestrator moves the feature's row from `status.md` to the top of `status-done.md` (feature, date, outcome, folder). The Product Manager moves done and dropped backlog rows to `backlog/archive.md`. Agents re-read the live files constantly; the archives cost nothing until someone opens them.
 - **Names sort and never collide.** Backlog IDs are three digits (`B001`), ADRs three digits, tasks two (`T01`), questions three (`q001`), fixes start with their date. Every workspace date is the machine's local day (`date +%F`), never UTC, so an approval and the line it approves agree. Feature folders follow the `folders` setting; `F###` numbers are assigned by the Product Manager in PRD order. **Claim a number by creating its file** the moment you pick it, before citing it anywhere; if any file with that number exists (`B026-*`), whatever its name, another role took it: take the next. Roles running side by side otherwise pick the same one.
 - **Link, don't search.** A feature's Handoff lists **Related** features by folder name and the ADRs its plan made or follows.
+- **No HTML comments in workspace Markdown.** Orca shows a file that has one as raw text. A note for the reader is a plain line.
 - **Write only in folders dev-team made.** If the features location is shared with other people's folders, never write into one you did not create; on a name clash, pick a different name.
 
 ## Guest mode
