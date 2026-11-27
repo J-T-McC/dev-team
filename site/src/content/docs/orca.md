@@ -27,6 +27,8 @@ and deny the subagent tool in `.claude/settings.json`, since peers are full sess
 
 Peers live in named homes: `dt-product`, `dt-designer`, `dt-architect`, `dt-reviewer`, and `dt-dev-1`, `dt-dev-2` and so on. Each also gets a random first name, so Orca, the [Owner board](/dev-team/board/) and the coordinator's reports talk about Bob the developer and Sandra the reviewer. `peer team --rename dt-dev-1 Sandra` changes one.
 
+![Orca running a dev-team project: the sidebar lists the coordinator and nine peers by name and role, each in its own worktree on a branch or the default branch; the conversation and the project name are blurred, and the file tree shows the dev-team workspace folders](../../../../examples/orca/orca-team.png)
+
 A home is made on its first task, or all at once with `peer team --create` if you want the whole team in Orca's sidebar from the start. Setup asks which you want. `--create` makes only the worktrees, so no usage is spent until each home's first task.
 
 Roles that work one after another share the feature's worktree, and only one peer edits a worktree at a time. Independent chains in the task list run as parallel streams, each in its own developer home and child worktree. Streams merge their own work one at a time at the end, then the reviewer starts. A real conflict between them means the plan split the work wrong, so it goes to the principal-engineer as a question.
