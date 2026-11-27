@@ -4,6 +4,7 @@
 - **Author:** Designer
 - **PRD:** `<feature>/prd.md`
 - **Approved by / date:**
+- **Touch-ups:** <asked at approval, and who does them; or none> — **Done:** <who> / <date>
 
 ## Concept
 <The point of view, in a few lines: what this should feel like, the one idea that makes it memorable, and the visual direction (hierarchy, type, color, motion). Commit to it.>
