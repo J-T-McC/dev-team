@@ -101,6 +101,8 @@ When the task index has independent chains, record the base commit in the Review
 
 When an answered question lands in the feature worktree, the coordinator `peer tell`s the waiting stream to pull the feature branch.
 
+A task stacked on an open PR goes to the home that holds that PR's branch: git checks a branch out in one worktree only, so another home can't stack on it until that one detaches (`<ws>/standards/coding.md` § Stacked PRs).
+
 ## Remote peers
 
 A home can run on a connected Orca server: `peer dispatch <home> <role> <spec> --on <environment> --worktree <selector>`. The Run, its messages, and the coordinator stay on this machine; the home remembers its server.
@@ -125,4 +127,4 @@ The Owner board (`workflow/board.md`) is the fuller view and works with either r
 
 ## Browser
 
-Under this runtime, UI checks (senior-developer, reviewer) and mockup snapshots (designer) use Orca's built-in browser — `orca tab create --url …`, `orca snapshot`, `orca screenshot` — instead of a Playwright MCP server.
+Under this runtime, UI checks (senior-developer, reviewer) and mockup snapshots (designer) use Orca's built-in browser — `orca tab create --url …`, `orca snapshot`, `orca screenshot` — instead of a Playwright MCP server. Its page never has window focus, so `:focus` and `:focus-visible` never match and key presses don't move focus reliably: keyboard, focus-ring and hover checks run in Playwright instead, the project's own when it pins one.
