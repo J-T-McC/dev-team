@@ -38,7 +38,9 @@ EFFORTS = ("low", "medium", "high", "xhigh", "max")
 ADVISOR_ROLES = ("product-manager", "principal-engineer")
 ROLE_LINE = ("You are the dev-team {role} peer [dev-team home {home}]. If the dev-team:{role} skill is not loaded "
              "in this conversation, invoke it first. Follow the peer rules in the dev-team workflow/orca.md § Peers: "
-             "ask for any decision or go with your preamble's `ask` command, never in a status message.")
+             "ask for any decision or go with your preamble's `ask` command, never in a status message. Read messages with "
+             "`orca orchestration check`, then `check --ack <deliveryId>` and check again until it is empty: an "
+             "unacknowledged batch hides the ones behind it.")
 ADVISOR_LINE = (" You have an advisor model: use it for hard questions other roles bring you and hard calls in your "
                 "own plans, not for routine work.")
 # A peer's screen while it still runs something: a turn, or a background shell, monitor, or agent.
@@ -83,6 +85,7 @@ STATE = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir") or "
 REG = STATE / "peers.json"
 LIMITS = STATE / "limits.json"
 WATCH_PID = STATE / "watch.pid"
+LOCK = STATE / "coordinator.lock"
 BOARD = STATE / "board.json"
 CLAUDE_DIR = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
 PLUGIN = Path(__file__).resolve().parent.parent
@@ -929,7 +932,7 @@ def cmd_nudge(argv):
     try:
         nudge(h, subject)
     except SystemExit as e:
-        if e.code:
+        if e.code and not busy(h):  # mid-turn, it reads the queued nudge (or has read the mail) at its next turn
             with NUDGES.open("a") as f:
                 f.write(f"{home}\t{subject}\n")
 
@@ -1190,6 +1193,7 @@ def cmd_board_stamp(argv):
     st.update(hash=status_hash(), time=time.strftime("%Y-%m-%dT%H:%M:%S%z"), root=str(ROOT))
     if val.get("--rows"):
         st["rows"] = str(Path(val["--rows"]).resolve())
+        (STATE / "board-drift-seen.txt").unlink(missing_ok=True)  # a new snapshot: drift is reported afresh
     STATE.mkdir(parents=True, exist_ok=True)
     BOARD.write_text(json.dumps(st, indent=2) + "\n")
     print(f"board stamped {st['time']}" + (f"; rows in {st['rows']}" if st.get("rows") else ""))
@@ -1206,7 +1210,12 @@ def board_report():
         try:
             p = subprocess.run([str(PLUGIN / "bin" / "board-drift"), rows], capture_output=True, text=True, timeout=600)
             if p.returncode == 1:
-                lines += [f"BOARD | {line}" for line in p.stdout.splitlines() if line.strip()]
+                seen_file = STATE / "board-drift-seen.txt"
+                seen = set(seen_file.read_text().splitlines()) if seen_file.exists() else set()
+                new = [line for line in p.stdout.splitlines() if line.strip() and line not in seen]
+                with seen_file.open("a") as f:  # reported once: the saved rows don't change when the board does
+                    f.writelines(line + "\n" for line in new)
+                lines += [f"BOARD | {line}" for line in new]
         except (OSError, subprocess.TimeoutExpired):
             pass
     if lines:
@@ -1308,6 +1317,21 @@ def cmd_watch(argv):
     board_report()
 
 
+def hold_lock():
+    """A running watch means a live interactive coordinator: hold the coordinator lock as owner and keep it fresh, so a
+    check-in never routes beside it (an unrefreshed lock expires after DEV_TEAM_LOCK_TTL_MIN). A check-in's lock is
+    left alone."""
+    ttl = float(os.environ.get("DEV_TEAM_LOCK_TTL_MIN", "30")) * 60
+    try:
+        holder, fresh = LOCK.read_text().strip(), time.time() - LOCK.stat().st_mtime < ttl
+    except OSError:
+        holder, fresh = "", False
+    if fresh and holder not in ("", "owner"):
+        return
+    STATE.mkdir(parents=True, exist_ok=True)
+    LOCK.write_text("owner\n")
+
+
 def watch(minutes):
     reg = load()
     run = bind(reg)
@@ -1316,6 +1340,7 @@ def watch(minutes):
     last, since, active = {}, {}, {}
     next_active = next_size = next_pr = 0
     while time.time() < end:
+        hold_lock()
         delivery, msgs = pending_batch(run)
         if delivery:
             return show_batch(reg, run, delivery, msgs)
