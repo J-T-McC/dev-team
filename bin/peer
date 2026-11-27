@@ -9,8 +9,9 @@
   peer sleep <home>... | --idle    close idle peers' sessions to free the machine; the next dispatch wakes them
   peer adopt <home> <role> <terminal> [--on <environment>]   make a terminal started outside peer a home
   peer watch [minutes]   wait, at no token cost, for a peer message, STUCK, LIMIT, SIZE, STALL, NUDGE, a PR change, or the
-                         time limit (default 15); then report Owner-board drift
-  peer pending           the unacknowledged batch: peer reports not handled yet (exit 1 if any)
+                         time limit (default 15); then report status.md drift and Owner-board drift
+  peer pending [--full]  the unacknowledged batch: peer reports not handled yet (exit 1 if any); --full: uncut
+  peer ack <delivery>    acknowledge that batch, unless messages joined it after you read it (then shows them, exit 1)
   peer pr <home> <PR number or URL>... [--repo <owner/name>] | peer pr --drop <PR>...   who owns which PR
   peer prs [--sweep]     the team's PRs and owners; --sweep: open PRs with a failing check or a conflict (exit 1 if any)
   peer sizes             each peer's context size against the project's Peer size limit
@@ -1004,20 +1005,45 @@ def pending_batch(run):
         orca("orchestration", "check", "--run", run, "--ack", delivery)
 
 
-def describe(who, m):
+SEEN_FILE = STATE / "seen-messages"
+
+
+def seen_ids():
+    return set(SEEN_FILE.read_text().split()) if SEEN_FILE.exists() else set()
+
+
+def mark_seen(msgs):
+    """Record the messages shown to the coordinator, so `peer ack` can tell which joined a batch after it was read."""
+    ids = [m["id"] for m in msgs if m.get("id")]
+    if not ids:
+        return
+    STATE.mkdir(parents=True, exist_ok=True)
+    with open(SEEN_FILE, "a") as f:
+        f.write("\n".join(ids) + "\n")
+    if SEEN_FILE.stat().st_size > 64_000:  # keep the newest half
+        keep = SEEN_FILE.read_text().split()[-2000:]
+        SEEN_FILE.write_text("\n".join(keep) + "\n")
+
+
+def describe(who, m, full=False):
     body = m.get("body") or ""
+    cut = not full and len(body) > 700
     line = f"{m.get('type')} | {who.get(m.get('from_handle'), m.get('from_handle') or '?')} | id {m.get('id')} | " \
-           f"{m.get('subject')} | {body[:700]}"
+           f"{m.get('subject')} | {body if not cut else body[:700]}"
+    if not cut:
+        return line
     friction = re.findall(r"^Friction:.*$", body, re.M)
-    return line + (f" … {friction[-1]}" if friction and friction[-1] not in body[:700] else "")
+    rest = f" … {friction[-1]}" if friction and friction[-1] not in body[:700] else ""
+    return line + rest + f" [cut: {len(body) - 700} more characters; `peer pending --full` shows them]"
 
 
-def show_batch(reg, run, delivery, msgs):
+def show_batch(reg, run, delivery, msgs, full=False):
     who = names(reg)
-    for m in msgs:
-        if m.get("type") != "heartbeat":
-            print(describe(who, m))
-    print(f"Handle every message, then acknowledge: orca orchestration check --run {run} --ack {delivery}")
+    shown = [m for m in msgs if m.get("type") != "heartbeat"]
+    for m in shown:
+        print(describe(who, m, full))
+    mark_seen(shown)
+    print(f"Handle every message, then acknowledge: {PLUGIN}/bin/peer ack {delivery}")
     # A PR link in a peer's report records that home as the PR's owner, for CI and conflict alerts.
     found = [(who[m["from_handle"]], repo, n) for m in msgs if who.get(m.get("from_handle"))
              for repo, n in PR_URL.findall(f"{m.get('subject')} {m.get('body')}")]
@@ -1208,6 +1234,33 @@ def cmd_board_stamp(argv):
     print(f"board stamped {st['time']}" + (f"; rows in {st['rows']}" if st.get("rows") else ""))
 
 
+def features_root():
+    m = re.search(r"\*\*Workspace:\*\*.*?\bfeatures\s+`([^`]*)`", project_text())
+    return ROOT / m.group(1).rstrip("/") if m else ws_root() / "features"
+
+
+def status_report():
+    """After a watch: status.md rows whose task count fell behind the task index, or whose cells grew into a log.
+    Each line is reported once until it changes."""
+    f = ws_root() / "status.md"
+    if not f.exists():
+        return
+    try:
+        p = subprocess.run([str(PLUGIN / "bin" / "board-drift"), "--status", str(f), "--features", str(features_root()),
+                            "--no-prs"], capture_output=True, text=True, timeout=60, cwd=str(ROOT))
+    except (OSError, subprocess.TimeoutExpired):
+        return
+    if p.returncode != 1:
+        return
+    seen_file = STATE / "status-drift-seen.txt"
+    seen = set(seen_file.read_text().splitlines()) if seen_file.exists() else set()
+    new = [line for line in p.stdout.splitlines() if line.strip() and line not in seen]
+    with seen_file.open("a") as out:
+        out.writelines(line + "\n" for line in new)
+    if new:
+        print("\n".join(f"STATUS | {line}" for line in new))
+
+
 def board_report():
     """After a watch: the board guard line, and board-drift on the rows the coordinator last listed."""
     if not board_on():
@@ -1237,8 +1290,43 @@ def cmd_pending(argv):
     delivery, msgs = pending_batch(run)
     if not delivery:
         return print("no unhandled reports")
-    show_batch(reg, run, delivery, msgs)
+    show_batch(reg, run, delivery, msgs, full="--full" in argv)
     sys.exit(1)
+
+
+def cmd_ack(argv):
+    """Acknowledge a batch only once every message in it has been shown: messages join a batch until it is
+    acknowledged, and an ack covers them all, read or not."""
+    if len(argv) != 1:
+        die("usage: peer ack <delivery>")
+    reg = load()
+    run = bind(reg)
+    delivery, msgs = pending_batch(run)
+    if not delivery:
+        return print("no unhandled reports")
+    if delivery != argv[0]:
+        print(f"{argv[0]} is not the open batch: it was acknowledged already, or the id is wrong. The open one:")
+        show_batch(reg, run, delivery, msgs)
+        sys.exit(1)
+    seen = seen_ids()
+    new = [m for m in msgs if m.get("type") != "heartbeat" and m.get("id") not in seen]
+    if new:
+        print(f"Not acknowledged: {len(new)} message(s) joined this batch after you read it. Handle them too, then "
+              f"`peer ack {delivery}` again:")
+        who = names(reg)
+        for m in new:
+            print(describe(who, m))
+        mark_seen(new)
+        sys.exit(1)
+    d, raw = orca("orchestration", "check", "--run", run, "--ack", delivery)
+    if not d.get("ok", True):
+        die("ack failed:\n" + raw[:800], 1)
+    print(f"acknowledged {delivery}")
+    delivery, msgs = pending_batch(run)
+    if delivery:
+        print("The next batch:")
+        show_batch(reg, run, delivery, msgs)
+        sys.exit(1)
 
 
 def transcript(reg, home, h):
@@ -1323,6 +1411,7 @@ def cmd_watch(argv):
         watch(float(argv[0]) if argv else 15)
     finally:
         WATCH_PID.unlink(missing_ok=True)
+    status_report()
     board_report()
 
 
@@ -1448,8 +1537,9 @@ def peer_lines(reg):
     if len(msgs) > len(asks):
         lines += ["Peer reports not handled yet:"] + ["  " + describe(who, m) for m in msgs if m not in asks]
     if msgs:
+        mark_seen(msgs)
         lines.append(f"Handle each (a question relayed to the Owner counts once it is on your Waiting on you list), then "
-                     f"acknowledge: orca orchestration check --run {run} --ack {delivery}")
+                     f"acknowledge: {PLUGIN}/bin/peer ack {delivery}")
     busy_homes = [home for home, h in sorted(reg["homes"].items()) if h.get("dispatch") and not h.get("asleep") and working(h)]
     if busy_homes and not watcher_running():
         lines.append(f"{len(busy_homes)} peer task(s) in flight ({', '.join(busy_homes)}) and no watcher: start "
@@ -1546,7 +1636,7 @@ def cmd_team(argv):
 
 
 CMDS = {"dispatch": cmd_dispatch, "tell": cmd_tell, "nudge": cmd_nudge, "switch": cmd_switch, "sleep": cmd_sleep, "release": cmd_sleep,
-        "adopt": cmd_adopt, "watch": cmd_watch, "pending": cmd_pending, "pr": cmd_pr, "prs": cmd_prs,
+        "adopt": cmd_adopt, "watch": cmd_watch, "pending": cmd_pending, "ack": cmd_ack, "pr": cmd_pr, "prs": cmd_prs,
         "sizes": cmd_sizes, "limits": cmd_limits, "list": cmd_list, "team": cmd_team, "board-stamp": cmd_board_stamp,
         "hook": cmd_hook}
 

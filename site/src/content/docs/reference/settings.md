@@ -68,6 +68,7 @@ Set these in your own environment. Most are timers you'll rarely need to touch.
 | `DEV_TEAM_SLOT_DIR` | `~/.cache/dev-team/slots` | where slots are kept |
 | `DEV_TEAM_LOCK_TTL_MIN` | `30` | minutes before a forgotten coordinator lock expires |
 | `DEV_TEAM_STUCK_MIN` | `2` | minutes a peer sits on an error before `STUCK` |
+| `DEV_TEAM_STATUS_CELL_MAX` | `300` | characters a `status.md` cell may hold before `board-drift --status` and `peer watch` flag it |
 | `DEV_TEAM_STALL_MIN` | `20` | minutes a working peer's screen stays the same before `STALL` |
 | `DEV_TEAM_WATCH_POLL` | `30` | seconds between the watcher's checks |
 | `DEV_TEAM_PR_POLL` | `5` | minutes between the watcher's PR checks |

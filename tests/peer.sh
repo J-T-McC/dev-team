@@ -191,8 +191,11 @@ state batches "[{\"deliveryId\":\"dlv_1\",\"messages\":[{\"type\":\"heartbeat\",
                 {\"type\":\"question\",\"id\":\"msg_4\",\"from_handle\":\"$(home dt-dev-1 terminal)\",\"subject\":\"May I install?\",\"body\":\"Steps ready\"}]}]"
 run pending
 ok "pending acks a heartbeat-only batch"   'called "\"--ack\", \"dlv_1\""'
-ok "pending shows the real batch"          '[ $RC = 1 ] && [[ $OUT == *"question | dt-dev-1 | id msg_4 | May I install?"* ]] && [[ $OUT == *"--ack dlv_2"* ]] && ! called "--ack\", \"dlv_2"'
+ok "pending shows the real batch"          '[ $RC = 1 ] && [[ $OUT == *"question | dt-dev-1 | id msg_4 | May I install?"* ]] && [[ $OUT == *"peer ack dlv_2"* ]] && ! called "--ack\", \"dlv_2"'
 ok "a cut-off report keeps its Friction line" '[[ $OUT == *"… Friction: #4 +1"* ]]'
+ok "a cut-off report says it was cut"      '[[ $OUT == *"[cut: "*"more characters; \`peer pending --full\`"* ]]'
+run pending --full
+ok "pending --full shows it whole"         '[ $RC = 1 ] && [[ $OUT != *"[cut: "* ]] && [[ $OUT == *"$(printf "x%.0s" {1..800})"* ]]'
 run watch 0.02
 ok "watch returns on the batch"            '[ $RC = 0 ] && [[ $OUT == *"May I install?"* ]] && [ ! -e .git/dev-team/watch.pid ]'
 
@@ -205,6 +208,13 @@ hook stop '{"session_id":"s1","stop_hook_active":true}'
 ok "hook: a second stop is let through"    '[ -z "$OUT" ]'
 ORCA_TERMINAL_HANDLE=term_2 hook stop '{"session_id":"s2"}'
 ok "hook: quiet in a peer's session"       '[ -z "$OUT" ] && ! called check'
+run ack dlv_x
+ok "ack: a wrong id shows the open batch"  '[ $RC = 1 ] && [[ $OUT == *"dlv_x is not the open batch"* ]] && ! called "\"--ack\""'
+fake "s['batches'][0]['messages'].append({'type': 'worker_done', 'id': 'msg_5', 'from_handle': '$(home dt-dev-1 terminal)', 'subject': 'T09 done', 'body': 'PR 40'})"
+run ack dlv_2
+ok "ack: refused while unread messages joined" '[ $RC = 1 ] && [[ $OUT == *"1 message(s) joined"*"msg_5"* ]] && [[ $OUT != *msg_4* ]] && ! called "\"--ack\", \"dlv_2\""'
+run ack dlv_2
+ok "ack: once each was shown, it acks"     '[ $RC = 0 ] && [[ $OUT == "acknowledged dlv_2" ]] && called "\"--ack\", \"dlv_2\""'
 state batches '[]'
 hook stop '{"session_id":"s1"}'
 ok "hook: work in flight, no watcher"      '[[ $OUT == *"block"* ]] && [[ $OUT == *"1 peer task(s) in flight (dt-dev-1)"* ]]'
@@ -216,6 +226,12 @@ mv CLAUDE.md CLAUDE.off; hook prompt '{}'; mv CLAUDE.off CLAUDE.md
 ok "hook: quiet outside an Orca project"   '[ -z "$OUT" ] && ! called check'
 run pending
 ok "pending: nothing unhandled"            '[ $RC = 0 ] && [[ $OUT == "no unhandled reports" ]]'
+mkdir -p docs; printf '%s\n' '| Feature | Phase | Next |' '|---|---|---|' "| notes | Requirements | $(printf 'x%.0s' {1..400}) |" > docs/status.md
+run watch 0.01
+ok "watch reports a status cell grown into a log" '[[ $OUT == *"STATUS | notes: its Next cell is 400 characters"* ]]'
+run watch 0.01
+ok "watch reports it once"                 '[[ $OUT != *STATUS* ]]'
+rm -r docs
 
 # watch: stuck screens, usage limits, and what launches do about them
 T1=$(home dt-dev-1 terminal)

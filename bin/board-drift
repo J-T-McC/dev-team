@@ -2,14 +2,17 @@
 """List Owner-board work rows whose state no longer matches their GitHub PR (workflow/board.md).
 
 Usage: board-drift <dir> [owner/repo] [--config <file>]
-       board-drift --status <ws>/status.md [<dir>] [owner/repo] [--config <file>]
+       board-drift --status <ws>/status.md [<dir>] [owner/repo] [--config <file>] [--features <dir>] [--no-prs]
 
 <dir> holds the board's `work` rows as JSON files, saved by an ArtifactData `list` of collection `work` with
 `out_dir`, so reading the board costs almost nothing. A row's own `repo` wins; otherwise the argument, otherwise
 this checkout's GitHub repo. A short repo name (`mobile`) is looked up in the board config's `repos` map — the
 `meta/config` document, saved as config.json in <dir> or passed with --config — else taken as the same owner's.
 --status reads the PR numbers each status.md row names (#123, repo#123, repo #123, owner/repo#123) and lists the
-rows whose PRs have all merged or closed. Repo names go through the config's repos map, from --config, the rows
+rows whose PRs have all merged or closed. It also lists, with no `gh` call, the rows whose task count
+("24 of 47 tasks") disagrees with the feature's <features>/<folder>/tasks/index.md (default: features/ beside
+status.md), and cells longer than DEV_TEAM_STATUS_CELL_MAX characters (default 300), which have turned into a log;
+--no-prs runs only those. Repo names go through the config's repos map, from --config, the rows
 <dir>, or the rows the last `peer board-stamp --rows` recorded. A row naming a repo it can't place is left alone. Prints one line per row to fix (exit 1), or "board in sync" / "status in sync"
 (exit 0). Uses `gh`.
 """
@@ -46,6 +49,13 @@ if "--config" in args:
 status_file = args.pop(args.index("--status") + 1) if "--status" in args else None
 if "--status" in args:
     args.remove("--status")
+features_dir = args.pop(args.index("--features") + 1) if "--features" in args else None
+if "--features" in args:
+    args.remove("--features")
+no_prs = "--no-prs" in args
+if no_prs:
+    args.remove("--no-prs")
+CELL_MAX = int(os.environ.get("DEV_TEAM_STATUS_CELL_MAX", "300"))
 if not args and not status_file:
     sys.exit(__doc__)
 
@@ -68,8 +78,26 @@ else:
 if not config_file and config_dir:
     config_file = next(iter(sorted(glob.glob(os.path.join(config_dir, "**", "config.json"), recursive=True))), None)
 config = load(config_file) if config_file else {}
-default_repo = (args[0] if args else config.get("repo")) or \
-    gh("repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner").strip()
+default_repo = (args[0] if args else config.get("repo")) or ("" if no_prs else
+    gh("repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner").strip())
+
+
+def task_count(folder):
+    """(done, live total, total with dropped tasks) from a feature's task index; None when it has no index."""
+    idx = os.path.join(features_dir or os.path.join(os.path.dirname(os.path.abspath(status_file)), "features"),
+                       folder, "tasks", "index.md")
+    if not os.path.exists(idx):
+        return None
+    done = live = every = 0
+    for line in open(idx):
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if line.lstrip().startswith("|") and re.fullmatch(r"T\d+", cells[0]):
+            state = cells[-1].lower()
+            every += 1
+            if not state.startswith(("dropped", "cancelled", "canceled")):
+                live += 1
+                done += state.startswith("done")
+    return done, live, every
 
 
 def full(repo):
@@ -103,9 +131,25 @@ def named_repo(name):
 drift = []
 if status_file:
     # status.md rows whose PRs have all merged or closed: the row should have moved to status-done.md, or been updated.
+    header = []
     for line in open(status_file):
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if line.lstrip().startswith("|") and cells and cells[0] == "Feature":
+            header = cells
         if not line.lstrip().startswith("|") or len(cells) < 2 or set(cells[0]) <= set("-: ") or cells[0] == "Feature":
+            continue
+        # Local checks first: a task count that fell behind its index, and a cell that turned into a log.
+        m = re.search(r"\b(\d+) of (\d+) tasks\b", line)
+        count = task_count(re.sub(r"\s*\([^)]*\)\s*$", "", cells[0])) if m else None
+        if count and (count[0] != int(m.group(1)) or int(m.group(2)) not in count[1:]):
+            drift.append(f"{cells[0]}: status.md says {m.group(1)} of {m.group(2)} tasks; its task index has "
+                         f"{count[0]} of {count[1]} done")
+        for i, c in enumerate(cells):
+            if len(c) > CELL_MAX:
+                name = header[i] if i < len(header) else f"column {i + 1}"
+                drift.append(f"{cells[0]}: its {name} cell is {len(c):,} characters — keep one line, what stands now; "
+                             "what happened goes in the feature's own files")
+        if no_prs:
             continue
         refs, unsure = set(), False
         for name, space, n in REF.findall(line):

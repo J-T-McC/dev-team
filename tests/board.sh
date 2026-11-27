@@ -111,6 +111,22 @@ ok "status: an unmapped repo name is left alone" '[ $RC = 0 ] && [ "$OUT" = "sta
 printf '{"rows": "%s"}' "$T/mapped" > "$T/g/.git/dev-team/board.json"
 OUT=$(cd "$T/g" && "$REPO/bin/board-drift" --status "$T/status3.md"); RC=$?
 ok "status: the stamped rows' config maps repo names" '[ $RC = 1 ] && [[ $OUT == "site: every PR it names is done (web#12 merged)"* ]]'
+# Task counts against each feature's task index, and cells grown into a log: no gh needed.
+mkdir -p "$T/ws/features/export/tasks" "$T/ws/features/import/tasks"
+printf '%s\n' '| ID | Task | Status |' '|---|---|---|' '| T01 | a | done (PR #1) |' '| T02 | b | done |' '| T03 | c | dropped |' \
+  '| T04 | d | in progress (draft PR #4) |' > "$T/ws/features/export/tasks/index.md"
+printf '%s\n' '| ID | Task | Status |' '|---|---|---|' '| T01 | a | done |' '| T02 | b | pending |' > "$T/ws/features/import/tasks/index.md"
+LONG=$(printf 'T%.0s merged, ' {1..40})
+printf '%s\n' '| Feature | Phase | Current Role | Next | Path |' '|---|---|---|---|---|' \
+  '| export (APP-1) | Implementation: 2 of 4 tasks | senior-developer | T04: Bob | tasks |' \
+  '| import | Implementation: 0 of 2 tasks | senior-developer | T02 | tasks |' \
+  "| notes | Requirements | product-manager | $LONG | brief |" > "$T/ws/status.md"
+: > "$FAKE_GH_LOG"
+OUT=$("$REPO/bin/board-drift" --status "$T/ws/status.md" --no-prs); RC=$?
+ok "status: a count behind its task index"   '[ $RC = 1 ] && [[ $OUT == *"import: status.md says 0 of 2 tasks; its task index has 1 of 2 done"* ]]'
+ok "status: a dropped task may count or not" '[[ $OUT != *export* ]]'
+ok "status: a cell grown into a log"         '[[ $OUT == *"notes: its Next cell is "*" characters — keep one line"* ]]'
+ok "status: --no-prs calls no gh"            '[ ! -s "$FAKE_GH_LOG" ]'
 mkdir -p "$T/sync"; printf '%s' '{"data": {"pr": 5, "state": "review"}}' > "$T/sync/a.json"
 OUT=$("$REPO/bin/board-drift" "$T/sync"); RC=$?
 ok "in sync exits 0"                       '[ $RC = 0 ] && [ "$OUT" = "board in sync" ]'
