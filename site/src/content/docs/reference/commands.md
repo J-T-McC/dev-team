@@ -27,11 +27,12 @@ The coordinator's helper under the [Orca runtime](/dev-team/orca/). It keeps the
 | Command | What it does |
 |---|---|
 | `peer dispatch [--keep] <home> <role> <spec>` | starts a task in a fresh session (or the same one, with `--keep`). Options: `--model` and `--effort` for this task only; `--worktree <selector>` with `--name` and `--base-branch` for a new worktree; `--on <environment>` (and `--repo`) for a remote server; `--title` |
-| `peer tell <home> <subject> <body> [--reply <id>]` | sends a message and nudges an idle peer to read it |
+| `peer tell <home> <subject> <body> [--reply <id>] [--wait]` | sends a message and nudges the peer in the background to read it; `--wait` nudges in the foreground |
+| `peer nudge <home> <subject>` | the background nudge `peer tell` starts; not run by hand |
 | `peer switch [<home>...]` | gives live peers the Runtime line's current model and effort now |
 | `peer sleep <home>... \| --idle` | closes idle peers' sessions and keeps their worktrees (`peer release` is the old name) |
 | `peer adopt <home> <role> <terminal> [--on <environment>]` | makes a home of a terminal started outside `peer` |
-| `peer watch [minutes]` | waits, at no token cost, for a peer message or trouble (default 15 minutes) |
+| `peer watch [minutes]` | waits, at no token cost, for a peer message, trouble, or a nudge that didn't land (default 15 minutes) |
 | `peer pending` | the peer reports not handled yet (exit 1 if any) |
 | `peer pr <home> <PR>... \| peer pr --drop <PR>...` | records or drops which home owns a PR |
 | `peer prs [--sweep]` | the team's PRs and owners; `--sweep` lists open ones with a failing check or a conflict |

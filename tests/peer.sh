@@ -123,7 +123,7 @@ ok "sleep leaves a working peer awake"     '[[ $OUT == *"still working"* ]] && !
 state stage '"settled"'
 run sleep --idle
 ok "sleep --idle closes every idle peer"   '[[ $OUT == *"dt-dev-1: asleep"* ]] && [[ $OUT == *"dt-reviewer: asleep"* ]] && [ "$(home dt-dev-1 terminal)" = None ]'
-run tell dt-dev-1 "Install" "Yes"
+run tell dt-dev-1 "Install" "Yes" --wait
 ok "tell refuses a sleeping peer"          '[ $RC = 2 ] && [[ $OUT == *"asleep"* ]] && ! called "\"send\""'
 run dispatch --keep dt-dev-1 senior-developer "Fix"
 ok "--keep refuses a sleeping peer"        '[ $RC = 2 ] && ! called worker-start'
@@ -134,17 +134,41 @@ ok "dispatch wakes it in its worktree"     '[ $RC = 0 ] && [[ $OUT == *"(wake,"*
 
 # tell
 state stage '"settled"'
-run tell dt-dev-1 "Install" "Yes, install the build"
+run tell dt-dev-1 "Install" "Yes, install the build" --wait
 ok "tell refuses a settled peer"           '[ $RC = 2 ] && [[ $OUT == *"peer dispatch --keep"* ]] && ! called "\"send\""'
 state stage '"running"'
-run tell dt-dev-1 "Install" "Yes, install the build"
+run tell dt-dev-1 "Install" "Yes, install the build" --wait
 ok "tell mails the dispatch and nudges"    '[ $RC = 0 ] && called "\"--to\", \"dispatch:$(home dt-dev-1 dispatch)\"" && called "From coordinator: Install" && [[ $OUT == *"nudge delivered"* ]]'
 state send_reply '"accepted; retry with --retry-request 4f2a-9c; no turn start was observed"'; shows "$(home dt-dev-1 terminal)" "> From coordinator: Install"
-run tell dt-dev-1 "Install" "Yes"
+run tell dt-dev-1 "Install" "Yes" --wait
 ok "busy peer: nudge queued"               '[ $RC = 0 ] && [[ $OUT == *"nudge queued"* ]] && called "\"--retry-request\", \"4f2a-9c\""'
 shows "$(home dt-dev-1 terminal)" ""
-run tell dt-dev-1 "Install" "Yes"
+run tell dt-dev-1 "Install" "Yes" --wait
 ok "unconfirmed nudge exits 2"             '[ $RC = 2 ] && [[ $OUT == *"NUDGE NOT CONFIRMED"* ]]'
+waitfor() { for _ in $(seq 100); do eval "$1" && return 0; sleep 0.1; done; return 1; }
+run tell dt-dev-1 "Install" "Yes"
+ok "tell returns at once; the nudge runs in the background" '[ $RC = 0 ] && [[ $OUT == *"nudging dt-dev-1 in the background"* ]]'
+waitfor '[ -s .git/dev-team/nudges-unconfirmed.txt ]'
+run watch 0.02
+ok "watch reports a nudge that didn't land"  '[[ $OUT == *"NUDGE | dt-dev-1 | not confirmed for '"'Install'"'"* ]]'
+run watch 0.01
+ok "and reports it once"                     '[[ $OUT != *NUDGE* ]]'
+state send_reply '"sent"'; shows "$(home dt-dev-1 terminal)" "❯ "
+run tell dt-dev-1 "Deploy" "Go"
+ok "a background nudge reaches the terminal" 'waitfor "called \"From coordinator: Deploy\""'
+
+# two peer commands saving side by side keep each other's changes (the registry is written under a lock, per home)
+python3 - "$PEER" <<'PYEOF'
+import importlib.machinery, importlib.util, sys
+sys.dont_write_bytecode = True  # no bin/__pycache__ left behind
+loader = importlib.machinery.SourceFileLoader("peer", sys.argv[1])
+m = importlib.util.module_from_spec(importlib.util.spec_from_loader("peer", loader)); loader.exec_module(m)
+a, b = m.load(), m.load()
+a["homes"]["dt-dev-1"]["note"] = "from a"; m.save(a)
+b["homes"]["dt-tmp"] = {"role": "senior-developer", "name": "Tess"}; m.save(b)
+PYEOF
+ok "side-by-side saves keep both changes"    '[ "$(home dt-dev-1 note)" = "from a" ] && [ "$(home dt-tmp name)" = Tess ]'
+setreg 'r["homes"].pop("dt-tmp"); r["homes"]["dt-dev-1"].pop("note")'
 state send_reply '"sent"'; shows "$(home dt-dev-1 terminal)" "❯ "
 run tell dt-dev-1 "Re: schedule" "Weekly" --reply msg_9
 ok "--reply answers the ask"               'called "\"reply\", \"--run\", \"run_0a1b2c\", \"--id\", \"msg_9\""'
@@ -351,7 +375,7 @@ run dispatch dt-dev-r senior-developer "Remote T1" --on gpu-box --worktree new-t
 ok "remote: Orca starts it, model and effort pinned" '[ $RC = 0 ] && ! launched && start_args | grep -q "\"--on\", \"gpu-box\", \"--agent\", \"claude\", \"--model\", \"opus\", \"--effort\", \"medium\", \"--worktree\", \"new-top-level\", \"--repo\", \"name:app\", \"--name\", \"feat-r\""'
 ok "remote: what a launch there cannot take is said" '[[ $OUT == *"on gpu-box a launch takes only the model and effort"* ]]'
 ok "remote: home keeps server, terminal, selector" '[ "$(home dt-dev-r env)" = gpu-box ] && [[ $(home dt-dev-r terminal) == rterm_* ]] && [ "$(home dt-dev-r worktree_sel)" = "id:repo1::/remote/feat-r" ]'
-run tell dt-dev-r "Go" "Yes"
+run tell dt-dev-r "Go" "Yes" --wait
 ok "remote: tell nudges through its server" '[[ $OUT == *"nudge delivered"* ]] && called "\"--enter\", \"--environment\", \"gpu-box\""'
 shows "$(home dt-dev-r terminal)" "  ⎿  API Error: 500 internal
 ❯ "

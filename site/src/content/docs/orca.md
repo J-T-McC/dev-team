@@ -49,7 +49,7 @@ To change the line, edit it and run `peer switch` in the same turn, which moves 
 
 ## The coordinator's loop
 
-The coordinator runs the team through `peer`, a helper around Orca's commands. Between turns it waits on `peer watch`, which costs no tokens, and wakes when a peer sends a message or needs help: stopped on an error or a usage limit, past its size limit, or working with an unchanged screen for 20 minutes. A failing check or a conflict on a team PR whose owner is idle wakes it too, and goes back to that owner. Plugin hooks keep the coordinator from going idle while anything is unhandled.
+The coordinator runs the team through `peer`, a helper around Orca's commands. Between turns it waits on `peer watch`, which costs no tokens, and wakes when a peer sends a message or needs help: stopped on an error or a usage limit, past its size limit, or working with an unchanged screen for 20 minutes. A failing check or a conflict on a team PR whose owner is idle wakes it too, and goes back to that owner. Plugin hooks keep the coordinator from going idle while anything is unhandled. It never holds its turn on a wait: launches and closes run in the background, and `peer tell` nudges a peer in the background, so it can keep answering you.
 
 ## Sharing the machine
 
