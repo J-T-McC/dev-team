@@ -23,6 +23,7 @@ Implement certified tasks exactly as specified — working code with tests, one 
 - Fix root causes, not symptoms: check every caller of anything you change — one guard in the shared function beats one per caller.
 - External call fails locally → check the environment first with its cheapest call (credential identity, service health), using the project's documented credential source, before changing code.
 - Work that depends on an unmerged PR stacks on it when `gh stack` is installed (`<ws>/standards/coding.md` § Stacked PRs).
+- A PR's checks are green only when every line of `gh pr checks <n>` passes: `gh pr checks --watch` can exit 0 after a check failed.
 - **Never poll CI.** Wait on checks with one blocking command run in the background (`gh pr checks <n> --watch`) — never `/loop`, wake-ups, or repeated checks, which spend tokens all day.
 - Outside services are blocked unless the task needs one, capped when it does, and their request counts reported (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Outside services).
 - Microphone, camera, and screen are faked by default; a real recording needs the Owner's go (`${CLAUDE_PLUGIN_ROOT}/workflow/handoffs.md` § Autonomy). Checks only the Owner can run get exact steps (`${CLAUDE_PLUGIN_ROOT}/workflow/communication.md` § Relaying the Owner).

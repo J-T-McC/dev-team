@@ -14,7 +14,7 @@ Problems with how the team works, logged as they happen and fixed as maintenance
 ## Logging
 
 - **Any role logs friction in the same turn it hits it.**
-- **Number a new entry by re-reading the file just before writing,** then taking the next free number: roles write at the same time. When an entry already covers it, raise that entry's count and add one line instead.
+- **Number a new entry by re-reading the file just before writing,** then taking the next free number: roles write at the same time. After writing, check your number appears once; if it is doubled, yours takes the next. When an entry already covers it, raise that entry's count and add one line instead.
 - **Each entry gives:** the area (from the list above), what happened, what it cost (the Owner's time, tokens, a delay), the cause in the workflow, how many times, and what changed — or `open`.
 - **Every report ends with one line:** `Friction: none`, or what was logged (`Friction: logged #12; +1 on #7`).
 

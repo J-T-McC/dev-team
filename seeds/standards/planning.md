@@ -17,10 +17,10 @@ Work that is real but not now. Canonical structure — one index, one file per i
 - The index is seeded once (`<ws>/backlog/index.md`); each item starts from the plugin's `templates/backlog-item.md`. IDs are sequential and never reused.
 
 Rules:
-- **Any role files** an item (feature idea, deferred scope, tech debt, known bug not being fixed now); the **Product Manager owns the index** — priority, status, and promotion.
+- **Any role files** an item (feature idea, deferred scope, tech debt, known bug not being fixed now), and adds its row at the bottom of the open rows with priority `—`; the **Product Manager owns the index** — priority, status, and promotion — and ranks every `—` row.
 - **The index's row order is the rank,** top first; re-ranking moves rows there, never notes in item files. An item waiting on the Owner (the floor, `workflow/handoffs.md` § Autonomy) sits last, marked *parked*, so nothing queues behind it.
 - One item per row and per file; an item too large to state in a few lines is a feature — file it as a feature item and let it become a PRD.
-- Promotion is the only exit into work: `feature` → PM writes a PRD (pipeline); `bug`/`debt` → Owner delegates to the Senior Developer (fast path); with Next work `steered`, the PM promotes them itself. Record the destination in the promotion log and flip Status.
+- Promotion is the only exit into work: `feature` → PM writes a PRD (pipeline); `bug`/`debt` → Owner delegates to the Senior Developer (fast path); with Next work `steered`, the PM promotes them itself. Record the destination in the promotion log and flip Status, then grep the features folder for the item's ID and update each pointer ("B008, now F5", or "no item" where the new work leaves that part out).
 - The backlog is not a queue or a status board: `<ws>/status.md` tracks work in flight, the backlog tracks work not started. An item leaves the backlog the moment it enters either path.
 - Not in the backlog: review follow-ups (they stay in the review record until the Owner acts on them), and open questions (they are question docs).
 
