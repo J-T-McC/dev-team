@@ -160,6 +160,7 @@ ok "a background nudge reaches the terminal" 'waitfor "called \"From coordinator
 # two peer commands saving side by side keep each other's changes (the registry is written under a lock, per home)
 python3 - "$PEER" <<'PYEOF'
 import importlib.machinery, importlib.util, sys
+sys.dont_write_bytecode = True  # no bin/__pycache__ left behind
 loader = importlib.machinery.SourceFileLoader("peer", sys.argv[1])
 m = importlib.util.module_from_spec(importlib.util.spec_from_loader("peer", loader)); loader.exec_module(m)
 a, b = m.load(), m.load()

@@ -31,9 +31,9 @@ ok "every peer command is in the commands page" "$(missing reference/commands.md
 ok "every slash command is in the commands page" "$(missing reference/commands.md '
   ["/dev-team:" + os.path.basename(f)[:-3] for f in glob.glob("commands/*.md")]')"
 ok "every script is in the commands page" "$(missing reference/commands.md '
-  [os.path.basename(f) for f in glob.glob("bin/*") if not os.path.basename(f).startswith("_")]')"
+  [os.path.basename(f) for f in glob.glob("bin/*") if os.path.isfile(f) and not os.path.basename(f).startswith("_")]')"
 ok "every environment variable is in the settings page" "$(missing reference/settings.md '
-  sorted({v for f in glob.glob("bin/*") + glob.glob("hooks/*") for v in re.findall(r"DEV_TEAM_[A-Z_]*[A-Z]", read(f))})')"
+  sorted({v for f in glob.glob("bin/*") + glob.glob("hooks/*") if os.path.isfile(f) for v in re.findall(r"DEV_TEAM_[A-Z_]*[A-Z]", read(f))})')"
 ok "every Runtime-line setting is in the settings page" "$(missing reference/settings.md '
   [k + ":" for k in re.findall(r"([A-Z][a-z]+(?: [a-z]+)*): ", read("workflow/orca.md").split("never spawn subagents.")[1].split("\n")[0])]
   + [k + ":" for k in re.findall(r"`([A-Z][a-z]+(?: [a-z]+)*):[^`]*` to the (?:project.s )?Runtime line", read("workflow/orca.md"))]')"
