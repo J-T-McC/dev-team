@@ -9,12 +9,13 @@ Usage: board-drift <dir> [owner/repo] [--config <file>]
 this checkout's GitHub repo. A short repo name (`mobile`) is looked up in the board config's `repos` map — the
 `meta/config` document, saved as config.json in <dir> or passed with --config — else taken as the same owner's.
 --status reads the PR numbers each status.md row names (#123, repo#123, repo #123, owner/repo#123) and lists the
-rows whose PRs have all merged or closed. It also lists, with no `gh` call, the rows whose task count
-("24 of 47 tasks") disagrees with the feature's <features>/<folder>/tasks/index.md (default: features/ beside
+rows whose PRs have all merged or closed, and the rows it could not check: a word before "#123" that is neither a
+known repo nor a lead-in ("PR #123", "review #123", "APP-12 #123"). It also lists, with no `gh` call, the rows
+whose task count ("24 of 47 tasks") disagrees with the feature's <features>/<folder>/tasks/index.md (default: features/ beside
 status.md), and cells longer than DEV_TEAM_STATUS_CELL_MAX characters (default 300), which have turned into a log;
 --no-prs runs only those. Repo names go through the config's repos map, from --config, the rows
-<dir>, or the rows the last `peer board-stamp --rows` recorded. A row naming a repo it can't place is left alone. Prints one line per row to fix (exit 1), or "board in sync" / "status in sync"
-(exit 0). Uses `gh`.
+<dir>, or the rows the last `peer board-stamp --rows` recorded. Prints one line per row to fix or reword (exit 1),
+or "board in sync" / "status in sync" (exit 0). Uses `gh`.
 """
 import glob, json, os, re, subprocess, sys
 
@@ -24,7 +25,9 @@ REF = re.compile(r"(?<![\w/#])(?:([\w.-]+(?:/[\w.-]+)?)( ?))?#(\d+)\b")
 LEADS = {"pr", "prs", "pull", "request", "mr", "issue", "issues", "ticket", "fix", "fixes", "fixed", "close", "closes",
          "closed", "resolve", "resolves", "resolved", "see", "and", "or", "in", "on", "of", "for", "with", "by", "via",
          "from", "to", "after", "before", "also", "plus", "then", "merge", "merged", "open", "opened", "draft", "ready",
-         "stack", "stacked", "base", "under", "as", "at", "is", "was", "its", "the", "a", "an"}
+         "stack", "stacked", "base", "under", "as", "at", "is", "was", "its", "the", "a", "an", "review", "reviewed",
+         "reviewing", "approved", "pending", "awaiting", "waiting"}
+TICKET = re.compile(r"[A-Z][A-Z0-9]*-\d+")  # a ticket key ("APP-12 #345") leads into this repo's PR number
 
 
 def gh(*a):
@@ -151,22 +154,28 @@ if status_file:
                              "what happened goes in the feature's own files")
         if no_prs:
             continue
-        refs, unsure = set(), False
+        refs, unplaced = set(), None
         for name, space, n in REF.findall(line):
             if not name:
                 refs.add((default_repo, int(n)))
             elif not space:
                 refs.add((full(name), int(n)))
-            elif named_repo(name) or name.lower() in LEADS:
+            elif named_repo(name) or name.lower() in LEADS or TICKET.fullmatch(name):
                 refs.add((named_repo(name) or default_repo, int(n)))
-            else:  # "<word> #12": another repo's PR, under this owner if anywhere; can't tell → leave the row alone
+            else:  # "<word> #12": another repo's PR, under this owner if anywhere; can't tell → the row goes unchecked
                 state = pr(int(n), full(name)).get("state")
-                unsure = unsure or not state
                 if state:
                     refs.add((full(name), int(n)))
+                else:
+                    unplaced = unplaced or (name, n)
+        if unplaced:
+            name, n = unplaced
+            drift.append(f"{cells[0]}: not checked — \"{name} #{n}\" is not a PR it can find; "
+                         f"write #{n} for this repo's PR, or <repo>#{n}")
+            continue
         states = [(r, n, pr(n, r).get("state")) for r, n in sorted(refs)]
         known = [x for x in states if x[2]]
-        if not unsure and known and all(s in ("MERGED", "CLOSED") for _, _, s in known):
+        if known and all(s in ("MERGED", "CLOSED") for _, _, s in known):
             what = ", ".join(f"#{n} {s.lower()}" if r == default_repo else f"{r.split('/')[-1]}#{n} {s.lower()}"
                              for r, n, s in known)
             drift.append(f"{cells[0]}: every PR it names is done ({what}) — move it to status-done.md or update it")

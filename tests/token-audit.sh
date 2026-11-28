@@ -24,7 +24,7 @@ open(f"{P}/CLAUDE.md", "w").write("# App\n\nSee @docs/extra.md for more.\n\n# De
                                   "- **Workspace:** `docs` · committed\n- **Runtime: Orca.** Peer size limit: 400k.\n\n## Rules\n- one\n")
 open(f"{P}/docs/extra.md", "w").write("extra\n" * 100)
 open(f"{P}/docs/status.md", "w").write("# Status\n")
-open(f"{P}/docs/standards/documentation.md", "w").write("# Docs\n\n## Size and reading\n- Stay under about 20 KB.\n")
+open(f"{P}/docs/standards/documentation.md", "w").write("# Docs\n\n## Size and reading\n- History: one plan reached 95 KB.\n- Stay under about 20 KB.\n")
 open(f"{P}/docs/features/a/plan.md", "w").write("# Plan\n" + "## Part\n" + "x" * 30000 + "\n")
 open(f"{P}/docs/features/a/brief.md", "w").write("# Brief\n")
 open(f"{P}/docs/features/a/notes.md", "w").write("y" * 12000 + "\n")
@@ -128,6 +128,7 @@ ok "history over it is only counted"            '[[ $OUT == *"and 1 more, neithe
 
 # m1: context 1,010, 10 + 1,000 × 2 + 100 × 5 = 2,510; m2: context 4,000, 10 + 990 × 1.25 + 3,000 × 0.1 + 50 × 5 = 1,797.5
 ok "calls from usage, each once, in the window"  '[[ $(row "dt-dev-1" | grep "at ~") == " 4.3k 2 2.5k 1.0k 1 at ~368k dt-dev-1" ]]'
+ok "the calls' total, for always-loaded savings" '[[ $OUT == *"4.3k      2  in 1 session(s), all readers"* ]]'
 ok "a size limit compaction always beats"       '[[ $OUT == *"compacted 1 time(s), at a median 368k: the Peer size limit (400k) is above that"* ]]'
 ok "the tool schemas every call carries"        '[[ $OUT == *"tool schemas of ~1.1k (median session); the largest: Artifact 1.0k, Bash 101"* ]]'
 ok "MCP servers: size, loaded, used"            '[[ $(server rea) == " 116 1 0 23 rea" ]] && [[ $(server claude_ai_Docs) == " 200 1 0 40 claude_ai_Docs" ]] && [[ $(server db) == " 98 1 1 19 db" ]]'

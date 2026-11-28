@@ -23,7 +23,7 @@ Request: $ARGUMENTS
    - **Long sessions:** compactions at or under the Peer size limit (the summary says so) → a lower limit, below them. Saving: the readers' cache reads × the share of their average context the lower limit cuts.
    - **MCP servers peers never used** → `Peer MCP:` keeping only the used ones, or `none` (`${CLAUDE_PLUGIN_ROOT}/workflow/orca.md` § Launch settings). Saving: its input-eq. Both are Runtime-line changes: the Owner decides.
 
-   Expected saving: the share of a file cut × its weekly read cost, or, for an always-loaded file, the tokens cut × sessions per week. Weekly figures are the window's × 7 ÷ N.
+   Expected saving: the share of a file cut × its weekly read cost, or, for an always-loaded file, the tokens cut × (0.1 × calls + 2 × sessions) per week, from the calls table's total: every call reads it from the cache, and each session start writes it there. Weekly figures are the window's × 7 ÷ N.
 
 4. **Report** one short table, the largest saving first, and the total:
 

@@ -95,6 +95,9 @@ ok "status.md approvals history: reported"    '[[ $OUT == *"status.md: an approv
 printf '# Friction log\n\n<!-- a note -->\n' >> "$(dirname "$W")/friction-log.md"
 run
 ok "an HTML comment in workspace Markdown: reported" '[[ $OUT == *"friction-log.md: an HTML comment"* ]]'
+printf '# Prompt\n\n<!-- for the filler only -->\n' > "$(dirname "$W")/prompt.tmpl.md"
+run
+ok "a template's comments are not drift"     '[[ $OUT != *"prompt.tmpl.md"* ]]'
 
 fresh CLAUDE.local.md .dev-team
 printf '# Their project\n\n- **Their own rule.** Something.\n' > "$T/p/CLAUDE.md"

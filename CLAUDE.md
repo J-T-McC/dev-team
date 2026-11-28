@@ -12,7 +12,7 @@ This repo **is** the dev-team Claude Code plugin and its marketplace. Do not sca
 - `examples/workspace/` — worked example (one feature folder plus its ADR) referenced by the skills; `examples/board/` — Owner board sample data and README screenshots (made-up data only); `examples/orca/` — an Orca screenshot for the README and site (conversation and project name blurred)
 - `evals/` — paid `claude plugin eval` cases for the setup flow; `tests/evals.sh` checks them for free
 - `site/` — the public docs site (Astro Starlight, deployed to GitHub Pages by `.github/workflows/pages.yml`): plain explanations for people that link to `workflow/` for the rules, never restate them in full; `tests/site.sh` fails when a command, setting, environment variable, or board state is missing from it
-- `hooks/` — tiny SessionStart announcement; refreshes check-in scripts; the coordinator's UserPromptSubmit / Stop guard (silent unless the checkout has peer homes or an Owner board); a PostToolUse note when an edit takes a feature document past the size limit
+- `hooks/` — tiny SessionStart announcement; refreshes check-in scripts; the coordinator's UserPromptSubmit / Stop guard (silent unless the checkout has peer homes or an Owner board); a PostToolUse note when an edit takes a workspace document past the size limit
 - `.claude-plugin/` — `plugin.json` (no version field: every commit is an update) + `marketplace.json`
 
 ## When editing
