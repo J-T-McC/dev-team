@@ -456,7 +456,9 @@ def size_limit(top, ws):
     except OSError:
         return 25
     sec = re.search(r"^## Size and reading\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
-    m = re.search(r"(\d+) ?KB", sec.group(1)) if sec else None
+    # The rule's own number ("stay under about 25 KB"), as hooks/doc-size.sh reads it; else the first KB figure.
+    m = sec and (re.search(r"(?:under|below) (?:about )?(\d+) ?KB", sec.group(1), re.I) or
+                 re.search(r"(\d+) ?KB", sec.group(1)))
     return int(m.group(1)) if m else 25
 
 
@@ -553,6 +555,8 @@ def report_calls(top, audit, days):
         comp = f"{len(c)} at ~{tok(median(c))}" if c else "none"
         print(f"  {tok(r['eq']):>8}  {r['calls']:>5}  {tok(r['context'] / r['calls']):>11}  {tok(median(r['starts'])):>5}"
               f"  {comp:>16}  {who}")
+    print(f"  {tok(sum(r['eq'] for r in rows.values())):>8}  {sum(r['calls'] for r in rows.values()):>5}  in "
+          f"{sum(r['sessions'] for r in rows.values())} session(s), all readers")
     every = [x for r in rows.values() for x in r["compacts"]]
     text = "\n".join((top / n).read_text(errors="ignore") for n in ("CLAUDE.local.md", "CLAUDE.md") if (top / n).is_file())
     if every and "**Runtime: Orca.**" in text:

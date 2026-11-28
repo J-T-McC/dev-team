@@ -69,7 +69,7 @@ Validate with `claude plugin validate .` and run `tests/*.sh`.
 | `commands/` | `/dev-team:sync`, `tickets`, `checkins`, `board`, `orca` and `audit` | yes |
 | `templates/`, `workflow/` | Document templates; the pipeline, handoff and communication rules | yes |
 | `bin/` | Check-in triggers and the coordinator lock; `peer` and `slot` for the Orca runtime; `board-drift` for the Owner board; `seed-drift` and `migrate-layout` for sync; `token-audit` for the audit | yes |
-| `hooks/` | Session start; the coordinator's guard hooks; the Stop hook that commits an uncommitted workspace; the edit hook that flags a feature document past the size limit | yes |
+| `hooks/` | Session start; the coordinator's guard hooks; the Stop hook that commits an uncommitted workspace; the edit hook that flags a workspace document past the size limit | yes |
 | `seeds/` | Files setup and sync copy into a project | no: the project owns its copy |
 | `examples/` | A worked workspace, the Owner board's sample data and screenshots, and an Orca screenshot | yes |
 | `site/` | The docs site, built with Astro Starlight and published to GitHub Pages | not used by projects |

@@ -59,7 +59,7 @@ Makes heavy jobs take turns on the machine.
 | Command | What it does |
 |---|---|
 | `board-drift <dir> [owner/repo] [--config <file>]` | lists Owner-board rows whose PR has moved on (exit 1 if any) |
-| `board-drift --status <ws>/status.md [--config <file>] [--features <dir>] [--no-prs]` | lists `status.md` rows whose PRs (`#123`, `repo#123`, `repo #123`) have all merged or closed, whose task count disagrees with the feature's task index, or whose cells have grown into a log; `--no-prs` skips the PR lookups. Repo names go through the board config's `repos` map; a row naming a repo it can't place is left alone |
+| `board-drift --status <ws>/status.md [--config <file>] [--features <dir>] [--no-prs]` | lists `status.md` rows whose PRs (`#123`, `repo#123`, `repo #123`) have all merged or closed, whose task count disagrees with the feature's task index, or whose cells have grown into a log; `--no-prs` skips the PR lookups. Repo names go through the board config's `repos` map; a row naming a repo it can't place is listed as not checked, to reword |
 | `hours [--spec]` | whether the team is inside its working hours now, and until when (exit 1 when closed); `--spec` prints the Hours line's value |
 | `setup-detect [--other-projects <dir>] [project-dir]` | what setup can tell before asking anything, as JSON: the project's state, remote and your access to it, its commit style and ticket prefix, what its code runs and what is configured but never run, the tools on the machine, the Claude plan and whether it's running inside Orca, your open PRs, and a suggestion with a reason for each setup question. `--other-projects` also summarizes what the git repos in that folder are built with, for stack suggestions; setup asks before using it |
 | `seed-drift [project-dir]` | what the plugin's seeds have that the project's copies lack (used by `/dev-team:sync`) |
@@ -85,5 +85,5 @@ The plugin installs these; there's nothing to set up.
 |---|---|
 | SessionStart | tells Claude the plugin is active and where the workspace is, warns when a role's memory grows large, flags an old layout, and keeps the check-in scripts where Orca can find them |
 | UserPromptSubmit, Stop | the coordinator's guard: unanswered peer questions, unhandled reports, unwatched work, and an Owner board behind `status.md` |
-| PostToolUse (Write, Edit) | tells the agent, once per session, when its edit takes a feature document past the size limit |
+| PostToolUse (Write, Edit) | tells the agent, once per session, when its edit takes a workspace document past the size limit, in the main checkout or a peer's worktree; logs and archives are left out |
 | Stop | commits an uncommitted workspace's own repository whenever it changed |

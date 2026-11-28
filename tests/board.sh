@@ -101,13 +101,19 @@ EOF
 printf '%s' '{"repos": {"mobile": "acme/mobile", "site": "acme/web"}}' > "$T/statuscfg.json"
 OUT=$("$REPO/bin/board-drift" --status "$T/status2.md" --config "$T/statuscfg.json")
 ok "status: '<repo> #N' is that repo's PR"   '[[ $OUT != *"app side"* && $OUT != *"site:"* ]]'
-ok "status: an unknown repo name leaves the row alone" '[[ $OUT != *unplaced* ]]'
+ok "status: an unknown repo name is reported unchecked" '[[ $OUT == *"unplaced: not checked — \"Phone #854\" is not a PR it can find; write #854 for this repo"* ]]'
+ok "status: and is never marked done"       '[[ $OUT != *"unplaced: every PR"* ]]'
 ok "status: 'PR #N' is this repo's"         '[[ $OUT == *"billing: every PR it names is done (#11 merged)"* ]]'
+printf '%s\n' '| Feature | Phase | Current Role | Next | Path |' '|---|---|---|---|---|' \
+  '| reviewed | Review | reviewer | review #11 | build |' '| ticketed | Review | reviewer | APP-7 #12 | build |' > "$T/status4.md"
+OUT=$("$REPO/bin/board-drift" --status "$T/status4.md")
+ok "status: 'review #N' is this repo's PR"   '[[ $OUT == *"reviewed: every PR it names is done (#11 merged)"* ]]'
+ok "status: '<ticket key> #N' is this repo's PR" '[[ $OUT == *"ticketed: every PR it names is done (#12 closed)"* ]]'
 mkdir -p "$T/g" && git -C "$T/g" init -q && mkdir -p "$T/g/.git/dev-team"
 printf '%s\n' '| Feature | Phase | Current Role | Blockers | Approvals | Path |' '|---|---|---|---|---|---|' \
   '| site | Review | reviewer | — | — | site #12 |' > "$T/status3.md"
 OUT=$(cd "$T/g" && "$REPO/bin/board-drift" --status "$T/status3.md"); RC=$?
-ok "status: an unmapped repo name is left alone" '[ $RC = 0 ] && [ "$OUT" = "status in sync" ]'
+ok "status: an unmapped repo name is reported" '[ $RC = 1 ] && [[ $OUT == "site: not checked — \"site #12\" is not a PR"* ]]'
 printf '{"rows": "%s"}' "$T/mapped" > "$T/g/.git/dev-team/board.json"
 OUT=$(cd "$T/g" && "$REPO/bin/board-drift" --status "$T/status3.md"); RC=$?
 ok "status: the stamped rows' config maps repo names" '[ $RC = 1 ] && [[ $OUT == "site: every PR it names is done (web#12 merged)"* ]]'
